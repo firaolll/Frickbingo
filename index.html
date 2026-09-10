@@ -1373,35 +1373,39 @@ function headers(){
 
 }
 
+async function api(path, options = {}) {
 
-async function api(path,options={}){
+    const res = await fetch(
+        SERVER_URL + path,
+        {
+            ...options,
 
- const res = await fetch(
-  SERVER_URL + path,
-  {
-   ...options,
-   headers:{
-    ...headers(),
-    ...(options.headers || {})
-   }
-  }
- );
+            cache: "no-store",
 
- const data =
-  await res.json().catch(
-   ()=>({
-    ok:false,
-    error:"Server error"
-   })
-  );
+            headers: {
+                ...headers(),
+                ...(options.headers || {})
+            }
+        }
+    );
 
- if(!res.ok){
-  throw new Error(
-   data.error || "Request failed"
-  );
- }
+    const data =
+        await res.json().catch(
+            () => ({
+                ok: false,
+                error: "Server returned invalid data."
+            })
+        );
 
- return data;
+    if (!res.ok) {
+
+        throw new Error(
+            data.error || "Request failed"
+        );
+
+    }
+
+    return data;
 
 }
 
@@ -1412,104 +1416,108 @@ async function api(path,options={}){
 
 async function loadProfile(showError=true){
 
- try{
+    try {
 
-  if(tg){
+        if (tg) {
 
-   tg.ready();
-   tg.expand();
+            tg.ready();
+            tg.expand();
 
-   telegramInitData =
-    tg.initData || "";
+            telegramInitData = tg.initData || "";
 
-  }
+        }
 
+        if (!telegramInitData) {
 
-  if(!telegramInitData){
+            console.warn("Telegram initData is empty.");
 
-   console.warn(
-    "Telegram initData is empty."
-   );
+            if (showError) {
+                alert(
+                    "እባክዎ Frick Bingoን ከTelegram bot ውስጥ ይክፈቱ።"
+                );
+            }
 
-   if(showError){
+            return;
+        }
 
-    alert(
-     "እባክዎ Frick Bingoን ከTelegram bot ውስጥ ይክፈቱ።"
-    );
+        const data = await api("/api/me");
 
-   }
+        if (!data.ok || !data.user) {
+            throw new Error(
+                data.error || "Could not load account."
+            );
+        }
 
-   return;
+        const u = data.user;
 
-  }
+        /*
+         * Support both server naming styles:
+         *
+         * balance / play_balance
+         * mainBalance / playBalance
+         */
 
+        profileData = {
 
-  const data =
-   await api("/api/me");
+            id:
+                u.telegramId ??
+                u.telegram_id ??
+                "",
 
+            name:
+                u.firstName ??
+                u.first_name ??
+                "Player",
 
-  if(!data.ok || !data.user){
+            username:
+                u.username ??
+                ""
 
-   throw new Error(
-    data.error ||
-    "Could not load account."
-   );
+        };
 
-  }
+        mainBalance = Number(
+            u.balance ??
+            u.mainBalance ??
+            0
+        );
 
+        playBalance = Number(
+            u.play_balance ??
+            u.playBalance ??
+            0
+        );
 
-  const u = data.user;
+        updateAllDisplays();
 
+        renderProfile();
 
-  profileData = {
+        console.log(
+            "✅ WEB BALANCE UPDATED",
+            {
+                mainBalance: mainBalance,
+                playBalance: playBalance
+            }
+        );
 
-   id:u.telegramId || "",
+    } catch (e) {
 
-   name:u.firstName || "Player",
+        console.error(
+            "❌ loadProfile:",
+            e
+        );
 
-   username:u.username || ""
+        if (showError) {
 
-  };
+            alert(
+                e.message ||
+                "Could not load balance."
+            );
 
+        }
 
-  mainBalance =
-   Number(u.mainBalance || 0);
-
-  playBalance =
-   Number(u.playBalance || 0);
-
-
-  updateAllDisplays();
-
-  renderProfile();
-
-
-  console.log(
-   "✅ Balance loaded:",
-   mainBalance
-  );
-
-
- }catch(e){
-
-  console.error(
-   "❌ loadProfile:",
-   e
-  );
-
-  if(showError){
-
-   alert(
-    e.message ||
-    "Could not load balance."
-   );
-
-  }
-
- }
+    }
 
 }
-
 
 /*
  Refresh balance every 5 seconds,
