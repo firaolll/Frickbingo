@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html lang="am">
 <head>
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Frick Bingo</title>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
 <style>
 :root{
  --bg:#080612;
@@ -1324,12 +1328,11 @@ button{
 
 <script>
 
-const SERVER_URL = "http://192.168.1.15:3000";
+const SERVER_URL = "";
 
 let tg = window.Telegram?.WebApp || null;
 
-let telegramInitData = tg?.initData || "";
-
+let telegramInitData = "";
 let selectedStake = 0;
 let selectedCards = [];
 let calledNumbers = [];
@@ -1414,22 +1417,34 @@ async function api(path, options = {}) {
    PROFILE / BALANCE
 ========================= */
 
-async function loadProfile(showError=true){
+async function loadProfile(showError = true){
 
     try {
 
-        if (tg) {
+        tg = window.Telegram?.WebApp || null;
 
-            tg.ready();
-            tg.expand();
+        if (!tg) {
+            console.error("Telegram WebApp SDK not loaded.");
 
-            telegramInitData = tg.initData || "";
+            if (showError) {
+                alert("እባክዎ Frick Bingoን ከTelegram bot ውስጥ ይክፈቱ።");
+            }
 
+            return;
         }
+
+        tg.ready();
+        tg.expand();
+
+        telegramInitData = tg.initData || "";
+
+        console.log("Telegram initData available:",
+            telegramInitData ? "YES" : "NO"
+        );
 
         if (!telegramInitData) {
 
-            console.warn("Telegram initData is empty.");
+            console.error("Telegram initData is empty.");
 
             if (showError) {
                 alert(
@@ -1441,10 +1456,9 @@ async function loadProfile(showError=true){
         }
 
         const data = await api("/api/me");
-console.log("🔥 /api/me RESPONSE:", data);
-console.log("🔥 USER:", data.user);
-console.log("🔥 MAIN BALANCE:", data.user?.mainBalance);
-console.log("🔥 PLAY BALANCE:", data.user?.playBalance);
+
+        console.log("🔥 /api/me RESPONSE:", data);
+
         if (!data.ok || !data.user) {
             throw new Error(
                 data.error || "Could not load account."
@@ -1453,75 +1467,34 @@ console.log("🔥 PLAY BALANCE:", data.user?.playBalance);
 
         const u = data.user;
 
-        /*
-         * Support both server naming styles:
-         *
-         * balance / play_balance
-         * mainBalance / playBalance
-         */
-
         profileData = {
-
-            id:
-                u.telegramId ??
-                u.telegram_id ??
-                "",
-
-            name:
-                u.firstName ??
-                u.first_name ??
-                "Player",
-
-            username:
-                u.username ??
-                ""
-
+            id: String(u.telegramId || ""),
+            name: u.firstName || "Player",
+            username: u.username || ""
         };
 
-        mainBalance = Number(
-            u.balance ??
-            u.mainBalance ??
-            0
-        );
-
-        playBalance = Number(
-            u.play_balance ??
-            u.playBalance ??
-            0
-        );
+        mainBalance = Number(u.mainBalance || 0);
+        playBalance = Number(u.playBalance || 0);
 
         updateAllDisplays();
-
         renderProfile();
 
-        console.log(
-            "✅ WEB BALANCE UPDATED",
-            {
-                mainBalance: mainBalance,
-                playBalance: playBalance
-            }
-        );
+        console.log("✅ BALANCE LOADED:", {
+            mainBalance,
+            playBalance
+        });
 
     } catch (e) {
 
-        console.error(
-            "❌ loadProfile:",
-            e
-        );
+        console.error("❌ loadProfile:", e);
 
         if (showError) {
-
             alert(
-                e.message ||
-                "Could not load balance."
+                e.message || "Could not load balance."
             );
-
         }
-
     }
-
 }
-
 /*
  Refresh balance every 5 seconds,
  but don't interrupt an active game.
