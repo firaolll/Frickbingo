@@ -1441,7 +1441,10 @@ async function loadProfile(showError=true){
         }
 
         const data = await api("/api/me");
-
+console.log("🔥 /api/me RESPONSE:", data);
+console.log("🔥 USER:", data.user);
+console.log("🔥 MAIN BALANCE:", data.user?.mainBalance);
+console.log("🔥 PLAY BALANCE:", data.user?.playBalance);
         if (!data.ok || !data.user) {
             throw new Error(
                 data.error || "Could not load account."
