@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080511">
 <title>Frick Bingo</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-:root{
 :root{
  --bg:#070511;
  --bg2:#0d081b;
@@ -19,11 +19,25 @@
  --purple2:#b06cff;
  --purple3:#d19cff;
  --green:#20e59b;
+ --green2:#69ffc6;
  --red:#ff4d67;
  --yellow:#ffd34d;
  --white:#fff;
  --muted:#aaa3c4;
  --border:#392866;
+
+ --glow-purple:
+  0 0 8px rgba(124,60,255,.75),
+  0 0 22px rgba(124,60,255,.45),
+  0 0 45px rgba(124,60,255,.18);
+
+ --glow-green:
+  0 0 8px rgba(32,229,155,.8),
+  0 0 22px rgba(32,229,155,.4);
+
+ --glow-yellow:
+  0 0 10px rgba(255,211,77,.9),
+  0 0 25px rgba(255,211,77,.45);
 }
 
 *{
@@ -35,12 +49,13 @@
 html,body{
  min-height:100%;
  background:
-   radial-gradient(circle at 50% -10%,#3b1975 0%,transparent 32%),
-   radial-gradient(circle at 0% 45%,#1b0c38 0%,transparent 35%),
-   radial-gradient(circle at 100% 80%,#200d42 0%,transparent 35%),
-   linear-gradient(160deg,#080511,#05030b);
+  radial-gradient(circle at 50% -10%,#48208a 0%,transparent 34%),
+  radial-gradient(circle at 0% 40%,#211047 0%,transparent 36%),
+  radial-gradient(circle at 100% 75%,#2b1055 0%,transparent 38%),
+  linear-gradient(160deg,#080511,#05030b);
  color:#fff;
  font-family:Arial,"Noto Sans Ethiopic",sans-serif;
+ overscroll-behavior:none;
 }
 
 body{
@@ -52,27 +67,30 @@ button{
  font:inherit;
 }
 
-button,
-.stake-btn,
-.play-main,
-.ready-btn,
-.call-btn,
-.control-btn{
+button{
  -webkit-tap-highlight-color:transparent;
+ user-select:none;
  transition:
-   transform .18s ease,
-   box-shadow .18s ease,
-   border-color .18s ease,
-   background .18s ease;
+  transform .18s ease,
+  box-shadow .18s ease,
+  border-color .18s ease,
+  background .18s ease,
+  opacity .18s ease;
 }
 
 button:active{
- transform:scale(.96);
+ transform:scale(.95);
+}
+
+button:focus-visible{
+ outline:2px solid var(--purple2);
+ outline-offset:2px;
 }
 
 .app{
  width:100%;
  max-width:1250px;
+ min-height:100vh;
  margin:auto;
 }
 
@@ -83,13 +101,13 @@ button:active{
 
 .page.active{
  display:block;
- animation:pageIn .28s ease;
+ animation:pageIn .3s ease;
 }
 
 @keyframes pageIn{
  from{
   opacity:0;
-  transform:translateY(8px);
+  transform:translateY(10px);
  }
  to{
   opacity:1;
@@ -108,49 +126,62 @@ button:active{
  position:sticky;
  top:0;
  z-index:50;
-
- background:rgba(8,5,18,.82);
+ background:
+  linear-gradient(
+   180deg,
+   rgba(9,5,21,.96),
+   rgba(8,5,18,.82)
+  );
  backdrop-filter:blur(18px);
-
- border-bottom:1px solid rgba(124,60,255,.35);
-
+ border-bottom:1px solid rgba(176,108,255,.4);
  box-shadow:
-   0 8px 30px rgba(0,0,0,.35),
-   0 0 25px rgba(124,60,255,.08);
+  0 8px 30px rgba(0,0,0,.4),
+  0 0 28px rgba(124,60,255,.12);
 }
 
 .logo{
  font-size:24px;
  font-weight:900;
  letter-spacing:.5px;
-
  color:#fff;
-
  text-shadow:
-   0 0 5px #fff,
+  0 0 4px #fff,
+  0 0 10px var(--purple2),
+  0 0 22px var(--purple),
+  0 0 42px rgba(124,60,255,.8);
+ animation:logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse{
+ 0%,100%{
+  text-shadow:
+   0 0 4px #fff,
    0 0 10px var(--purple2),
-   0 0 22px var(--purple),
-   0 0 42px rgba(124,60,255,.75);
+   0 0 22px var(--purple);
+ }
+ 50%{
+  text-shadow:
+   0 0 5px #fff,
+   0 0 14px var(--purple2),
+   0 0 30px var(--purple),
+   0 0 50px rgba(124,60,255,.8);
+ }
 }
 
 .rules-btn{
  padding:8px 13px;
  border-radius:11px;
-
  color:#fff;
- background:rgba(124,60,255,.15);
-
+ background:linear-gradient(
+  145deg,
+  rgba(124,60,255,.3),
+  rgba(65,30,130,.2)
+ );
  border:1px solid var(--purple2);
-
  box-shadow:
-   0 0 8px rgba(124,60,255,.35),
-   inset 0 0 10px rgba(124,60,255,.08);
-}
-
-.rules-btn:hover{
- box-shadow:
-   0 0 12px var(--purple),
-   0 0 28px rgba(124,60,255,.45);
+  0 0 8px rgba(124,60,255,.4),
+  inset 0 0 10px rgba(124,60,255,.1);
+ cursor:pointer;
 }
 
 /* WELCOME */
@@ -166,60 +197,48 @@ button:active{
 .welcome-box{
  position:relative;
  overflow:hidden;
-
  background:
-   linear-gradient(145deg,
-   rgba(37,29,66,.92),
-   rgba(13,9,28,.96));
-
- border:1px solid rgba(124,60,255,.4);
+  linear-gradient(
+   145deg,
+   rgba(43,31,78,.96),
+   rgba(13,9,28,.98)
+  );
+ border:1px solid rgba(176,108,255,.45);
  border-radius:20px;
-
- padding:24px 12px;
+ padding:25px 12px;
  text-align:center;
-
  box-shadow:
-   0 0 12px rgba(124,60,255,.15),
-   0 12px 35px rgba(0,0,0,.3),
-   inset 0 0 25px rgba(124,60,255,.05);
-}
-
-.welcome-box::before{
- content:"";
- position:absolute;
- inset:-50%;
- background:radial-gradient(
-   circle,
-   rgba(124,60,255,.16),
-   transparent 55%
- );
- pointer-events:none;
+  0 0 14px rgba(124,60,255,.2),
+  0 12px 35px rgba(0,0,0,.3),
+  inset 0 0 25px rgba(124,60,255,.07);
 }
 
 .welcome-box h2{
- position:relative;
  color:var(--purple3);
- text-shadow:0 0 14px var(--purple);
+ text-shadow:
+  0 0 8px var(--purple),
+  0 0 20px rgba(124,60,255,.55);
 }
 
 .welcome-box p{
- position:relative;
  margin-top:8px;
  color:var(--muted);
+ line-height:1.5;
 }
 
-/* SECTION */
+/* TITLES */
 
 .section-title{
  text-align:center;
  margin:25px 0 14px;
  font-size:19px;
-
+ color:#eee8ff;
  text-shadow:
-   0 0 8px rgba(124,60,255,.6);
+  0 0 8px rgba(124,60,255,.7),
+  0 0 18px rgba(124,60,255,.25);
 }
 
-/* STAKES */
+/* STAKE */
 
 .stake-grid{
  display:grid;
@@ -230,95 +249,68 @@ button:active{
 }
 
 .stake-btn{
- position:relative;
- overflow:hidden;
-
  background:
-   linear-gradient(145deg,#24194b,#120d25);
-
+  linear-gradient(145deg,#2b1d58,#120d25);
  color:#fff;
-
- border:1px solid #4a3580;
+ border:1px solid #50398a;
  border-radius:18px;
-
  padding:20px 10px;
-
  cursor:pointer;
-
  font-size:23px;
  font-weight:900;
-
  box-shadow:
-   0 0 10px rgba(124,60,255,.16),
-   inset 0 0 18px rgba(124,60,255,.05);
-}
-
-.stake-btn::after{
- content:"";
- position:absolute;
- width:80px;
- height:80px;
- right:-30px;
- top:-35px;
-
- background:radial-gradient(
-   circle,
-   rgba(176,108,255,.28),
-   transparent 65%
- );
+  0 0 10px rgba(124,60,255,.18),
+  inset 0 0 18px rgba(124,60,255,.06);
 }
 
 .stake-btn:hover{
  border-color:var(--purple2);
- box-shadow:
-   0 0 12px rgba(124,60,255,.6),
-   0 0 28px rgba(124,60,255,.22);
+ box-shadow:var(--glow-purple);
 }
 
 .stake-btn.selected{
  background:
-   linear-gradient(145deg,#6530c9,#32166d);
-
- border-color:#c69aff;
-
+  linear-gradient(145deg,#7139df,#351572);
+ border-color:#d1b4ff;
  box-shadow:
-   0 0 10px var(--purple),
-   0 0 25px rgba(124,60,255,.65),
-   inset 0 0 18px rgba(255,255,255,.08);
-
+  0 0 12px var(--purple),
+  0 0 28px rgba(124,60,255,.7),
+  0 0 55px rgba(124,60,255,.25),
+  inset 0 0 20px rgba(255,255,255,.1);
  transform:translateY(-2px);
 }
 
-/* BALANCE */
+/* PANELS */
 
 .simple-panel{
  background:
-   linear-gradient(145deg,
-   rgba(28,21,54,.94),
-   rgba(11,8,24,.97));
-
- border:1px solid rgba(124,60,255,.35);
+  linear-gradient(
+   145deg,
+   rgba(31,23,59,.97),
+   rgba(10,7,22,.99)
+  );
+ border:1px solid rgba(124,60,255,.4);
  border-radius:19px;
-
  padding:17px;
-
  box-shadow:
-   0 0 15px rgba(124,60,255,.12),
-   0 12px 30px rgba(0,0,0,.25),
-   inset 0 0 18px rgba(124,60,255,.04);
+  0 0 15px rgba(124,60,255,.14),
+  0 12px 30px rgba(0,0,0,.3),
+  inset 0 0 20px rgba(124,60,255,.05);
 }
 
 .simple-panel h2{
  text-align:center;
  color:var(--purple3);
  margin-bottom:14px;
- text-shadow:0 0 12px var(--purple);
+ text-shadow:
+  0 0 12px var(--purple),
+  0 0 24px rgba(124,60,255,.35);
 }
 
 #homeBalance{
  text-shadow:
-   0 0 8px rgba(32,229,155,.7),
-   0 0 18px rgba(32,229,155,.25);
+  0 0 8px rgba(32,229,155,.8),
+  0 0 20px rgba(32,229,155,.4);
 }
 
 /* PLAY */
@@ -327,52 +319,54 @@ button:active{
 .call-btn{
  position:relative;
  overflow:hidden;
-
  display:block;
  width:min(500px,95%);
  margin:24px auto 0;
-
  padding:16px;
-
- border:1px solid #c39aff;
+ border:1px solid #d0b0ff;
  border-radius:15px;
-
  background:
-   linear-gradient(100deg,#6d2df2,#a14cff,#6d2df2);
+  linear-gradient(
+   100deg,
+   #6725e8,
+   #ae59ff,
+   #6725e8
+  );
  background-size:200% 100%;
-
  color:#fff;
-
  font-weight:900;
  font-size:17px;
- letter-spacing:.5px;
-
+ letter-spacing:.7px;
  cursor:pointer;
-
  box-shadow:
-   0 0 10px rgba(124,60,255,.75),
-   0 0 25px rgba(124,60,255,.4),
-   inset 0 1px rgba(255,255,255,.25);
-
+  0 0 12px rgba(124,60,255,.8),
+  0 0 28px rgba(124,60,255,.4);
  animation:buttonGlow 2.2s ease-in-out infinite;
+}
+
+.play-main:disabled,
+.call-btn:disabled{
+ opacity:.4;
+ cursor:not-allowed;
+ animation:none;
 }
 
 @keyframes buttonGlow{
  0%,100%{
-   box-shadow:
-     0 0 9px rgba(124,60,255,.65),
-     0 0 22px rgba(124,60,255,.25);
-   background-position:0% 50%;
+  box-shadow:
+   0 0 10px rgba(124,60,255,.7),
+   0 0 24px rgba(124,60,255,.3);
+  background-position:0% 50%;
  }
  50%{
-   box-shadow:
-     0 0 14px rgba(176,108,255,.95),
-     0 0 34px rgba(124,60,255,.5);
-   background-position:100% 50%;
+  box-shadow:
+   0 0 17px rgba(176,108,255,1),
+   0 0 38px rgba(124,60,255,.55);
+  background-position:100% 50%;
  }
 }
 
-/* CARD SELECTION HEADER */
+/* PAGE 2 */
 
 .page2-header{
  display:grid;
@@ -386,16 +380,13 @@ button:active{
 .refresh-btn,
 .control-btn{
  background:
-   linear-gradient(145deg,#21173f,#120d26);
-
+  linear-gradient(145deg,#251a45,#100b22);
  color:#fff;
-
- border:1px solid #493575;
+ border:1px solid #4e3980;
  cursor:pointer;
  border-radius:12px;
-
  box-shadow:
-   0 0 8px rgba(124,60,255,.12);
+  0 0 8px rgba(124,60,255,.15);
 }
 
 .back-btn,
@@ -410,9 +401,9 @@ button:active{
  font-size:20px;
  font-weight:900;
  color:#fff;
-
  text-shadow:
-   0 0 8px rgba(176,108,255,.55);
+  0 0 8px rgba(176,108,255,.65),
+  0 0 20px rgba(124,60,255,.25);
 }
 
 /* INFO */
@@ -428,16 +419,13 @@ button:active{
 .info-box,
 .game-stat{
  background:
-   linear-gradient(145deg,#21183d,#120d25);
-
- border:1px solid rgba(124,60,255,.3);
+  linear-gradient(145deg,#251a44,#110c24);
+ border:1px solid rgba(124,60,255,.34);
  border-radius:12px;
-
  padding:9px 6px;
  text-align:center;
-
  box-shadow:
-   inset 0 0 12px rgba(124,60,255,.04);
+  inset 0 0 12px rgba(124,60,255,.05);
 }
 
 .info-box span,
@@ -452,80 +440,92 @@ button:active{
  display:block;
  color:var(--green);
  margin-top:4px;
-
  text-shadow:
-   0 0 7px rgba(32,229,155,.45);
+  0 0 7px rgba(32,229,155,.55),
+  0 0 15px rgba(32,229,155,.2);
 }
 
 /* TIMER */
 
 .timer{
  text-align:center;
-
  background:
-   linear-gradient(145deg,#281b50,#120c27);
-
+  linear-gradient(145deg,#30205d,#110b27);
  border:1px solid var(--purple2);
  border-radius:15px;
-
- padding:9px 18px;
+ padding:9px 20px;
  margin:9px auto 13px;
  width:max-content;
-
  box-shadow:
-   0 0 10px rgba(124,60,255,.3),
-   0 0 24px rgba(124,60,255,.12);
+  0 0 12px rgba(124,60,255,.4),
+  0 0 28px rgba(124,60,255,.15);
+ color:#ddd6ef;
 }
 
 .timer span{
  display:block;
  color:var(--yellow);
- font-size:24px;
+ font-size:27px;
  font-weight:900;
-
  text-shadow:
-   0 0 8px rgba(255,211,77,.7);
+  0 0 8px #ffd34d,
+  0 0 20px rgba(255,211,77,.65);
 }
 
-/* CARD SELECTOR */
+/* COST */
+
+.cost-panel{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
+ margin-bottom:10px;
+ padding:10px 13px;
+ border-radius:12px;
+ background:
+  linear-gradient(145deg,#21163e,#0d091c);
+ border:1px solid rgba(32,229,155,.25);
+}
+
+.cost-panel span{
+ color:var(--muted);
+ font-size:12px;
+}
+
+.cost-panel strong{
+ color:var(--green);
+ text-shadow:0 0 8px rgba(32,229,155,.6);
+}
+
+/* SELECTOR */
 
 .selector-panel{
  height:42vh;
  min-height:240px;
  max-height:390px;
-
  overflow-y:auto;
-
  background:
-   linear-gradient(145deg,#15102b,#090713);
-
- border:1px solid rgba(124,60,255,.35);
+  linear-gradient(145deg,#17102f,#080611);
+ border:1px solid rgba(124,60,255,.4);
  border-radius:17px;
-
  padding:9px;
-
  box-shadow:
-   inset 0 0 25px rgba(124,60,255,.05),
-   0 0 15px rgba(124,60,255,.08);
+  inset 0 0 25px rgba(124,60,255,.07),
+  0 0 18px rgba(124,60,255,.1);
+ scrollbar-width:thin;
 }
 
 .selector-hint{
  color:var(--muted);
  font-size:11px;
  text-align:center;
-
  margin-bottom:8px;
-
  position:sticky;
  top:0;
-
- background:rgba(18,13,36,.94);
- backdrop-filter:blur(10px);
-
+ background:rgba(18,13,36,.96);
+ backdrop-filter:blur(12px);
  padding:7px;
-
  border-radius:8px;
-
  z-index:2;
 }
 
@@ -537,46 +537,28 @@ button:active{
 
 .card-number{
  min-height:35px;
-
  border-radius:8px;
-
- border:1px solid #30274e;
-
+ border:1px solid #342950;
  background:
-   linear-gradient(145deg,#1c1633,#110c22);
-
+  linear-gradient(145deg,#211a39,#100b21);
  color:#fff;
-
  cursor:pointer;
  font-size:11px;
-
- box-shadow:
-   inset 0 0 6px rgba(255,255,255,.02);
-}
-
-.card-number:hover{
- border-color:var(--purple2);
- box-shadow:0 0 8px rgba(124,60,255,.3);
 }
 
 .card-number.selected{
  background:
-   linear-gradient(145deg,#7c3cff,#b06cff);
-
- border-color:#d1b4ff;
-
+  linear-gradient(145deg,#7438e8,#b06cff);
+ border-color:#e1cfff;
  box-shadow:
-   0 0 8px #7c3cff,
-   0 0 18px rgba(124,60,255,.6),
-   inset 0 1px rgba(255,255,255,.3);
-
+  0 0 9px #7c3cff,
+  0 0 20px rgba(124,60,255,.7);
  font-weight:900;
 }
 
 .card-number.selected::after{
- content:"✓";
+ content:" ✓";
  color:#fff;
- margin-left:3px;
 }
 
 /* SELECTED */
@@ -595,28 +577,21 @@ button:active{
 
 .selected-chip{
  background:
-   linear-gradient(145deg,#5e2cb9,#29134f);
-
+  linear-gradient(145deg,#652fca,#28114e);
  border:1px solid var(--purple2);
-
  color:#fff;
-
  padding:8px 11px;
  border-radius:10px;
-
  cursor:pointer;
  font-weight:bold;
-
  box-shadow:
-   0 0 9px rgba(124,60,255,.25);
+  0 0 9px rgba(124,60,255,.35);
 }
 
 .cards-preview{
  margin-top:10px;
-
  display:grid;
  grid-template-columns:repeat(2,minmax(0,1fr));
-
  gap:10px;
 }
 
@@ -625,49 +600,42 @@ button:active{
 .ready-btn{
  width:100%;
  margin-top:12px;
-
  padding:14px;
-
- border:1px solid rgba(32,229,155,.6);
+ border:1px solid rgba(32,229,155,.7);
  border-radius:14px;
-
  background:
-   linear-gradient(90deg,#0b9e6d,#20e59b,#0b9e6d);
-
+  linear-gradient(90deg,#079665,#20e59b,#079665);
+ background-size:200% 100%;
  color:#03140e;
-
  font-weight:900;
  cursor:pointer;
-
  box-shadow:
-   0 0 10px rgba(32,229,155,.35),
-   0 0 25px rgba(32,229,155,.12);
+  0 0 10px rgba(32,229,155,.4);
 }
 
 .ready-btn.ready{
  background:
-   linear-gradient(90deg,#ffb51b,#ffd34d,#ffb51b);
-
+  linear-gradient(90deg,#e7a915,#ffd34d,#e7a915);
+ color:#201600;
  border-color:#ffe58c;
+ box-shadow:var(--glow-yellow);
+}
 
- box-shadow:
-   0 0 12px rgba(255,211,77,.6);
+.ready-btn:disabled{
+ opacity:.5;
+ cursor:not-allowed;
 }
 
 /* BINGO CARD */
 
 .bingo-card{
  background:
-   linear-gradient(145deg,#21183e,#0d0919);
-
- border:1px solid rgba(124,60,255,.45);
+  linear-gradient(145deg,#241945,#0c0818);
+ border:1px solid rgba(176,108,255,.5);
  border-radius:14px;
-
  padding:8px;
-
  box-shadow:
-   0 0 10px rgba(124,60,255,.18),
-   inset 0 0 15px rgba(124,60,255,.04);
+  0 0 12px rgba(124,60,255,.22);
 }
 
 .bingo-header,
@@ -687,77 +655,53 @@ button:active{
  font-size:12px;
  font-weight:900;
  padding:3px;
-
  text-shadow:
-   0 0 7px var(--purple);
+  0 0 7px var(--purple);
 }
 
 .bingo-cell{
  aspect-ratio:1;
-
  display:flex;
  align-items:center;
  justify-content:center;
-
  background:
-   linear-gradient(145deg,#282044,#171229);
-
- border:1px solid #3a2d5e;
+  linear-gradient(145deg,#2b2347,#171129);
+ border:1px solid #3c315d;
  border-radius:6px;
-
  font-size:11px;
  font-weight:bold;
-
- transition:.25s;
 }
 
 .bingo-cell.called{
  background:
-   radial-gradient(circle at 35% 25%,#69ffc6,#20e59b);
-
+  radial-gradient(circle at 35% 25%,var(--green2),var(--green));
  color:#03140e;
-
  border-color:#8fffd4;
-
  box-shadow:
-   0 0 7px #20e59b,
-   0 0 15px rgba(32,229,155,.5);
-
- animation:markedPop .25s ease;
-}
-
-@keyframes markedPop{
- from{transform:scale(.8);}
- to{transform:scale(1);}
+  0 0 8px #20e59b,
+  0 0 17px rgba(32,229,155,.55);
 }
 
 .bingo-cell.free{
  background:
-   linear-gradient(145deg,#7c3cff,#b06cff);
-
+  linear-gradient(145deg,#7c3cff,#b06cff);
  color:#fff;
-
  border-color:#d2b6ff;
-
  box-shadow:
-   0 0 8px rgba(124,60,255,.7);
+  0 0 9px rgba(124,60,255,.8);
 }
 
-/* LIVE BOARD */
+/* LIVE */
 
 .game-board-panel,
 .your-card-section{
  background:
-   linear-gradient(145deg,#17112f,#0a0715);
-
- border:1px solid rgba(124,60,255,.4);
+  linear-gradient(145deg,#1a1235,#090611);
+ border:1px solid rgba(124,60,255,.45);
  border-radius:19px;
-
  padding:11px;
-
  box-shadow:
-   0 0 16px rgba(124,60,255,.15),
-   inset 0 0 20px rgba(124,60,255,.035);
+  0 0 17px rgba(124,60,255,.17);
 }
 
 .panel-title{
@@ -766,9 +710,8 @@ button:active{
  font-size:18px;
  font-weight:900;
  margin-bottom:9px;
-
  text-shadow:
-   0 0 10px var(--purple);
+  0 0 10px var(--purple);
 }
 
 .big-board-header,
@@ -784,72 +727,46 @@ button:active{
 
 .big-board-header div{
  text-align:center;
-
  background:
-   linear-gradient(145deg,#432080,#241044);
-
- color:#d8c1ff;
-
+  linear-gradient(145deg,#4a238e,#241044);
+ color:#e3d4ff;
  font-weight:900;
  font-size:19px;
-
  padding:8px;
  border-radius:8px;
-
- border:1px solid #6842a4;
-
- box-shadow:
-   0 0 8px rgba(124,60,255,.25);
+ border:1px solid #7048ad;
 }
 
 .board-number{
  aspect-ratio:1;
-
  background:
-   linear-gradient(145deg,#1d1733,#100c20);
-
- border:1px solid #332950;
-
+  linear-gradient(145deg,#201934,#100b20);
+ border:1px solid #372d51;
  border-radius:8px;
-
  display:flex;
  align-items:center;
  justify-content:center;
-
  font-size:15px;
  font-weight:bold;
-
- transition:.2s;
 }
 
 .board-number.called{
  background:
-   linear-gradient(145deg,#13bd7e,#20e59b);
-
+  linear-gradient(145deg,#13bd7e,#20e59b);
  color:#03140e;
-
  border-color:#7affca;
-
  box-shadow:
-   0 0 7px #20e59b,
-   0 0 14px rgba(32,229,155,.4);
+  0 0 8px #20e59b,
+  0 0 16px rgba(32,229,155,.45);
 }
 
 .board-number.last-called{
  background:
-   radial-gradient(circle at 35% 25%,#fff1a0,#ffd34d);
-
+  radial-gradient(circle at 35% 25%,#fff5ad,#ffd34d);
  color:#171000;
-
  transform:scale(1.08);
-
  border-color:#fff2a0;
-
- box-shadow:
-   0 0 10px #ffd34d,
-   0 0 25px rgba(255,211,77,.8);
-
- z-index:2;
+ box-shadow:var(--glow-yellow);
 }
 
 /* LIVE CONTROLS */
@@ -863,16 +780,13 @@ button:active{
 
 .call-display{
  background:
-   radial-gradient(circle at 50% 20%,#382263,#16102d);
-
+  radial-gradient(circle at 50% 20%,#422873,#16102d);
  border:1px solid var(--purple2);
  border-radius:15px;
-
  text-align:center;
  padding:9px;
-
  box-shadow:
-   0 0 14px rgba(124,60,255,.25);
+  0 0 14px rgba(124,60,255,.3);
 }
 
 .call-display small{
@@ -884,10 +798,9 @@ button:active{
  font-weight:900;
  color:var(--yellow);
  margin-top:3px;
-
  text-shadow:
-   0 0 7px #ffd34d,
-   0 0 20px rgba(255,211,77,.65);
+  0 0 7px #ffd34d,
+  0 0 20px rgba(255,211,77,.75);
 }
 
 .control-btn{
@@ -898,20 +811,13 @@ button:active{
 .control-btn.on{
  border-color:var(--green);
  color:var(--green);
-
  box-shadow:
-   0 0 9px rgba(32,229,155,.25);
+  0 0 9px rgba(32,229,155,.3);
 }
 
 .call-btn{
  width:100%;
  margin:11px 0 0;
-}
-
-.call-btn:disabled{
- opacity:.4;
- cursor:not-allowed;
- animation:none;
 }
 
 /* PLAYER CARD */
@@ -920,9 +826,6 @@ button:active{
  text-align:center;
  color:var(--muted);
  margin-bottom:9px;
-
- text-shadow:
-   0 0 7px rgba(124,60,255,.35);
 }
 
 .playing-cards{
@@ -933,22 +836,43 @@ button:active{
 
 .watch-message{
  margin-top:12px;
-
  text-align:center;
-
  background:
-   linear-gradient(145deg,#1b1433,#0e0a1d);
-
+  linear-gradient(145deg,#21183c,#0e0a1d);
  border:1px solid var(--border);
  border-radius:15px;
-
  padding:13px;
-
  color:var(--muted);
  line-height:1.7;
+}
 
- box-shadow:
-   0 0 12px rgba(124,60,255,.1);
+/* LISTS */
+
+.history-item,
+.score-item,
+.wallet-item{
+ padding:12px;
+ background:
+  linear-gradient(145deg,#241a42,#110c22);
+ border:1px solid rgba(124,60,255,.28);
+ border-radius:11px;
+ margin-bottom:8px;
+}
+
+.profile-row,
+.wallet-balance{
+ display:flex;
+ justify-content:space-between;
+ gap:15px;
+ padding:12px 0;
+ border-bottom:1px solid var(--border);
+ word-break:break-word;
+}
+
+.empty{
+ text-align:center;
+ color:var(--muted);
+ padding:20px 10px;
 }
 
 /* BOTTOM NAV */
@@ -958,44 +882,31 @@ button:active{
  left:0;
  right:0;
  bottom:0;
-
  z-index:100;
-
- background:
-   rgba(8,5,17,.92);
-
+ background:rgba(8,5,17,.95);
  backdrop-filter:blur(18px);
-
- border-top:1px solid rgba(124,60,255,.4);
-
+ border-top:1px solid rgba(124,60,255,.45);
  display:grid;
  grid-template-columns:repeat(5,1fr);
-
  max-width:1250px;
  margin:auto;
-
  box-shadow:
-   0 -8px 30px rgba(0,0,0,.4),
-   0 0 20px rgba(124,60,255,.08);
+  0 -8px 30px rgba(0,0,0,.5);
 }
 
 .nav-btn{
  background:none;
  border:0;
-
  color:var(--muted);
-
  padding:8px 2px 9px;
-
  cursor:pointer;
  font-size:10px;
 }
 
 .nav-btn.active{
- color:#c59aff;
-
+ color:#d0aaff;
  text-shadow:
-   0 0 8px var(--purple2);
+  0 0 8px var(--purple2);
 }
 
 .nav-icon{
@@ -1004,56 +915,21 @@ button:active{
  margin-bottom:2px;
 }
 
-/* HISTORY / SCORE / WALLET */
-
-.history-item,
-.score-item,
-.wallet-item{
- padding:12px;
-
- background:
-   linear-gradient(145deg,#21183d,#110c22);
-
- border:1px solid rgba(124,60,255,.25);
-
- border-radius:11px;
- margin-bottom:8px;
-
- box-shadow:
-   0 0 8px rgba(124,60,255,.08);
-}
-
-.profile-row,
-.wallet-balance{
- display:flex;
- justify-content:space-between;
- gap:15px;
-
- padding:12px 0;
-
- border-bottom:1px solid var(--border);
-
- word-break:break-word;
-}
-
 /* MODALS */
 
 .modal,
 .winner-overlay{
  display:none;
-
  position:fixed;
  inset:0;
-
  background:
-   radial-gradient(circle at center,
-   rgba(91,38,163,.2),
-   rgba(0,0,0,.92));
-
- backdrop-filter:blur(8px);
-
+  radial-gradient(
+   circle at center,
+   rgba(91,38,163,.25),
+   rgba(0,0,0,.94)
+  );
+ backdrop-filter:blur(9px);
  z-index:200;
-
  padding:18px;
  overflow:auto;
 }
@@ -1063,107 +939,70 @@ button:active{
  display:flex;
  align-items:center;
  justify-content:center;
-
- animation:fadeIn .2s ease;
-}
-
-@keyframes fadeIn{
- from{opacity:0;}
- to{opacity:1;}
 }
 
 .modal-box,
 .winner-box{
  width:min(600px,100%);
-
  background:
-   linear-gradient(145deg,#1b1335,#0b0716);
-
+  linear-gradient(145deg,#1e153a,#0b0716);
  border:1px solid var(--purple2);
-
  border-radius:20px;
-
  padding:20px;
-
  box-shadow:
-   0 0 18px rgba(124,60,255,.4),
-   0 0 50px rgba(124,60,255,.15);
+  0 0 20px rgba(124,60,255,.45),
+  0 0 55px rgba(124,60,255,.18);
 }
 
 .modal-title{
  text-align:center;
-
  color:#fff;
  font-size:25px;
  font-weight:900;
-
  text-shadow:
-   0 0 7px #fff,
-   0 0 15px var(--purple),
-   0 0 30px var(--purple);
-
+  0 0 7px #fff,
+  0 0 15px var(--purple),
+  0 0 30px var(--purple);
  margin-bottom:15px;
 }
 
 .rule{
  padding:10px 0;
-
  border-bottom:1px solid #28223e;
-
  line-height:1.7;
  color:#ddd8ec;
 }
 
 .close-btn{
  width:100%;
-
  margin-top:15px;
  padding:12px;
-
  border:1px solid #bb91ff;
  border-radius:12px;
-
  background:
-   linear-gradient(90deg,#6426d5,#9d4fff);
-
+  linear-gradient(90deg,#6426d5,#9d4fff);
  color:#fff;
-
  font-weight:bold;
-
- box-shadow:
-   0 0 12px rgba(124,60,255,.4);
+ cursor:pointer;
 }
 
 /* WINNER */
 
 .winner-box{
  text-align:center;
-
  border:2px solid var(--yellow);
-
  box-shadow:
-   0 0 15px rgba(255,211,77,.8),
-   0 0 50px rgba(255,211,77,.3);
+  0 0 18px rgba(255,211,77,.85),
+  0 0 55px rgba(255,211,77,.3);
 }
 
 .winner-title{
  font-size:34px;
-
  color:var(--yellow);
-
  font-weight:900;
-
  text-shadow:
-   0 0 8px #ffd34d,
-   0 0 20px rgba(255,211,77,.8);
-
- animation:winnerPulse 1s ease-in-out infinite;
-}
-
-@keyframes winnerPulse{
- 50%{
-   transform:scale(1.05);
- }
+  0 0 8px #ffd34d,
+  0 0 20px rgba(255,211,77,.8);
 }
 
 .winner-name{
@@ -1179,14 +1018,11 @@ button:active{
 
 .winner-prize{
  font-size:26px;
-
  color:var(--green);
-
  font-weight:900;
  margin:11px;
-
  text-shadow:
-   0 0 10px rgba(32,229,155,.7);
+  0 0 10px rgba(32,229,155,.8);
 }
 
 .winner-card-wrap{
@@ -1199,6 +1035,34 @@ button:active{
  margin-top:10px;
 }
 
+/* TOAST */
+
+.toast{
+ position:fixed;
+ left:50%;
+ bottom:88px;
+ transform:translateX(-50%) translateY(20px);
+ z-index:500;
+ min-width:220px;
+ max-width:90%;
+ padding:12px 16px;
+ border-radius:12px;
+ background:
+  linear-gradient(145deg,#28194d,#10091f);
+ border:1px solid var(--purple2);
+ color:#fff;
+ text-align:center;
+ box-shadow:var(--glow-purple);
+ opacity:0;
+ pointer-events:none;
+ transition:.25s ease;
+}
+
+.toast.show{
+ opacity:1;
+ transform:translateX(-50%) translateY(0);
+}
+
 /* MOBILE */
 
 @media(max-width:700px){
@@ -1207,10 +1071,7 @@ button:active{
   padding:10px;
  }
 
- .top-info{
-  grid-template-columns:repeat(3,1fr);
- }
-
+ .top-info,
  .game-stats{
   grid-template-columns:repeat(3,1fr);
  }
@@ -1230,6 +1091,7 @@ button:active{
  .big-board-header div{
   font-size:16px;
  }
+
 }
 
 @media(max-width:430px){
@@ -1268,10 +1130,7 @@ button:active{
   grid-template-columns:1fr;
  }
 
- .top-info{
-  grid-template-columns:repeat(2,1fr);
- }
-
+ .top-info,
  .game-stats{
   grid-template-columns:repeat(2,1fr);
  }
@@ -1295,6 +1154,39 @@ button:active{
  .big-board-header div{
   padding:6px;
  }
+
+ .welcome-box h2{
+  font-size:18px;
+ }
+
+ .welcome-box p{
+  font-size:11px;
+ }
+
+}
+
+@media(max-width:350px){
+
+ .page{
+  padding:7px;
+ }
+
+ .card-number-board{
+  grid-template-columns:repeat(5,1fr);
+ }
+
+ .card-number{
+  font-size:10px;
+ }
+
+ .selection-title{
+  font-size:17px;
+ }
+
+ .stake-btn{
+  font-size:19px;
+ }
+
 }
 </style>
 </head>
@@ -1303,13 +1195,19 @@ button:active{
 
 <div class="app">
 
-<!-- PAGE 1 -->
+<!-- HOME -->
 
 <div id="page1" class="page active">
 
  <div class="header">
   <div class="logo">Frick Bingo</div>
-  <button class="rules-btn" onclick="openRules()">Rules</button>
+
+  <button
+   class="rules-btn"
+   type="button"
+   onclick="openRules()">
+   Rules
+  </button>
  </div>
 
  <div class="welcome-grid">
@@ -1326,48 +1224,64 @@ button:active{
 
  </div>
 
- <h3 class="section-title">Choose Your Stake</h3>
+ <h3 class="section-title">
+  Choose Your Stake
+ </h3>
 
  <div class="stake-grid">
 
-  <button class="stake-btn" onclick="chooseStake(10,this)">
+  <button
+   class="stake-btn"
+   type="button"
+   onclick="chooseStake(10,this)">
    10 ETB
   </button>
 
-  <button class="stake-btn" onclick="chooseStake(20,this)">
+  <button
+   class="stake-btn"
+   type="button"
+   onclick="chooseStake(20,this)">
    20 ETB
   </button>
 
  </div>
 
- <div class="simple-panel"
-      style="max-width:500px;margin:18px auto;text-align:center">
+ <div
+  class="simple-panel"
+  style="max-width:500px;margin:18px auto;text-align:center">
 
   <div style="color:var(--muted)">
    Main Balance
   </div>
 
-  <strong id="homeBalance"
-          style="font-size:24px;color:var(--green)">
+  <strong
+   id="homeBalance"
+   style="display:inline-block;font-size:24px;color:var(--green);margin-top:4px">
    0.00 ETB
   </strong>
 
  </div>
 
- <button class="play-main" onclick="goToCardSelection()">
+ <button
+  class="play-main"
+  type="button"
+  onclick="goToCardSelection()">
   PLAY
  </button>
 
 </div>
 
 
-<!-- PAGE 2 -->
+<!-- CARD SELECTION -->
 
 <div id="page2" class="page">
 
  <div class="page2-header">
 
-  <button class="back-btn" onclick="showPage('page1')">
+  <button
+   class="back-btn"
+   type="button"
+   onclick="backToHome()">
    ↩️
   </button>
 
@@ -1375,7 +1289,10 @@ button:active{
    Choose Your Bingo Card
   </div>
 
-  <button class="refresh-btn" onclick="renderCardSelection()">
+  <button
+   class="refresh-btn"
+   type="button"
+   onclick="refreshSelection()">
    🔄
   </button>
 
@@ -1385,12 +1302,12 @@ button:active{
 
   <div class="info-box">
    <span>Main</span>
-   <strong id="mainBalance2">0</strong>
+   <strong id="mainBalance2">0.00</strong>
   </div>
 
   <div class="info-box">
    <span>Play</span>
-   <strong id="playBalance2">0</strong>
+   <strong id="playBalance2">0.00</strong>
   </div>
 
   <div class="info-box">
@@ -1410,62 +1327,78 @@ button:active{
 
  </div>
 
+ <div class="cost-panel">
+
+  <span>Total Cost</span>
+
+  <strong id="totalCost2">
+   0.00 ETB
+  </strong>
+
+ </div>
+
  <div class="timer">
+
   Starts in
+
   <span id="selectionTimer">30</span>
+
  </div>
 
  <div class="selector-panel">
 
   <div class="selector-hint">
-   200 cards • scroll here to see more • select up to 2
+   200 cards • select up to 2 cards
   </div>
 
-  <div class="card-number-board"
-       id="cardNumberBoard">
+  <div
+   class="card-number-board"
+   id="cardNumberBoard">
   </div>
 
  </div>
 
  <div class="selected-title">
-  Selected cards — tap a selected number to remove it
+  Selected cards — tap again to remove
  </div>
 
- <div class="selected-cards"
-      id="selectedCards">
+ <div
+  class="selected-cards"
+  id="selectedCards">
  </div>
 
- <div class="cards-preview"
-      id="cardsPreview">
+ <div
+  class="cards-preview"
+  id="cardsPreview">
  </div>
 
- <button id="readyButton"
-         class="ready-btn"
-         onclick="readyForGame()">
+ <button
+  id="readyButton"
+  class="ready-btn"
+  type="button"
+  onclick="readyForGame()">
   START GAME
  </button>
 
- <div id="watchMessage"
-      class="watch-message"
-      style="display:none">
-
-  የዚህ ዙር ጨዋታ ተጀምሯል
-  <br>
-  እባክዎ እስከ ቀጣዩ ጨዋታ ይመልከቱ 👀
-
+ <div
+  id="watchMessage"
+  class="watch-message"
+  style="display:none">
  </div>
 
 </div>
 
 
-<!-- PAGE 3 -->
+<!-- LIVE GAME -->
 
 <div id="page3" class="page game-page">
 
  <div class="page2-header">
 
-  <button class="back-btn"
-          onclick="handleBackDuringGame()">
+  <button
+   class="back-btn"
+   type="button"
+   onclick="handleBackDuringGame()">
    ↩️
   </button>
 
@@ -1473,8 +1406,10 @@ button:active{
    Frick Bingo • LIVE
   </div>
 
-  <button class="refresh-btn"
-          onclick="refreshGame()">
+  <button
+   class="refresh-btn"
+   type="button"
+   onclick="refreshGame()">
    🔄
   </button>
 
@@ -1484,12 +1419,12 @@ button:active{
 
   <div class="game-stat">
    <small>Main</small>
-   <b id="mainBalance3">0</b>
+   <b id="mainBalance3">0.00</b>
   </div>
 
   <div class="game-stat">
    <small>Play</small>
-   <b id="playBalance3">0</b>
+   <b id="playBalance3">0.00</b>
   </div>
 
   <div class="game-stat">
@@ -1499,16 +1434,15 @@ button:active{
 
   <div class="game-stat">
    <small>Derash</small>
-   <b id="derashDisplay">0</b>
+   <b id="derashDisplay">0.00</b>
   </div>
 
   <div class="game-stat">
    <small>Potential</small>
-   <b id="potentialDisplay">0</b>
+   <b id="potentialDisplay">0.00</b>
   </div>
 
  </div>
-
 
  <div class="game-board-panel">
 
@@ -1524,12 +1458,12 @@ button:active{
    <div>O</div>
   </div>
 
-  <div id="bigBingoBoard"
-       class="big-board">
+  <div
+   id="bigBingoBoard"
+   class="big-board">
   </div>
 
  </div>
-
 
  <div class="live-controls">
 
@@ -1537,35 +1471,40 @@ button:active{
 
    <small>LAST CALLED</small>
 
-   <div id="calledNumberDisplay"
-        class="called-number">
+   <div
+    id="calledNumberDisplay"
+    class="called-number">
     --
    </div>
 
   </div>
 
-  <button id="autoBtn"
-          class="control-btn on"
-          onclick="toggleAuto()">
+  <button
+   id="autoBtn"
+   class="control-btn on"
+   type="button"
+   onclick="toggleAuto()">
    🔄 Auto ON
   </button>
 
-  <button id="voiceBtn"
-          class="control-btn on"
-          onclick="toggleVoice()">
+  <button
+   id="voiceBtn"
+   class="control-btn on"
+   type="button"
+   onclick="toggleVoice()">
    🔊 Voice ON
   </button>
 
  </div>
 
-
- <button id="callBtn"
-         class="call-btn"
-         onclick="callNumber()"
-         disabled>
+ <button
+  id="callBtn"
+  class="call-btn"
+  type="button"
+  onclick="callNumber()"
+  disabled>
   CALL NUMBER
  </button>
-
 
  <div class="your-card-section">
 
@@ -1573,8 +1512,9 @@ button:active{
    YOUR 5×5 BINGO CARD
   </div>
 
-  <div id="playingCards"
-       class="playing-cards">
+  <div
+   id="playingCards"
+   class="playing-cards">
   </div>
 
  </div>
@@ -1584,8 +1524,7 @@ button:active{
 
 <!-- HISTORY -->
 
-<div id="historyPage"
-     class="page">
+<div id="historyPage" class="page">
 
  <div class="simple-panel">
 
@@ -1600,8 +1539,7 @@ button:active{
 
 <!-- SCORE -->
 
-<div id="scorePage"
-     class="page">
+<div id="scorePage" class="page">
 
  <div class="simple-panel">
 
@@ -1616,8 +1554,7 @@ button:active{
 
 <!-- WALLET -->
 
-<div id="walletPage"
-     class="page">
+<div id="walletPage" class="page">
 
  <div class="simple-panel">
 
@@ -1625,18 +1562,16 @@ button:active{
 
   <div class="wallet-balance">
    <span>Main Balance</span>
-   <strong id="walletMain">0</strong>
+   <strong id="walletMain">0.00</strong>
   </div>
 
   <div class="wallet-balance">
    <span>Play Balance</span>
-   <strong id="walletPlay">0</strong>
+   <strong id="walletPlay">0.00</strong>
   </div>
 
-  <p style="color:var(--muted);
-            margin-top:15px;
-            text-align:center">
-   Deposit and withdrawal are handled securely through the Telegram bot.
+  <p style="color:var(--muted);margin-top:15px;text-align:center;line-height:1.6">
+   Deposit and withdrawal are handled through the Telegram bot.
   </p>
 
  </div>
@@ -1646,8 +1581,7 @@ button:active{
 
 <!-- PROFILE -->
 
-<div id="profilePage"
-     class="page">
+<div id="profilePage" class="page">
 
  <div class="simple-panel">
 
@@ -1655,17 +1589,17 @@ button:active{
 
   <div class="profile-row">
    <span>Telegram ID</span>
-   <strong id="profileId"></strong>
+   <strong id="profileId">—</strong>
   </div>
 
   <div class="profile-row">
    <span>Name</span>
-   <strong id="profileName"></strong>
+   <strong id="profileName">Player</strong>
   </div>
 
   <div class="profile-row">
    <span>Username</span>
-   <strong id="profileUsername"></strong>
+   <strong id="profileUsername">—</strong>
   </div>
 
  </div>
@@ -1673,36 +1607,46 @@ button:active{
 </div>
 
 
-<!-- BOTTOM NAV -->
+<!-- NAV -->
 
 <div class="bottom-nav">
 
- <button class="nav-btn active"
-         onclick="navPage('page1',this)">
+ <button
+  class="nav-btn active"
+  type="button"
+  onclick="navPage('page1',this)">
   <span class="nav-icon">🎮</span>
   Game
  </button>
 
- <button class="nav-btn"
-         onclick="navPage('historyPage',this)">
+ <button
+  class="nav-btn"
+  type="button"
+  onclick="navPage('historyPage',this)">
   <span class="nav-icon">📜</span>
   History
  </button>
 
- <button class="nav-btn"
-         onclick="navPage('scorePage',this)">
+ <button
+  class="nav-btn"
+  type="button"
+  onclick="navPage('scorePage',this)">
   <span class="nav-icon">🏆</span>
   Score
  </button>
 
- <button class="nav-btn"
-         onclick="navPage('walletPage',this)">
+ <button
+  class="nav-btn"
+  type="button"
+  onclick="navPage('walletPage',this)">
   <span class="nav-icon">💰</span>
   Wallet
  </button>
 
- <button class="nav-btn"
-         onclick="navPage('profilePage',this)">
+ <button
+  class="nav-btn"
+  type="button"
+  onclick="navPage('profilePage',this)">
   <span class="nav-icon">👤</span>
   Profile
  </button>
@@ -1712,10 +1656,11 @@ button:active{
 </div>
 
 
-<!-- RULES MODAL -->
+<!-- RULES -->
 
-<div id="rulesModal"
-     class="modal">
+<div
+ id="rulesModal"
+ class="modal">
 
  <div class="modal-box">
 
@@ -1732,8 +1677,7 @@ button:active{
   </div>
 
   <div class="rule">
-   3. የመረጡትን ካርቴላ ለመቀየር
-   የተመረጠውን ቁጥር እንደገና ይንኩ።
+   3. የመረጡትን ካርቴላ ለመቀየር የተመረጠውን ቁጥር እንደገና ይንኩ።
   </div>
 
   <div class="rule">
@@ -1745,12 +1689,13 @@ button:active{
   </div>
 
   <div class="rule">
-   6. በአግድም፣ በቁም፣ በዲያጎናል
-   ወይም በአራት ኮርነር ሲሟላ አሸናፊ ይሆናሉ።
+   6. በአግድም፣ በቁም፣ በዲያጎናል ወይም በአራት ኮርነር ሲሟላ አሸናፊ ይሆናሉ።
   </div>
 
-  <button class="close-btn"
-          onclick="closeRules()">
+  <button
+   class="close-btn"
+   type="button"
+   onclick="closeRules()">
    CLOSE
   </button>
 
@@ -1761,8 +1706,9 @@ button:active{
 
 <!-- WINNER -->
 
-<div id="winnerOverlay"
-     class="winner-overlay">
+<div
+ id="winnerOverlay"
+ class="winner-overlay">
 
  <div class="winner-box">
 
@@ -1770,27 +1716,33 @@ button:active{
    🎉 BINGO! 🎉
   </div>
 
-  <div class="winner-name"
-       id="winnerName">
+  <div
+   class="winner-name"
+   id="winnerName">
    Winner
   </div>
 
   <div class="winner-info">
+
    Card Number:
    <strong id="winnerCardNumber">--</strong>
+
    <br>
+
    Winner Count:
    <strong>1</strong>
+
   </div>
 
   <div class="winner-prize">
    Prize:
-   <span id="winnerPrize">0</span>
+   <span id="winnerPrize">0.00</span>
    ETB
   </div>
 
-  <div id="winnerCardWrap"
-       class="winner-card-wrap">
+  <div
+   id="winnerCardWrap"
+   class="winner-card-wrap">
   </div>
 
   <div class="reset-count">
@@ -1804,13 +1756,47 @@ button:active{
 </div>
 
 
-<script>
+<!-- TOAST -->
 
+<div
+ id="toast"
+ class="toast">
+</div>
+
+
+<script>
+"use strict";
+
+/* =====================================================
+   CONFIG
+===================================================== */
+
+/*
+ IMPORTANT:
+ index.html is served from the SAME Render server.
+
+ Keep this EMPTY.
+
+ Do NOT use:
+ http://192.168.1.15:3000
+
+ Do NOT use GitHub Pages here.
+*/
 const SERVER_URL = "";
 
-let tg = window.Telegram?.WebApp || null;
 
+/* =====================================================
+   TELEGRAM
+===================================================== */
+
+let tg = null;
 let telegramInitData = "";
+
+
+/* =====================================================
+   GAME STATE
+===================================================== */
+
 let selectedStake = 0;
 let selectedCards = [];
 let calledNumbers = [];
@@ -1825,9 +1811,10 @@ let autoMode = true;
 let voiceMode = true;
 
 let autoInterval = null;
+let winnerResetInterval = null;
 
 let winnerShown = false;
-let winnerResetInterval = null;
+let currentGameId = null;
 
 let profileData = {
  id:"",
@@ -1838,170 +1825,427 @@ let profileData = {
 let mainBalance = 0;
 let playBalance = 0;
 
-let currentGameId = null;
+
+/* =====================================================
+   HAPTIC
+===================================================== */
+
+function haptic(type="light"){
+
+ try{
+
+  if(
+   tg &&
+   tg.HapticFeedback
+  ){
+
+   if(type === "success"){
+
+    tg.HapticFeedback.notificationOccurred("success");
+
+   }else if(type === "error"){
+
+    tg.HapticFeedback.notificationOccurred("error");
+
+   }else{
+
+    tg.HapticFeedback.impactOccurred("light");
+
+   }
+
+  }
+
+ }catch(e){}
+
+}
 
 
-/* =========================
-   API
-========================= */
+/* =====================================================
+   TOAST
+===================================================== */
+
+let toastTimer = null;
+
+function showToast(message){
+
+ const toast =
+  document.getElementById("toast");
+
+ if(!toast){
+
+  return;
+
+ }
+
+ toast.textContent =
+  String(message || "");
+
+ toast.classList.add("show");
+
+ clearTimeout(toastTimer);
+
+ toastTimer =
+  setTimeout(
+   ()=>{
+    toast.classList.remove("show");
+   },
+   2600
+  );
+
+}
+
+
+/* =====================================================
+   TELEGRAM INITIALIZATION
+===================================================== */
+
+function initializeTelegram(){
+
+ tg =
+  window.Telegram &&
+  window.Telegram.WebApp
+   ? window.Telegram.WebApp
+   : null;
+
+ if(!tg){
+
+  console.warn(
+   "Telegram WebApp SDK is not available."
+  );
+
+  return false;
+
+ }
+
+ try{
+
+  tg.ready();
+
+  tg.expand();
+
+  telegramInitData =
+   tg.initData || "";
+
+  console.log(
+   "Telegram initData:",
+   telegramInitData
+    ? "AVAILABLE"
+    : "EMPTY"
+  );
+
+  return true;
+
+ }catch(error){
+
+  console.error(
+   "Telegram initialization error:",
+   error
+  );
+
+  return false;
+
+ }
+
+}
+
+
+/* =====================================================
+   API HEADERS
+===================================================== */
 
 function headers(){
 
  return {
   "Content-Type":"application/json",
-  "X-Telegram-Init-Data":telegramInitData
+  "X-Telegram-Init-Data":
+   telegramInitData
  };
 
 }
 
-async function api(path, options = {}) {
 
-    const res = await fetch(
-        SERVER_URL + path,
-        {
-            ...options,
+/* =====================================================
+   API
+===================================================== */
 
-            cache: "no-store",
+async function api(
+ path,
+ options={}
+){
 
-            headers: {
-                ...headers(),
-                ...(options.headers || {})
-            }
-        }
-    );
+ try{
 
-    const data =
-        await res.json().catch(
-            () => ({
-                ok: false,
-                error: "Server returned invalid data."
-            })
-        );
-
-    if (!res.ok) {
-
-        throw new Error(
-            data.error || "Request failed"
-        );
-
+  const response =
+   await fetch(
+    SERVER_URL + path,
+    {
+     ...options,
+     cache:"no-store",
+     headers:{
+      ...headers(),
+      ...(options.headers || {})
+     }
     }
-
-    return data;
-
-}
+   );
 
 
-/* =========================
-   PROFILE / BALANCE
-========================= */
+  const text =
+   await response.text();
 
-async function loadProfile(showError = true){
 
-    try {
+  let data = {};
 
-        tg = window.Telegram?.WebApp || null;
+  try{
 
-        if (!tg) {
-            console.error("Telegram WebApp SDK not loaded.");
+   data =
+    text
+     ? JSON.parse(text)
+     : {};
 
-            if (showError) {
-                alert("እባክዎ Frick Bingoን ከTelegram bot ውስጥ ይክፈቱ።");
-            }
+  }catch(e){
 
-            return;
-        }
+   throw new Error(
+    "Server returned invalid JSON."
+   );
 
-        tg.ready();
-        tg.expand();
+  }
 
-        telegramInitData = tg.initData || "";
 
-        console.log("Telegram initData available:",
-            telegramInitData ? "YES" : "NO"
-        );
+  if(!response.ok){
 
-        if (!telegramInitData) {
+   throw new Error(
+    data.error ||
+    data.message ||
+    `Server error (${response.status})`
+   );
 
-            console.error("Telegram initData is empty.");
+  }
 
-            if (showError) {
-                alert(
-                    "እባክዎ Frick Bingoን ከTelegram bot ውስጥ ይክፈቱ።"
-                );
-            }
 
-            return;
-        }
+  return data;
 
-        const data = await api("/api/me");
+ }catch(error){
 
-        console.log("🔥 /api/me RESPONSE:", data);
+  console.error(
+   "API ERROR:",
+   path,
+   error
+  );
 
-        if (!data.ok || !data.user) {
-            throw new Error(
-                data.error || "Could not load account."
-            );
-        }
-
-        const u = data.user;
-
-        profileData = {
-            id: String(u.telegramId || ""),
-            name: u.firstName || "Player",
-            username: u.username || ""
-        };
-
-        mainBalance = Number(u.mainBalance || 0);
-        playBalance = Number(u.playBalance || 0);
-
-        updateAllDisplays();
-        renderProfile();
-
-        console.log("✅ BALANCE LOADED:", {
-            mainBalance,
-            playBalance
-        });
-
-    } catch (e) {
-
-        console.error("❌ loadProfile:", e);
-
-        if (showError) {
-            alert(
-                e.message || "Could not load balance."
-            );
-        }
-    }
-}
-/*
- Refresh balance every 5 seconds,
- but don't interrupt an active game.
-*/
-setInterval(()=>{
-
- if(!actualGameStarted){
-
-  loadProfile(false);
+  throw error;
 
  }
 
-},5000);
+}
 
 
-/* =========================
-   PAGE NAVIGATION
-========================= */
+/* =====================================================
+   PROFILE
+===================================================== */
+
+async function loadProfile(
+ showError=true
+){
+
+ try{
+
+  const telegramOK =
+   initializeTelegram();
+
+
+  if(!telegramOK){
+
+   if(showError){
+
+    showToast(
+     "እባክዎ Frick Bingoን ከTelegram ውስጥ ይክፈቱ።"
+    );
+
+   }
+
+   return false;
+
+  }
+
+
+  if(!telegramInitData){
+
+   if(showError){
+
+    showToast(
+     "Telegram user information አልተገኘም።"
+    );
+
+   }
+
+   return false;
+
+  }
+
+
+  const data =
+   await api("/api/me");
+
+
+  console.log(
+   "/api/me response:",
+   data
+  );
+
+
+  if(
+   !data ||
+   data.ok === false ||
+   !data.user
+  ){
+
+   throw new Error(
+    data?.error ||
+    "Could not load user account."
+   );
+
+  }
+
+
+  const user =
+   data.user;
+
+
+  profileData = {
+
+   id:
+    String(
+     user.telegramId ??
+     user.telegram_id ??
+     user.id ??
+     ""
+    ),
+
+   name:
+    String(
+     user.firstName ??
+     user.first_name ??
+     user.name ??
+     "Player"
+    ),
+
+   username:
+    String(
+     user.username ??
+     ""
+    )
+
+  };
+
+
+  mainBalance =
+   Number(
+    user.mainBalance ??
+    user.balance ??
+    0
+   );
+
+
+  playBalance =
+   Number(
+    user.playBalance ??
+    user.play_balance ??
+    0
+   );
+
+
+  if(!Number.isFinite(mainBalance)){
+
+   mainBalance = 0;
+
+  }
+
+
+  if(!Number.isFinite(playBalance)){
+
+   playBalance = 0;
+
+  }
+
+
+  updateAllDisplays();
+
+  renderProfile();
+
+
+  console.log(
+   "BALANCE:",
+   mainBalance,
+   playBalance
+  );
+
+
+  return true;
+
+ }catch(error){
+
+  console.error(
+   "loadProfile error:",
+   error
+  );
+
+
+  if(showError){
+
+   showToast(
+    error.message ||
+    "Could not load balance."
+   );
+
+  }
+
+
+  return false;
+
+ }
+
+}
+
+
+/* =====================================================
+   BALANCE REFRESH
+===================================================== */
+
+setInterval(
+ ()=>{
+
+  if(
+   !actualGameStarted &&
+   !winnerShown &&
+   telegramInitData
+  ){
+
+   loadProfile(false);
+
+  }
+
+ },
+ 10000
+);
+
+
+/* =====================================================
+   PAGE
+===================================================== */
 
 function showPage(id){
 
  document
   .querySelectorAll(".page")
   .forEach(
-   p=>p.classList.remove("active")
+   page=>
+    page.classList.remove("active")
   );
+
 
  const page =
   document.getElementById(id);
+
 
  if(page){
 
@@ -2009,21 +2253,31 @@ function showPage(id){
 
  }
 
+
  updateAllDisplays();
 
 }
 
 
-function navPage(id,b){
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+function navPage(
+ id,
+ button
+){
 
  if(
   actualGameStarted &&
   id !== "page3"
  ){
 
-  alert(
+  showToast(
    "ጨዋታው እየተካሄደ ነው።"
   );
+
+  haptic("error");
 
   return;
 
@@ -2036,143 +2290,211 @@ function navPage(id,b){
  document
   .querySelectorAll(".nav-btn")
   .forEach(
-   x=>x.classList.remove("active")
+   item=>
+    item.classList.remove("active")
   );
 
 
- if(b){
+ if(button){
 
-  b.classList.add("active");
+  button.classList.add("active");
 
  }
 
 
  if(id === "historyPage"){
+
   renderHistory();
+
  }
+
 
  if(id === "scorePage"){
+
   renderScore();
+
  }
 
+
  if(id === "profilePage"){
+
   renderProfile();
+
  }
 
 }
 
 
-/* =========================
+/* =====================================================
    RULES
-========================= */
+===================================================== */
 
 function openRules(){
 
  document
   .getElementById("rulesModal")
-  .classList.add("show");
+  ?.classList.add("show");
+
+ haptic();
 
 }
-
 
 function closeRules(){
 
  document
   .getElementById("rulesModal")
-  .classList.remove("show");
+  ?.classList.remove("show");
 
 }
 
 
-/* =========================
+/* =====================================================
    STAKE
-========================= */
+===================================================== */
 
-function chooseStake(v,b){
+function chooseStake(
+ value,
+ button
+){
 
- selectedStake = Number(v);
+ const stake =
+  Number(value);
+
+
+ if(
+  ![10,20].includes(stake)
+ ){
+
+  showToast(
+   "Invalid stake."
+  );
+
+  return;
+
+ }
+
+
+ selectedStake =
+  stake;
 
 
  document
   .querySelectorAll(".stake-btn")
   .forEach(
-   x=>x.classList.remove("selected")
+   item=>
+    item.classList.remove("selected")
   );
 
 
- b.classList.add("selected");
+ if(button){
 
+  button.classList.add("selected");
+
+ }
+
+
+ haptic();
 
  updateAllDisplays();
 
 }
 
 
-/* =========================
-   START SELECTION
-========================= */
+/* =====================================================
+   PLAY
+===================================================== */
 
 function goToCardSelection(){
 
+ if(actualGameStarted){
+
+  return;
+
+ }
+
+
  if(!selectedStake){
 
-  alert(
+  showToast(
    "Please choose your stake first."
   );
 
+  haptic("error");
+
   return;
 
  }
 
 
- if(mainBalance < selectedStake){
+ if(
+  !Number.isFinite(mainBalance) ||
+  mainBalance < selectedStake
+ ){
 
-  alert(
-   "Insufficient Main Balance. Please deposit through Telegram bot."
+  showToast(
+   "Insufficient Main Balance."
   );
 
+  haptic("error");
+
   return;
 
  }
 
 
- showPage("page2");
-
  resetSelection();
+
+ showPage("page2");
 
  renderCardSelection();
 
  startSelectionTimer();
 
+ haptic("success");
+
 }
 
 
-/* =========================
+/* =====================================================
+   BACK HOME
+===================================================== */
+
+function backToHome(){
+
+ if(actualGameStarted){
+
+  showToast(
+   "ጨዋታው ከጀመረ በኋላ ማቋረጥ አይቻልም።"
+  );
+
+  return;
+
+ }
+
+
+ stopSelectionTimer();
+
+ showPage("page1");
+
+}
+
+
+/* =====================================================
    RESET SELECTION
-========================= */
+===================================================== */
 
 function resetSelection(){
 
+ stopSelectionTimer();
+
  selectedCards = [];
-
  playerReady = false;
-
  actualGameStarted = false;
-
  calledNumbers = [];
-
  winnerShown = false;
-
  currentGameId = null;
 
-
- clearInterval(
-  selectionTimerInterval
- );
-
-
  selectionSeconds = 30;
-
 
  const timer =
   document.getElementById(
@@ -2185,25 +2507,19 @@ function resetSelection(){
 
  }
 
-
- const button =
+ const ready =
   document.getElementById(
    "readyButton"
   );
 
- if(button){
+ if(ready){
 
-  button.style.display = "block";
-
-  button.textContent =
-   "START GAME";
-
-  button.classList.remove(
-   "ready"
-  );
+  ready.style.display = "block";
+  ready.disabled = false;
+  ready.textContent = "START GAME";
+  ready.classList.remove("ready");
 
  }
-
 
  const watch =
   document.getElementById(
@@ -2213,15 +2529,62 @@ function resetSelection(){
  if(watch){
 
   watch.style.display = "none";
+  watch.textContent = "";
+
+ }
+
+ updateAllDisplays();
+
+}
+
+
+/* =====================================================
+   TIMER STOP
+===================================================== */
+
+function stopSelectionTimer(){
+
+ if(selectionTimerInterval){
+
+  clearInterval(
+   selectionTimerInterval
+  );
+
+  selectionTimerInterval = null;
 
  }
 
 }
 
 
-/* =========================
-   CARD SELECTOR
-========================= */
+/* =====================================================
+   REFRESH SELECTION
+===================================================== */
+
+function refreshSelection(){
+
+ if(playerReady){
+
+  showToast(
+   "You are already ready."
+  );
+
+  return;
+
+ }
+
+ renderCardSelection();
+
+ updateSelectedCards();
+
+ haptic();
+
+}
+
+
+/* =====================================================
+   CARD BOARD
+===================================================== */
 
 function renderCardSelection(){
 
@@ -2230,43 +2593,63 @@ function renderCardSelection(){
    "cardNumberBoard"
   );
 
- if(!board)return;
+
+ if(!board){
+
+  return;
+
+ }
 
 
  board.innerHTML = "";
 
 
- for(let i=1;i<=200;i++){
+ for(
+  let number=1;
+  number<=200;
+  number++
+ ){
 
-  const b =
-   document.createElement(
-    "button"
-   );
+  const button =
+   document.createElement("button");
 
-  b.className =
+
+  button.type = "button";
+
+  button.className =
    "card-number";
 
-  b.textContent = i;
 
-  b.dataset.number = i;
+  button.textContent =
+   String(number);
+
+
+  button.dataset.number =
+   String(number);
 
 
   if(
-   selectedCards.includes(i)
+   selectedCards.includes(number)
   ){
 
-   b.classList.add(
+   button.classList.add(
     "selected"
    );
 
   }
 
 
-  b.onclick = () =>
-   selectCard(i);
+  button.addEventListener(
+   "click",
+   ()=>{
+    selectCard(number);
+   }
+  );
 
 
-  board.appendChild(b);
+  board.appendChild(
+   button
+  );
 
  }
 
@@ -2276,11 +2659,15 @@ function renderCardSelection(){
 }
 
 
-function selectCard(n){
+/* =====================================================
+   SELECT CARD
+===================================================== */
+
+function selectCard(number){
 
  if(playerReady){
 
-  alert(
+  showToast(
    "You are already ready."
   );
 
@@ -2290,10 +2677,10 @@ function selectCard(n){
 
 
  if(
-  selectedCards.includes(n)
+  selectedCards.includes(number)
  ){
 
-  removeCard(n);
+  removeCard(number);
 
   return;
 
@@ -2304,46 +2691,59 @@ function selectCard(n){
   selectedCards.length >= 2
  ){
 
-  alert(
-   "You can select a maximum of 2 cards."
+  showToast(
+   "Maximum 2 cards."
   );
+
+  haptic("error");
 
   return;
 
  }
 
 
- selectedCards.push(n);
+ selectedCards.push(number);
 
-
- document
-  .querySelector(
-   `.card-number[data-number="${n}"]`
-  )
-  ?.classList.add("selected");
-
+ haptic();
 
  updateSelectedCards();
 
 }
 
 
-function removeCard(n){
+/* =====================================================
+   REMOVE CARD
+===================================================== */
 
- if(playerReady)return;
+function removeCard(number){
+
+ if(playerReady){
+
+  return;
+
+ }
 
 
  selectedCards =
   selectedCards.filter(
-   x=>x !== n
+   item=>
+    item !== number
   );
 
 
- document
-  .querySelector(
-   `.card-number[data-number="${n}"]`
-  )
-  ?.classList.remove("selected");
+ const button =
+  document.querySelector(
+   `.card-number[data-number="${number}"]`
+  );
+
+
+ if(button){
+
+  button.classList.remove(
+   "selected"
+  );
+
+ }
 
 
  updateSelectedCards();
@@ -2351,64 +2751,62 @@ function removeCard(n){
 }
 
 
+/* =====================================================
+   UPDATE SELECTED
+===================================================== */
+
 function updateSelectedCards(){
 
- const s =
+ const container =
   document.getElementById(
    "selectedCards"
   );
 
- const p =
+ const preview =
   document.getElementById(
    "cardsPreview"
   );
 
 
- if(!s || !p)return;
+ if(!container || !preview){
 
-
- s.innerHTML = "";
-
- p.innerHTML = "";
-
-
- const count =
-  document.getElementById(
-   "selectedCount2"
-  );
-
- if(count){
-
-  count.textContent =
-   `${selectedCards.length} / 2`;
+  return;
 
  }
 
 
- selectedCards.forEach(n=>{
+ container.innerHTML = "";
+ preview.innerHTML = "";
 
-  const chip =
-   document.createElement(
-    "button"
+
+ selectedCards.forEach(
+  number=>{
+
+   const chip =
+    document.createElement("button");
+
+   chip.type = "button";
+
+   chip.className =
+    "selected-chip";
+
+   chip.textContent =
+    `Card ${number} ✕`;
+
+   chip.onclick =
+    ()=>removeCard(number);
+
+   container.appendChild(
+    chip
    );
 
-  chip.className =
-   "selected-chip";
 
-  chip.textContent =
-   `Card ${n} ✕`;
+   preview.appendChild(
+    createCardElement(number)
+   );
 
-  chip.onclick =
-   ()=>removeCard(n);
-
-  s.appendChild(chip);
-
-
-  p.appendChild(
-   createCardElement(n)
-  );
-
- });
+  }
+ );
 
 
  updateAllDisplays();
@@ -2416,274 +2814,22 @@ function updateSelectedCards(){
 }
 
 
-/* =========================
-   BINGO CARD GENERATOR
-========================= */
-
-function range(a,b){
-
- let x = [];
-
- for(let i=a;i<=b;i++){
-
-  x.push(i);
-
- }
-
- return x;
-
-}
-
-
-function seededRandom(seed){
-
- let v =
-  Number(seed) % 2147483647;
-
-
- if(v <= 0){
-
-  v += 2147483646;
-
- }
-
-
- return ()=>{
-
-  v =
-   v * 16807 %
-   2147483647;
-
-  return (
-   (v-1) /
-   2147483646
-  );
-
- };
-
-}
-
-
-function shuffle(a,r){
-
- for(
-  let i=a.length-1;
-  i>0;
-  i--
- ){
-
-  let j =
-   Math.floor(
-    r() * (i+1)
-   );
-
-  [
-   a[i],
-   a[j]
-  ] =
-  [
-   a[j],
-   a[i]
-  ];
-
- }
-
-}
-
-
-function generateBingoCard(seed){
-
- const cols = [
-
-  range(1,15),
-
-  range(16,30),
-
-  range(31,45),
-
-  range(46,60),
-
-  range(61,75)
-
- ];
-
-
- const out =
-  Array.from(
-   {length:5},
-   ()=>[]
-  );
-
-
- const r =
-  seededRandom(seed);
-
-
- for(
-  let c=0;
-  c<5;
-  c++
- ){
-
-  let a =
-   [...cols[c]];
-
-  shuffle(a,r);
-
-
-  for(
-   let row=0;
-   row<5;
-   row++
-  ){
-
-   out[row][c] =
-    a[row];
-
-  }
-
- }
-
-
- out[2][2] = "FREE";
-
-
- return out;
-
-}
-
-
-/* =========================
-   CARD UI
-========================= */
-
-function createCardElement(n){
-
- const card =
-  generateBingoCard(n);
-
-
- const w =
-  document.createElement(
-   "div"
-  );
-
- w.className =
-  "bingo-card";
-
-
- const h =
-  document.createElement(
-   "div"
-  );
-
- h.className =
-  "bingo-header";
-
-
- [
-  "B",
-  "I",
-  "N",
-  "G",
-  "O"
- ]
- .forEach(x=>{
-
-  let d =
-   document.createElement(
-    "div"
-   );
-
-  d.textContent = x;
-
-  h.appendChild(d);
-
- });
-
-
- w.appendChild(h);
-
-
- const g =
-  document.createElement(
-   "div"
-  );
-
- g.className =
-  "bingo-grid";
-
-
- for(
-  let r=0;
-  r<5;
-  r++
- ){
-
-  for(
-   let c=0;
-   c<5;
-   c++
-  ){
-
-   let cell =
-    document.createElement(
-     "div"
-    );
-
-   cell.className =
-    "bingo-cell";
-
-
-   let v =
-    card[r][c];
-
-
-   cell.textContent = v;
-
-   cell.dataset.value = v;
-
-
-   if(v === "FREE"){
-
-    cell.classList.add(
-     "free"
-    );
-
-   }
-
-
-   g.appendChild(cell);
-
-  }
-
- }
-
-
- w.appendChild(g);
-
-
- return w;
-
-}
-
-
-/* =========================
-   SELECTION TIMER
-========================= */
+/* =====================================================
+   TIMER
+===================================================== */
 
 function startSelectionTimer(){
 
- clearInterval(
-  selectionTimerInterval
- );
+ stopSelectionTimer();
 
  selectionSeconds = 30;
+
 
  const timer =
   document.getElementById(
    "selectionTimer"
   );
+
 
  if(timer){
 
@@ -2691,79 +2837,136 @@ function startSelectionTimer(){
 
  }
 
+
  selectionTimerInterval =
-  setInterval(async ()=>{
+  setInterval(
+   async()=>{
 
-   selectionSeconds--;
+    selectionSeconds--;
 
-   if(timer){
+    if(timer){
 
-    timer.textContent =
-     Math.max(0,selectionSeconds);
-   }
+     timer.textContent =
+      String(
+       Math.max(
+        0,
+        selectionSeconds
+       )
+      );
 
-   if(selectionSeconds <= 0){
+    }
 
-    clearInterval(
-     selectionTimerInterval
-    );
 
-    selectionTimerInterval = null;
+    if(
+     selectionSeconds <= 0
+    ){
 
-    await finishSelectionPeriod();
+     stopSelectionTimer();
 
-   }
+     await finishSelectionPeriod();
 
-  },1000);
+    }
+
+   },
+   1000
+  );
 
 }
 
 
-/* =========================
-   READY / START GAME
-========================= */
+/* =====================================================
+   START GAME
+===================================================== */
 
 async function readyForGame(){
 
- if(!selectedCards.length){
+ if(playerReady){
 
-  alert(
-   "Please select at least one Bingo card."
+  return;
+
+ }
+
+
+ if(!selectedStake){
+
+  showToast(
+   "Please select a stake."
   );
 
   return;
+
  }
 
- if(playerReady){
 
-  if(selectionSeconds <= 0){
-   beginActualGame();
-  }
+ if(!selectedCards.length){
+
+  showToast(
+   "Please select at least one Bingo card."
+  );
+
+  haptic("error");
 
   return;
+
  }
+
 
  const cost =
   selectedStake *
   selectedCards.length;
 
+
  if(mainBalance < cost){
 
-  alert(
-   `You need ${cost.toFixed(2)} ETB. Deposit through Telegram bot.`
+  showToast(
+   `You need ${cost.toFixed(2)} ETB.`
   );
 
+  haptic("error");
+
   return;
+
  }
+
+
+ const button =
+  document.getElementById(
+   "readyButton"
+  );
+
 
  try{
 
-  const d =
+  if(button){
+
+   button.disabled = true;
+   button.textContent =
+    "CONNECTING...";
+
+  }
+
+
+  if(!telegramInitData){
+
+   initializeTelegram();
+
+  }
+
+
+  if(!telegramInitData){
+
+   throw new Error(
+    "Open Frick Bingo from the Telegram bot."
+   );
+
+  }
+
+
+  const data =
    await api(
     "/api/game/start",
     {
      method:"POST",
-
      body:JSON.stringify({
 
       stake:selectedStake,
@@ -2774,39 +2977,168 @@ async function readyForGame(){
     }
    );
 
-  console.log("GAME START RESPONSE:", d);
 
-  if(!d || !d.ok){
+  console.log(
+   "GAME START:",
+   data
+  );
+
+
+  if(
+   !data ||
+   data.ok === false
+  ){
 
    throw new Error(
-    d?.error ||
-    "Server could not create the game."
+    data?.error ||
+    "Server rejected the game."
    );
 
   }
 
+
+  /*
+   Accept different common server response formats.
+  */
+
+  const gameId =
+   data.gameId ??
+   data.game_id ??
+   data.id ??
+   data.game?.id ??
+   null;
+
+
+  if(!gameId){
+
+   throw new Error(
+    "Server created no game ID."
+   );
+
+  }
+
+
   currentGameId =
-   d.gameId;
+   gameId;
+
 
   if(
-   d.mainBalance !== undefined
+   data.mainBalance !== undefined
   ){
 
    mainBalance =
-    Number(d.mainBalance);
+    Number(
+     data.mainBalance
+    );
 
   }
 
+
   if(
-   d.playBalance !== undefined
+   data.playBalance !== undefined
   ){
 
    playBalance =
-    Number(d.playBalance);
+    Number(
+     data.playBalance
+    );
 
   }
 
+
   playerReady = true;
+
+
+  if(button){
+
+   button.disabled = false;
+   button.textContent = "✓ READY";
+   button.classList.add("ready");
+
+  }
+
+
+  updateAllDisplays();
+
+  haptic("success");
+
+
+  /*
+   If timer already ended,
+   immediately enter the game.
+  */
+
+  if(selectionSeconds <= 0){
+
+   beginActualGame();
+
+  }else{
+
+   showToast(
+    "You are ready. Game starts when selection time ends."
+   );
+
+  }
+
+
+ }catch(error){
+
+  console.error(
+   "GAME START ERROR:",
+   error
+  );
+
+
+  playerReady = false;
+
+
+  if(button){
+
+   button.disabled = false;
+   button.textContent = "START GAME";
+   button.classList.remove("ready");
+
+  }
+
+
+  showToast(
+   error.message ||
+   "Could not start game."
+  );
+
+  haptic("error");
+
+ }
+
+}
+
+
+/* =====================================================
+   FINISH SELECTION
+===================================================== */
+
+async function finishSelectionPeriod(){
+
+ stopSelectionTimer();
+
+
+ if(!selectedCards.length){
+
+  const message =
+   document.getElementById(
+    "watchMessage"
+   );
+
+  if(message){
+
+   message.style.display =
+    "block";
+
+   message.innerHTML =
+    "የካርቴላ ምርጫ ጊዜ አልቋል።<br>እባክዎ ቀጣዩን ጨዋታ ይጠብቁ 👀";
+
+  }
+
 
   const button =
    document.getElementById(
@@ -2815,102 +3147,70 @@ async function readyForGame(){
 
   if(button){
 
-   button.textContent =
-    "✓ READY";
-
-   button.classList.add(
-    "ready"
-   );
+   button.style.display =
+    "none";
 
   }
 
-  updateAllDisplays();
-
-  /*
-   If the countdown has already reached zero,
-   immediately enter the game.
-  */
-
-  if(selectionSeconds <= 0){
-
-   beginActualGame();
-
-  }
-
- }catch(e){
-
-  console.error(
-   "GAME START ERROR:",
-   e
-  );
-
-  alert(
-   e.message ||
-   "Could not start game."
-  );
-
- }
-
-}
-
-/* =========================
-   GAME START
-========================= */
-
-async function finishSelectionPeriod(){
-
- clearInterval(selectionTimerInterval);
-
- if(!selectedCards.length){
-
-  document.getElementById("watchMessage").style.display = "block";
-
-  document.getElementById("watchMessage").innerHTML = `
-    የካርቴላ ምርጫ ጊዜ አልቋል።<br>
-    እባክዎ ቀጣዩን ጨዋታ ይጠብቁ 👀
-  `;
-
-  document.getElementById("readyButton").style.display = "none";
 
   return;
+
  }
 
- /*
-  If the player has selected cards but
-  has not pressed START GAME, start it now.
- */
+
  if(!playerReady){
 
   await readyForGame();
 
   return;
+
  }
+
 
  beginActualGame();
 
 }
 
 
+/* =====================================================
+   BEGIN GAME
+===================================================== */
+
 function beginActualGame(){
 
- if(actualGameStarted)return;
+ if(actualGameStarted){
+
+  return;
+
+ }
+
+
+ if(!selectedCards.length){
+
+  return;
+
+ }
 
 
  actualGameStarted = true;
+
+ stopSelectionTimer();
+
+ stopAutoCalling();
 
 
  showPage("page3");
 
 
- const callBtn =
+ const callButton =
   document.getElementById(
    "callBtn"
   );
 
 
- if(callBtn){
+ if(callButton){
 
-  callBtn.disabled = false;
+  callButton.disabled = false;
 
  }
 
@@ -2924,50 +3224,341 @@ function beginActualGame(){
 
  }
 
+
+ haptic("success");
+
 }
 
 
-/* =========================
-   BINGO LETTERS
-========================= */
+/* =====================================================
+   RANGE
+===================================================== */
 
-function getBingoLetter(n){
+function range(
+ start,
+ end
+){
 
- if(n <= 15)return "B";
+ const result = [];
 
- if(n <= 30)return "I";
+ for(
+  let i=start;
+  i<=end;
+  i++
+ ){
 
- if(n <= 45)return "N";
+  result.push(i);
 
- if(n <= 60)return "G";
+ }
+
+ return result;
+
+}
+
+
+/* =====================================================
+   SEEDED RANDOM
+===================================================== */
+
+function seededRandom(seed){
+
+ let value =
+  Number(seed) %
+  2147483647;
+
+
+ if(value <= 0){
+
+  value += 2147483646;
+
+ }
+
+
+ return ()=>{
+
+  value =
+   value *
+   16807 %
+   2147483647;
+
+
+  return (
+   (value-1) /
+   2147483646
+  );
+
+ };
+
+}
+
+
+/* =====================================================
+   SHUFFLE
+===================================================== */
+
+function shuffle(
+ array,
+ random
+){
+
+ for(
+  let i=array.length-1;
+  i>0;
+  i--
+ ){
+
+  const j =
+   Math.floor(
+    random() *
+    (i+1)
+   );
+
+
+  [
+   array[i],
+   array[j]
+  ] =
+  [
+   array[j],
+   array[i]
+  ];
+
+ }
+
+}
+
+
+/* =====================================================
+   BINGO CARD
+===================================================== */
+
+function generateBingoCard(seed){
+
+ const columns = [
+
+  range(1,15),
+  range(16,30),
+  range(31,45),
+  range(46,60),
+  range(61,75)
+
+ ];
+
+
+ const random =
+  seededRandom(seed);
+
+
+ const card =
+  Array.from(
+   {length:5},
+   ()=>Array(5)
+  );
+
+
+ for(
+  let column=0;
+  column<5;
+  column++
+ ){
+
+  const numbers =
+   [...columns[column]];
+
+
+  shuffle(
+   numbers,
+   random
+  );
+
+
+  for(
+   let row=0;
+   row<5;
+   row++
+  ){
+
+   card[row][column] =
+    numbers[row];
+
+  }
+
+ }
+
+
+ card[2][2] =
+  "FREE";
+
+
+ return card;
+
+}
+
+
+/* =====================================================
+   CREATE CARD
+===================================================== */
+
+function createCardElement(number){
+
+ const card =
+  generateBingoCard(number);
+
+
+ const wrapper =
+  document.createElement("div");
+
+
+ wrapper.className =
+  "bingo-card";
+
+
+ const header =
+  document.createElement("div");
+
+
+ header.className =
+  "bingo-header";
+
+
+ [
+  "B",
+  "I",
+  "N",
+  "G",
+  "O"
+ ]
+ .forEach(
+  letter=>{
+
+   const element =
+    document.createElement("div");
+
+   element.textContent =
+    letter;
+
+   header.appendChild(
+    element
+   );
+
+  }
+ );
+
+
+ wrapper.appendChild(
+  header
+ );
+
+
+ const grid =
+  document.createElement("div");
+
+
+ grid.className =
+  "bingo-grid";
+
+
+ for(
+  let row=0;
+  row<5;
+  row++
+ ){
+
+  for(
+   let column=0;
+   column<5;
+   column++
+  ){
+
+   const cell =
+    document.createElement("div");
+
+
+   cell.className =
+    "bingo-cell";
+
+
+   const value =
+    card[row][column];
+
+
+   cell.textContent =
+    String(value);
+
+
+   cell.dataset.value =
+    String(value);
+
+
+   if(value === "FREE"){
+
+    cell.classList.add("free");
+
+   }
+
+
+   grid.appendChild(
+    cell
+   );
+
+  }
+
+ }
+
+
+ wrapper.appendChild(
+  grid
+ );
+
+
+ return wrapper;
+
+}
+
+
+/* =====================================================
+   BINGO LETTER
+===================================================== */
+
+function getBingoLetter(number){
+
+ if(number <= 15) return "B";
+
+ if(number <= 30) return "I";
+
+ if(number <= 45) return "N";
+
+ if(number <= 60) return "G";
 
  return "O";
 
 }
 
 
-function getAmharicLetter(l){
+/* =====================================================
+   AMHARIC VOICE
+===================================================== */
 
- return {
+function getAmharicLetter(letter){
+
+ const map = {
 
   B:"ቢ",
-
   I:"አይ",
-
   N:"ኤን",
-
   G:"ጂ",
-
   O:"ኦ"
 
- }[l] || l;
+ };
+
+ return map[letter] || letter;
 
 }
 
 
-/* =========================
+/* =====================================================
    CALL NUMBER
-========================= */
+===================================================== */
 
 function callNumber(){
 
@@ -2987,25 +3578,29 @@ function callNumber(){
 
   stopAutoCalling();
 
+  showToast(
+   "All numbers have been called."
+  );
+
   return;
 
  }
 
 
- let available = [];
+ const available = [];
 
 
  for(
-  let i=1;
-  i<=75;
-  i++
+  let number=1;
+  number<=75;
+  number++
  ){
 
   if(
-   !calledNumbers.includes(i)
+   !calledNumbers.includes(number)
   ){
 
-   available.push(i);
+   available.push(number);
 
   }
 
@@ -3021,20 +3616,24 @@ function callNumber(){
  }
 
 
- const n =
-  available[
-   Math.floor(
-    Math.random() *
-    available.length
-   )
-  ];
+ const index =
+  Math.floor(
+   Math.random() *
+   available.length
+  );
 
 
- calledNumbers.push(n);
+ const number =
+  available[index];
 
 
- const l =
-  getBingoLetter(n);
+ calledNumbers.push(
+  number
+ );
+
+
+ const letter =
+  getBingoLetter(number);
 
 
  const display =
@@ -3046,7 +3645,7 @@ function callNumber(){
  if(display){
 
   display.textContent =
-   `${l}-${n}`;
+   `${letter}-${number}`;
 
  }
 
@@ -3055,20 +3654,28 @@ function callNumber(){
 
  markPlayerCards();
 
- speakNumber(l,n);
+ speakNumber(
+  letter,
+  number
+ );
 
  checkWinner();
 
  updateAllDisplays();
 
+ haptic();
+
 }
 
 
-/* =========================
+/* =====================================================
    VOICE
-========================= */
+===================================================== */
 
-function speakNumber(l,n){
+function speakNumber(
+ letter,
+ number
+){
 
  if(
   !voiceMode ||
@@ -3080,32 +3687,42 @@ function speakNumber(l,n){
  }
 
 
- window.speechSynthesis.cancel();
+ try{
+
+  window.speechSynthesis.cancel();
 
 
- const u =
-  new SpeechSynthesisUtterance(
-   `${getAmharicLetter(l)}, ${n}`
+  const speech =
+   new SpeechSynthesisUtterance(
+    `${getAmharicLetter(letter)}, ${number}`
+   );
+
+
+  speech.lang = "am-ET";
+  speech.rate = .85;
+  speech.pitch = 1;
+  speech.volume = 1;
+
+
+  window.speechSynthesis.speak(
+   speech
   );
 
+ }catch(error){
 
- u.lang = "am-ET";
+  console.warn(
+   "Voice error:",
+   error
+  );
 
- u.rate = .85;
-
- u.pitch = 1;
-
- u.volume = 1;
-
-
- window.speechSynthesis.speak(u);
+ }
 
 }
 
 
-/* =========================
-   AUTO MODE
-========================= */
+/* =====================================================
+   AUTO
+===================================================== */
 
 function toggleAuto(){
 
@@ -3113,21 +3730,21 @@ function toggleAuto(){
   !autoMode;
 
 
- const b =
+ const button =
   document.getElementById(
    "autoBtn"
   );
 
 
- if(b){
+ if(button){
 
-  b.textContent =
+  button.textContent =
    autoMode
     ? "🔄 Auto ON"
     : "🔄 Auto OFF";
 
 
-  b.classList.toggle(
+  button.classList.toggle(
    "on",
    autoMode
   );
@@ -3145,8 +3762,15 @@ function toggleAuto(){
 
  }
 
+
+ haptic();
+
 }
 
+
+/* =====================================================
+   AUTO START
+===================================================== */
 
 function startAutoCalling(){
 
@@ -3155,7 +3779,8 @@ function startAutoCalling(){
 
  if(
   !autoMode ||
-  !actualGameStarted
+  !actualGameStarted ||
+  winnerShown
  ){
 
   return;
@@ -3165,12 +3790,27 @@ function startAutoCalling(){
 
  autoInterval =
   setInterval(
-   callNumber,
+   ()=>{
+
+    if(
+     actualGameStarted &&
+     !winnerShown
+    ){
+
+     callNumber();
+
+    }
+
+   },
    3000
   );
 
 }
 
+
+/* =====================================================
+   AUTO STOP
+===================================================== */
 
 function stopAutoCalling(){
 
@@ -3187,9 +3827,9 @@ function stopAutoCalling(){
 }
 
 
-/* =========================
+/* =====================================================
    VOICE TOGGLE
-========================= */
+===================================================== */
 
 function toggleVoice(){
 
@@ -3197,21 +3837,21 @@ function toggleVoice(){
   !voiceMode;
 
 
- const b =
+ const button =
   document.getElementById(
    "voiceBtn"
   );
 
 
- if(b){
+ if(button){
 
-  b.textContent =
+  button.textContent =
    voiceMode
     ? "🔊 Voice ON"
     : "🔇 Voice OFF";
 
 
-  b.classList.toggle(
+  button.classList.toggle(
    "on",
    voiceMode
   );
@@ -3228,102 +3868,118 @@ function toggleVoice(){
 
  }
 
+
+ haptic();
+
 }
 
 
-/* =========================
-   BIG BOARD
-========================= */
+/* =====================================================
+   BOARD
+===================================================== */
 
 function renderBigBoard(){
 
- const b =
+ const board =
   document.getElementById(
    "bigBingoBoard"
   );
 
 
- if(!b)return;
+ if(!board){
+
+  return;
+
+ }
 
 
- b.innerHTML = "";
+ board.innerHTML = "";
 
 
  const last =
-  calledNumbers.at(-1);
+  calledNumbers[
+   calledNumbers.length-1
+  ];
 
 
  for(
-  let n=1;
-  n<=75;
-  n++
+  let number=1;
+  number<=75;
+  number++
  ){
 
-  let d =
-   document.createElement(
-    "div"
-   );
+  const cell =
+   document.createElement("div");
 
 
-  d.className =
+  cell.className =
    "board-number";
 
 
-  d.textContent = n;
+  cell.textContent =
+   String(number);
 
 
   if(
-   calledNumbers.includes(n)
+   calledNumbers.includes(number)
   ){
 
-   d.classList.add(
+   cell.classList.add(
     "called"
    );
 
   }
 
 
-  if(last === n){
+  if(last === number){
 
-   d.classList.add(
+   cell.classList.add(
     "last-called"
    );
 
   }
 
 
-  b.appendChild(d);
+  board.appendChild(
+   cell
+  );
 
  }
 
 }
 
 
-/* =========================
-   PLAYER CARDS
-========================= */
+/* =====================================================
+   PLAYING PAGE
+===================================================== */
 
 function renderPlayingPage(){
 
- const p =
+ const container =
   document.getElementById(
    "playingCards"
   );
 
 
- if(!p)return;
+ if(!container){
+
+  return;
+
+ }
 
 
- p.innerHTML = "";
+ container.innerHTML = "";
 
 
- selectedCards.forEach(n=>{
+ selectedCards.forEach(
+  number=>{
 
-  p.appendChild(
-   createCardElement(n)
-  );
+   container.appendChild(
+    createCardElement(number)
+   );
 
- });
+  }
+ );
 
 
  renderBigBoard();
@@ -3335,91 +3991,80 @@ function renderPlayingPage(){
 }
 
 
+/* =====================================================
+   MARK CARDS
+===================================================== */
+
 function markPlayerCards(){
 
  document
   .querySelectorAll(
    "#playingCards .bingo-cell"
   )
-  .forEach(c=>{
+  .forEach(
+   cell=>{
 
-   const value =
-    c.dataset.value;
-
-
-   if(value === "FREE"){
-
-    /*
-     FREE remains purple.
-     It should not become green.
-    */
-
-    c.classList.remove(
-     "called"
-    );
-
-    c.classList.add(
-     "free"
-    );
-
-    return;
-
-   }
+    const value =
+     cell.dataset.value;
 
 
-   const v =
-    Number(value);
+    if(value === "FREE"){
+
+     cell.classList.remove("called");
+     cell.classList.add("free");
+
+     return;
+
+    }
 
 
-   if(
-    calledNumbers.includes(v)
-   ){
+    const number =
+     Number(value);
 
-    c.classList.add(
-     "called"
-    );
 
-   }else{
-
-    c.classList.remove(
-     "called"
+    cell.classList.toggle(
+     "called",
+     calledNumbers.includes(number)
     );
 
    }
-
-  });
+  );
 
 }
 
 
-/* =========================
-   WIN CONDITION
-========================= */
+/* =====================================================
+   MARKED
+===================================================== */
 
-function isMarked(v){
+function isMarked(value){
 
  return (
-  v === "FREE" ||
+  value === "FREE" ||
   calledNumbers.includes(
-   Number(v)
+   Number(value)
   )
  );
 
 }
 
 
+/* =====================================================
+   WINNING CARD
+===================================================== */
+
 function isWinningCard(card){
 
- /* Rows */
+ /* ROWS */
 
  for(
-  let r=0;
-  r<5;
-  r++
+  let row=0;
+  row<5;
+  row++
  ){
 
   if(
-   card[r].every(
+   card[row].every(
     isMarked
    )
   ){
@@ -3431,30 +4076,30 @@ function isWinningCard(card){
  }
 
 
- /* Columns */
+ /* COLUMNS */
 
  for(
-  let c=0;
-  c<5;
-  c++
+  let column=0;
+  column<5;
+  column++
  ){
 
-  let ok = true;
+  let complete = true;
 
 
   for(
-   let r=0;
-   r<5;
-   r++
+   let row=0;
+   row<5;
+   row++
   ){
 
    if(
     !isMarked(
-     card[r][c]
+     card[row][column]
     )
    ){
 
-    ok = false;
+    complete = false;
 
     break;
 
@@ -3463,18 +4108,23 @@ function isWinningCard(card){
   }
 
 
-  if(ok)return true;
+  if(complete){
+
+   return true;
+
+  }
 
  }
 
 
- /* Main diagonal */
+ /* DIAGONAL 1 */
 
  if(
   [0,1,2,3,4].every(
-   i=>isMarked(
-    card[i][i]
-   )
+   index=>
+    isMarked(
+     card[index][index]
+    )
   )
  ){
 
@@ -3483,13 +4133,14 @@ function isWinningCard(card){
  }
 
 
- /* Other diagonal */
+ /* DIAGONAL 2 */
 
  if(
   [0,1,2,3,4].every(
-   i=>isMarked(
-    card[i][4-i]
-   )
+   index=>
+    isMarked(
+     card[index][4-index]
+    )
   )
  ){
 
@@ -3498,7 +4149,7 @@ function isWinningCard(card){
  }
 
 
- /* Four corners */
+ /* FOUR CORNERS */
 
  return (
   isMarked(card[0][0]) &&
@@ -3510,17 +4161,25 @@ function isWinningCard(card){
 }
 
 
+/* =====================================================
+   CHECK WINNER
+===================================================== */
+
 function checkWinner(){
 
- if(winnerShown)return;
+ if(winnerShown){
+
+  return;
+
+ }
 
 
  for(
-  const n of selectedCards
+  const number of selectedCards
  ){
 
   const card =
-   generateBingoCard(n);
+   generateBingoCard(number);
 
 
   if(
@@ -3528,7 +4187,7 @@ function checkWinner(){
   ){
 
    showWinner(
-    n,
+    number,
     card
    );
 
@@ -3541,33 +4200,36 @@ function checkWinner(){
 }
 
 
-/* =========================
-   WINNER
-========================= */
+/* =====================================================
+   SHOW WINNER
+===================================================== */
 
 async function showWinner(
- n,
+ cardNumber,
  card
 ){
 
- if(winnerShown)return;
+ if(winnerShown){
+
+  return;
+
+ }
 
 
  winnerShown = true;
 
-
  stopAutoCalling();
 
 
- const callBtn =
+ const callButton =
   document.getElementById(
    "callBtn"
   );
 
 
- if(callBtn){
+ if(callButton){
 
-  callBtn.disabled = true;
+  callButton.disabled = true;
 
  }
 
@@ -3578,140 +4240,212 @@ async function showWinner(
   .85;
 
 
- document
-  .getElementById(
+ const winnerName =
+  document.getElementById(
    "winnerName"
-  ).textContent =
-   profileData.name;
+  );
 
 
- document
-  .getElementById(
+ const winnerNumber =
+  document.getElementById(
    "winnerCardNumber"
-  ).textContent =
-   n;
+  );
 
 
- document
-  .getElementById(
+ const winnerPrize =
+  document.getElementById(
    "winnerPrize"
-  ).textContent =
+  );
+
+
+ if(winnerName){
+
+  winnerName.textContent =
+   profileData.name ||
+   "Winner";
+
+ }
+
+
+ if(winnerNumber){
+
+  winnerNumber.textContent =
+   String(cardNumber);
+
+ }
+
+
+ if(winnerPrize){
+
+  winnerPrize.textContent =
    prize.toFixed(2);
 
+ }
 
- const w =
+
+ const wrapper =
   document.getElementById(
    "winnerCardWrap"
   );
 
 
- w.innerHTML = "";
+ if(wrapper){
+
+  wrapper.innerHTML = "";
 
 
- w.appendChild(
-  createCardElement(n)
- );
+  const cardElement =
+   createCardElement(cardNumber);
 
 
- /*
- Mark winning card according
- to numbers already called.
- */
-
- w.querySelectorAll(
-  ".bingo-cell"
- ).forEach(cell=>{
-
-  const v =
-   cell.dataset.value;
+  wrapper.appendChild(
+   cardElement
+  );
 
 
-  if(
-   v !== "FREE" &&
-   calledNumbers.includes(
-    Number(v)
+  cardElement
+   .querySelectorAll(
+    ".bingo-cell"
    )
-  ){
+   .forEach(
+    cell=>{
 
-   cell.classList.add(
-    "called"
+     const value =
+      cell.dataset.value;
+
+
+     if(
+      value !== "FREE" &&
+      calledNumbers.includes(
+       Number(value)
+      )
+     ){
+
+      cell.classList.add(
+       "called"
+      );
+
+     }
+
+    }
    );
 
-  }
-
- });
+ }
 
 
  document
   .getElementById(
    "winnerOverlay"
   )
-  .classList.add("show");
+  ?.classList.add("show");
 
+
+ haptic("success");
+
+
+ /*
+  Send result to backend.
+ */
 
  try{
 
-  const d =
-   await api(
-    "/api/game/finish",
-    {
-     method:"POST",
+  if(!currentGameId){
 
-     body:JSON.stringify({
+   console.warn(
+    "No currentGameId available."
+   );
 
-      gameId:currentGameId,
+  }else{
 
-      result:"WIN",
+   const data =
+    await api(
+     "/api/game/finish",
+     {
+      method:"POST",
+      body:JSON.stringify({
 
-      prize,
+       gameId:
+        currentGameId,
 
-      cardNumber:n
+       result:
+        "WIN",
 
-     })
-    }
+       prize:
+        Number(
+         prize.toFixed(2)
+        ),
+
+       cardNumber:
+        cardNumber
+
+      })
+     }
+    );
+
+
+   console.log(
+    "GAME FINISH:",
+    data
    );
 
 
-  if(
-   d.mainBalance !== undefined
-  ){
+   if(
+    data.mainBalance !== undefined
+   ){
 
-   mainBalance =
-    Number(d.mainBalance);
+    mainBalance =
+     Number(
+      data.mainBalance
+     );
+
+   }
+
+
+   if(
+    data.playBalance !== undefined
+   ){
+
+    playBalance =
+     Number(
+      data.playBalance
+     );
+
+   }
+
+
+   updateAllDisplays();
 
   }
 
-
-  if(
-   d.playBalance !== undefined
-  ){
-
-   playBalance =
-    Number(d.playBalance);
-
-  }
-
-
-  updateAllDisplays();
-
-
- }catch(e){
+ }catch(error){
 
   console.error(
    "Finish game error:",
-   e
+   error
+  );
+
+  showToast(
+   "Winner saved locally. Server update failed."
   );
 
  }
 
 
- let s = 5;
+ let seconds = 5;
 
 
- document
-  .getElementById(
+ const countdown =
+  document.getElementById(
    "winnerCountdown"
-  ).textContent = s;
+  );
+
+
+ if(countdown){
+
+  countdown.textContent =
+   String(seconds);
+
+ }
 
 
  clearInterval(
@@ -3720,36 +4454,47 @@ async function showWinner(
 
 
  winnerResetInterval =
-  setInterval(()=>{
+  setInterval(
+   ()=>{
 
-   s--;
-
-
-   document
-    .getElementById(
-     "winnerCountdown"
-    ).textContent = s;
+    seconds--;
 
 
-   if(s <= 0){
+    if(countdown){
 
-    clearInterval(
-     winnerResetInterval
-    );
+     countdown.textContent =
+      String(
+       Math.max(
+        0,
+        seconds
+       )
+      );
+
+    }
 
 
-    resetAfterWinner();
+    if(seconds <= 0){
 
-   }
+     clearInterval(
+      winnerResetInterval
+     );
 
-  },1000);
+     winnerResetInterval = null;
+
+     resetAfterWinner();
+
+    }
+
+   },
+   1000
+  );
 
 }
 
 
-/* =========================
-   AFTER WINNER
-========================= */
+/* =====================================================
+   RESET AFTER WIN
+===================================================== */
 
 async function resetAfterWinner(){
 
@@ -3757,23 +4502,40 @@ async function resetAfterWinner(){
   .getElementById(
    "winnerOverlay"
   )
-  .classList.remove("show");
+  ?.classList.remove("show");
+
+
+ stopAutoCalling();
+ stopSelectionTimer();
 
 
  actualGameStarted = false;
-
+ playerReady = false;
  winnerShown = false;
 
- playerReady = false;
-
  selectedCards = [];
-
  calledNumbers = [];
 
  currentGameId = null;
 
 
+ const callButton =
+  document.getElementById(
+   "callBtn"
+  );
+
+
+ if(callButton){
+
+  callButton.disabled = true;
+
+ }
+
+
  showPage("page1");
+
+
+ updateAllDisplays();
 
 
  await loadProfile(false);
@@ -3781,26 +4543,37 @@ async function resetAfterWinner(){
 }
 
 
-/* =========================
-   GAME CONTROLS
-========================= */
+/* =====================================================
+   REFRESH GAME
+===================================================== */
 
 function refreshGame(){
 
- if(actualGameStarted){
+ if(!actualGameStarted){
 
-  renderPlayingPage();
+  return;
 
  }
 
+
+ renderPlayingPage();
+
+ showToast(
+  "Game refreshed."
+ );
+
 }
 
+
+/* =====================================================
+   BACK DURING GAME
+===================================================== */
 
 function handleBackDuringGame(){
 
  if(actualGameStarted){
 
-  alert(
+  showToast(
    "ጨዋታው ከጀመረ በኋላ ማቋረጥ አይቻልም።"
   );
 
@@ -3814,9 +4587,9 @@ function handleBackDuringGame(){
 }
 
 
-/* =========================
-   BALANCE / STATS
-========================= */
+/* =====================================================
+   DERASH
+===================================================== */
 
 function calculateDerash(){
 
@@ -3829,13 +4602,21 @@ function calculateDerash(){
 }
 
 
+/* =====================================================
+   UPDATE DISPLAYS
+===================================================== */
+
 function updateAllDisplays(){
 
- const vals = {
+ const totalCost =
+  selectedStake *
+  selectedCards.length;
+
+
+ const values = {
 
   homeBalance:
-   mainBalance.toFixed(2) +
-   " ETB",
+   `${mainBalance.toFixed(2)} ETB`,
 
   mainBalance2:
    mainBalance.toFixed(2),
@@ -3844,10 +4625,18 @@ function updateAllDisplays(){
    playBalance.toFixed(2),
 
   stakeDisplay2:
-   selectedStake,
+   selectedStake
+    ? `${selectedStake} ETB`
+    : "0",
 
   selectedCount2:
    `${selectedCards.length} / 2`,
+
+  playerCount2:
+   "1",
+
+  totalCost2:
+   `${totalCost.toFixed(2)} ETB`,
 
   mainBalance3:
    mainBalance.toFixed(2),
@@ -3856,7 +4645,9 @@ function updateAllDisplays(){
    playBalance.toFixed(2),
 
   stakeDisplay3:
-   selectedStake,
+   selectedStake
+    ? `${selectedStake} ETB`
+    : "0",
 
   derashDisplay:
    calculateDerash().toFixed(2),
@@ -3871,29 +4662,31 @@ function updateAllDisplays(){
    playBalance.toFixed(2),
 
   profileId:
-   profileData.id,
+   profileData.id || "—",
 
   profileName:
-   profileData.name,
+   profileData.name || "Player",
 
   profileUsername:
-   profileData.username ||
-   "—"
+   profileData.username
+    ? "@" + profileData.username.replace(/^@/,"")
+    : "—"
 
  };
 
 
- Object
-  .entries(vals)
+ Object.entries(values)
   .forEach(
-   ([id,v])=>{
+   ([id,value])=>{
 
-    const e =
+    const element =
      document.getElementById(id);
 
-    if(e){
 
-     e.textContent = v;
+    if(element){
+
+     element.textContent =
+      String(value);
 
     }
 
@@ -3903,38 +4696,46 @@ function updateAllDisplays(){
 }
 
 
-/* =========================
+/* =====================================================
    HISTORY
-========================= */
+===================================================== */
 
 async function renderHistory(){
 
- const l =
+ const list =
   document.getElementById(
    "historyList"
   );
 
 
- if(!l)return;
+ if(!list){
+
+  return;
+
+ }
 
 
- l.innerHTML = "";
+ list.innerHTML =
+  '<div class="empty">Loading...</div>';
 
 
  try{
 
-  const d =
+  const data =
    await api(
     "/api/history"
    );
 
 
-  if(
-   !d.games ||
-   !d.games.length
-  ){
+  const games =
+   Array.isArray(data.games)
+    ? data.games
+    : [];
 
-   l.innerHTML =
+
+  if(!games.length){
+
+   list.innerHTML =
     '<div class="empty">No games yet.</div>';
 
    return;
@@ -3942,140 +4743,264 @@ async function renderHistory(){
   }
 
 
-  d.games.forEach(g=>{
+  list.innerHTML = "";
 
-   const x =
-    document.createElement(
-     "div"
+
+  games.forEach(
+   game=>{
+
+    const item =
+     document.createElement(
+      "div"
+     );
+
+
+    item.className =
+     "history-item";
+
+
+    const result =
+     String(
+      game.result ||
+      "UNKNOWN"
+     );
+
+
+    const cards =
+     Number(
+      game.cards || 0
+     );
+
+
+    const stake =
+     Number(
+      game.stake || 0
+     );
+
+
+    const prize =
+     Number(
+      game.prize || 0
+     );
+
+
+    const strong =
+     document.createElement(
+      "strong"
+     );
+
+
+    strong.textContent =
+     result;
+
+
+    item.appendChild(
+     strong
     );
 
 
-   x.className =
-    "history-item";
+    item.appendChild(
+     document.createElement("br")
+    );
 
 
-   x.innerHTML = `
-
-    <strong>
-     ${g.result}
-    </strong>
-
-    <br>
-
-    Cards:
-    ${g.cards}
-
-    <br>
-
-    Stake:
-    ${Number(g.stake).toFixed(2)}
-    ETB
-
-    <br>
-
-    Prize:
-    ${Number(g.prize).toFixed(2)}
-    ETB
-
-   `;
+    item.appendChild(
+     document.createTextNode(
+      `Cards: ${cards}`
+     )
+    );
 
 
-   l.appendChild(x);
+    item.appendChild(
+     document.createElement("br")
+    );
 
-  });
+
+    item.appendChild(
+     document.createTextNode(
+      `Stake: ${stake.toFixed(2)} ETB`
+     )
+    );
 
 
- }catch(e){
+    item.appendChild(
+     document.createElement("br")
+    );
 
-  l.innerHTML =
-   `<div class="empty">
-    ${e.message}
-   </div>`;
+
+    item.appendChild(
+     document.createTextNode(
+      `Prize: ${prize.toFixed(2)} ETB`
+     )
+    );
+
+
+    list.appendChild(
+     item
+    );
+
+   }
+  );
+
+
+ }catch(error){
+
+  console.error(
+   "History error:",
+   error
+  );
+
+
+  list.innerHTML =
+   `<div class="empty"></div>`;
+
+
+  list
+   .querySelector(".empty")
+   .textContent =
+    error.message ||
+    "Could not load history.";
 
  }
 
 }
 
 
-/* =========================
+/* =====================================================
    SCORE
-========================= */
+===================================================== */
 
 async function renderScore(){
 
- const l =
+ const list =
   document.getElementById(
    "scoreList"
   );
 
 
- if(!l)return;
+ if(!list){
+
+  return;
+
+ }
 
 
- l.innerHTML =
-  '<div class="empty">Your scores are calculated from completed games.</div>';
+ list.innerHTML =
+  '<div class="empty">Loading...</div>';
 
 
  try{
 
-  const d =
+  const data =
    await api(
     "/api/history"
    );
 
 
+  const games =
+   Array.isArray(data.games)
+    ? data.games
+    : [];
+
+
   const wins =
-   (d.games || [])
-    .filter(
-     x=>x.result === "WIN"
-    );
+   games.filter(
+    game=>
+     String(
+      game.result || ""
+     ).toUpperCase() === "WIN"
+   );
 
 
-  if(wins.length){
+  if(!wins.length){
 
-   l.innerHTML =
-    wins
-     .slice(0,10)
-     .map(
-      (x,i)=>`
+   list.innerHTML =
+    '<div class="empty">No winning games yet.</div>';
 
-       <div class="score-item">
-
-        <strong>
-         #${i+1}
-         ${profileData.name}
-        </strong>
-
-        <br>
-
-        Prize:
-        ${Number(x.prize).toFixed(2)}
-        ETB
-
-       </div>
-
-      `
-     )
-     .join("");
+   return;
 
   }
 
 
- }catch(e){
+  list.innerHTML = "";
+
+
+  wins
+   .slice(0,10)
+   .forEach(
+    (game,index)=>{
+
+     const item =
+      document.createElement(
+       "div"
+      );
+
+
+     item.className =
+      "score-item";
+
+
+     const title =
+      document.createElement(
+       "strong"
+      );
+
+
+     title.textContent =
+      `#${index+1} ${profileData.name || "Player"}`;
+
+
+     item.appendChild(
+      title
+     );
+
+
+     item.appendChild(
+      document.createElement("br")
+     );
+
+
+     item.appendChild(
+      document.createTextNode(
+       `Prize: ${Number(game.prize || 0).toFixed(2)} ETB`
+      )
+     );
+
+
+     list.appendChild(
+      item
+     );
+
+    }
+   );
+
+
+ }catch(error){
 
   console.error(
    "Score error:",
-   e
+   error
   );
+
+
+  list.innerHTML =
+   '<div class="empty"></div>';
+
+
+  list
+   .querySelector(".empty")
+   .textContent =
+    error.message ||
+    "Could not load score.";
 
  }
 
 }
 
 
-/* =========================
+/* =====================================================
    PROFILE
-========================= */
+===================================================== */
 
 function renderProfile(){
 
@@ -4084,19 +5009,125 @@ function renderProfile(){
 }
 
 
-/* =========================
-   INITIALIZE
-========================= */
+/* =====================================================
+   MODAL BACKGROUND
+===================================================== */
+
+document.addEventListener(
+ "click",
+ event=>{
+
+  const modal =
+   document.getElementById(
+    "rulesModal"
+   );
+
+
+  if(
+   modal &&
+   event.target === modal
+  ){
+
+   closeRules();
+
+  }
+
+ }
+);
+
+
+/* =====================================================
+   TELEGRAM BACK BUTTON
+===================================================== */
+
+function setupTelegramBackButton(){
+
+ if(
+  !tg ||
+  !tg.BackButton
+ ){
+
+  return;
+
+ }
+
+
+ try{
+
+  tg.BackButton.onClick(
+   ()=>{
+
+    if(
+     document
+      .getElementById("rulesModal")
+      ?.classList.contains("show")
+    ){
+
+     closeRules();
+
+     return;
+
+    }
+
+
+    if(actualGameStarted){
+
+     showToast(
+      "ጨዋታው እየተካሄደ ነው።"
+     );
+
+     return;
+
+    }
+
+
+    const page =
+     document.querySelector(
+      ".page.active"
+     );
+
+
+    if(
+     page &&
+     page.id !== "page1"
+    ){
+
+     showPage("page1");
+
+    }
+
+   }
+  );
+
+ }catch(error){
+
+  console.warn(
+   "Telegram BackButton error:",
+   error
+  );
+
+ }
+
+}
+
+
+/* =====================================================
+   INITIALIZATION
+===================================================== */
 
 document.addEventListener(
  "DOMContentLoaded",
- ()=>{
+ async()=>{
 
-  loadProfile(false);
+  initializeTelegram();
+
+  setupTelegramBackButton();
 
   renderBigBoard();
 
   updateAllDisplays();
+
+  await loadProfile(false);
 
  }
 );
