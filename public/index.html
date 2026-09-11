@@ -1705,59 +1705,6 @@ button{
     }  
 }  
   
-
-/* User-requested small layout additions */
-.calling-row{
- display:flex;
- align-items:center;
- justify-content:space-between;
- margin-bottom:4px;
- padding:5px 7px;
- border-radius:7px;
- background:#171029;
- border:1px solid #382858;
- font-size:9px;
- font-weight:1000;
-}
-.calling-row strong{
- color:var(--green);
- font-size:13px;
-}
-.history-summary{
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:6px;
- margin-bottom:10px;
-}
-.history-summary>div{
- padding:8px 4px;
- text-align:center;
- border-radius:9px;
- background:#120d23;
- border:1px solid #322650;
-}
-.history-summary span{
- display:block;
- color:var(--muted);
- font-size:8px;
-}
-.history-summary strong{
- display:block;
- margin-top:3px;
- font-size:14px;
-}
-.winner-card-wrap{
- margin:10px auto;
- width:min(180px,70vw);
-}
-.winner-card-wrap .bingo-card{
- width:100%;
-}
-
-.winner-card-wrap{margin:12px auto;display:flex;justify-content:center;max-width:280px;overflow:hidden}
-.winner-card-wrap .bingo-card{transform:scale(.78);transform-origin:top center;margin-bottom:-38px}
-.small-muted{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
-.timer.counting{font-weight:1000;font-size:22px;color:var(--yellow);text-align:center}
 </style>  </head>  <body>  <div class="app">  <!-- ==================================================  
      PAGE 1  
 ================================================== -->  <section id="page1" class="page active">  <header class="app-header">  
@@ -1810,22 +1757,46 @@ button{
 
     </div>  
 
-    </div>
+    <div class="main-play-card">  
 
-<button class="ready-button" style="margin-top:9px" onclick="openCardSelection()">
-    PLAY BINGO
+        <div class="balance-box">  
+
+            <div class="balance-label">  
+                Main Wallet  
+            </div>  
+
+            <div  
+                class="balance-value"  
+                id="mainBalanceHome">  
+                0 ETB  
+            </div>  
+
+        </div>  
+
+        <div class="balance-box">  
+
+            <div class="balance-label">  
+                Play Wallet  
+            </div>  
+
+            <div  
+                class="balance-value"  
+                id="playBalanceHome">  
+                0 ETB  
+            </div>  
+
+        </div>  
+
+    </div>  
+
+</div>  
+
+<button  
+    class="ready-button"  
+    style="margin-top:9px"  
+    onclick="openCardSelection()">  
+    PLAY BINGO  
 </button>
-
-<div class="main-play-card" style="margin-top:9px;">
-    <div class="balance-box">
-        <div class="balance-label">Main Wallet</div>
-        <div class="balance-value" id="mainBalanceHome">0 ETB</div>
-    </div>
-    <div class="balance-box">
-        <div class="balance-label">Play Wallet</div>
-        <div class="balance-value" id="playBalanceHome">0 ETB</div>
-    </div>
-</div>
 
 </section>  <!-- ==================================================  
      PAGE 2 CARD SELECTION  
@@ -1921,7 +1892,7 @@ button{
 <div  
     id="selectionTimer"  
     class="timer">  
-    Waiting for card selection  
+    Waiting for players...  
 </div>  
 
 
@@ -1982,7 +1953,7 @@ button{
     class="ready-button"  
     onclick="readyForGame()"  
     disabled>  
-    ACCEPT  
+    READY  
 </button>  
 
 <div  
@@ -2019,38 +1990,67 @@ button{
 </header>  
 
 
-<div class="game-stats">
+<div class="game-stats">  
 
-    <div class="game-stat">
-        <div class="game-stat-label">MAIN</div>
-        <div class="game-stat-value" id="mainBalance3">0</div>
-    </div>
+    <div class="game-stat">  
 
-    <div class="game-stat">
-        <div class="game-stat-label">PLAY</div>
-        <div class="game-stat-value" id="playBalance3">0</div>
-    </div>
+        <div class="game-stat-label">  
+            STAKE  
+        </div>  
 
-    <div class="game-stat">
-        <div class="game-stat-label">STAKE</div>
-        <div class="game-stat-value" id="stakeDisplay3">0</div>
-    </div>
+        <div  
+            class="game-stat-value"  
+            id="gameStake">  
+            10  
+        </div>  
 
-    <div class="game-stat">
-        <div class="game-stat-label">DERASH</div>
-        <div class="game-stat-value" id="derashDisplay">0</div>
-    </div>
+    </div>  
 
-    <div class="game-stat">
-        <div class="game-stat-label">PLAYERS</div>
-        <div class="game-stat-value" id="gamePlayers">1</div>
-    </div>
+    <div class="game-stat">  
+
+        <div class="game-stat-label">  
+            PLAYERS  
+        </div>  
+
+        <div  
+            class="game-stat-value"  
+            id="gamePlayers">  
+            1  
+        </div>  
+
+    </div>  
+
+    <div class="game-stat">  
+
+        <div class="game-stat-label">  
+            POT  
+        </div>  
+
+        <div  
+            class="game-stat-value"  
+            id="gamePot">  
+            0  
+        </div>  
+
+    </div>  
+
+    <div class="game-stat">  
+
+        <div class="game-stat-label">  
+            BALL  
+        </div>  
+
+        <div  
+            class="game-stat-value"  
+            id="gameBall">  
+            -  
+        </div>  
+
+    </div>  
 
 </div>  
 
 
-<div id="gamePot" style="display:none"></div>
-<div id="gameBall" style="display:none"></div>
 <div class="game-board-panel">  
 
     <div class="panel-title">  
@@ -2198,7 +2198,7 @@ button{
 <div class="content-panel">  
 
     <div class="content-title">  
-        Top 10 Players  
+        My Score  
     </div>  
 
     <div class="score-row">  
@@ -2306,7 +2306,49 @@ button{
 </div>  
 
 
+<div class="content-panel">  
 
+    <div class="content-title">  
+        Deposit  
+    </div>  
+
+    <div class="form-group">  
+
+        <label class="form-label">  
+            Amount  
+        </label>  
+
+        <input  
+            id="depositAmount"  
+            class="form-input"  
+            type="number"  
+            min="50"  
+            max="1000"  
+            placeholder="50 - 1000 ETB">  
+
+    </div>  
+
+    <div class="form-group">  
+
+        <label class="form-label">  
+            Telebirr transaction reference  
+        </label>  
+
+        <input  
+            id="depositReference"  
+            class="form-input"  
+            type="text"  
+            placeholder="Enter transaction reference">  
+
+    </div>  
+
+    <button  
+        class="action-btn"  
+        onclick="submitDeposit()">  
+        SUBMIT DEPOSIT  
+    </button>  
+
+</div>
 
 </section>  <!-- ==================================================  
      PROFILE  
@@ -2376,21 +2418,21 @@ button{
 
 <button  
     class="nav-btn"  
-    data-page="scorePage"  
-    onclick="navigateNav('scorePage',this)">  
-
-    <span class="nav-icon">★</span>  
-    Score  
-
-</button>
-
-<button  
-    class="nav-btn"  
     data-page="historyPage"  
     onclick="navigateNav('historyPage',this)">  
 
     <span class="nav-icon">◷</span>  
     History  
+
+</button>  
+
+<button  
+    class="nav-btn"  
+    data-page="scorePage"  
+    onclick="navigateNav('scorePage',this)">  
+
+    <span class="nav-icon">★</span>  
+    Score  
 
 </button>  
 
@@ -2476,21 +2518,42 @@ button{
 
 </div>
 
-</div>  <!-- ==================================================
-     WINNER
-================================================== -->
-<div id="winnerOverlay" class="winner-overlay">
-    <div class="winner-box">
-        <div class="winner-title">🎉 BINGO! 🎉</div>
-        <div id="winnerName" class="winner-name">Winner</div>
-        <div id="winnerCardNumber" class="winner-name">Card</div>
-        <div id="winnerCardWrap" class="winner-card-wrap"></div>
-        <div id="winnerPrize" class="winner-prize">0 ETB</div>
-        <div class="small-muted">Returning to card selection in <strong id="winnerCountdown">5</strong></div>
-    </div>
+</div>  <!-- ==================================================  
+     WINNER  
+================================================== -->  <div  
+    id="winnerOverlay"  
+    class="winner-overlay">  <div class="winner-box">  
+
+    <div class="winner-title">  
+        🎉 BINGO! 🎉  
+    </div>  
+
+    <div  
+        id="winnerName"  
+        class="winner-name">  
+        Winner  
+    </div>  
+
+    <div  
+        id="winnerPrize"  
+        class="winner-prize">  
+        0 ETB  
+    </div>  
+
+    <button  
+        class="close-btn"  
+        onclick="closeWinner()">  
+        CONTINUE  
+    </button>  
+
 </div>
 
-<!-- ==================================================  
+</div>  <!-- ==================================================  
+     TOAST  
+================================================== -->  <div  
+    id="toast"  
+    class="toast">  
+</div>  <!-- ==================================================  
      LOADING  
 ================================================== -->  <div  
     id="loading"  
@@ -2567,16 +2630,9 @@ let gameRunning = false;
   
 let gameTimer = null;  
   
-let gameInterval = null;
-let selectionTimerInterval = null;
-let lobbyPollInterval = null;
-let winnerResetInterval = null;
-let playerReady = false;
-let actualGameStarted = false;
-let winnerShown = false;
-let profileData = {name:"Winner"};
-let fakePlayers = 1;
-let totalGameCards = 0;  
+let gameInterval = null;  
+  
+let fakePlayers = 1;  
   
   
 /* ==================================================  
@@ -2901,18 +2957,6 @@ function updateAllDisplays(){
     }  
   
   
-    const main3 = document.getElementById("mainBalance3");
-    const play3 = document.getElementById("playBalance3");
-    const stake3 = document.getElementById("stakeDisplay3");
-    const derash3 = document.getElementById("derashDisplay");
-    if(main3) main3.textContent = money(main);
-    if(play3) play3.textContent = money(play);
-    if(stake3) stake3.textContent = money(selectedStake);
-    if(derash3){
-        const cardsForPrize = totalGameCards > 0 ? totalGameCards : Math.max(1, selectedCards.length) * Math.max(1, Number(fakePlayers || 1));
-        derash3.textContent = money(selectedStake * cardsForPrize * WIN_RATE);
-    }
-
     if(currentUser){  
   
         const profileName =  
@@ -3002,39 +3046,19 @@ function chooseStake(stake){
    OPEN CARD SELECTION  
 ================================================== */  
   
-function openCardSelection(){
-    stopSelectionTimer();
-    selectedCards = [];
-    playerReady = false;
-    gameRunning = false;
-    selectionSeconds = 35;
-    const timer=document.getElementById("selectionTimer");
-    if(timer){timer.textContent="Waiting for card selection";timer.classList.remove("counting");}
-    const button=document.getElementById("readyButton");
-    if(button){button.disabled=true;button.textContent="ACCEPT";button.classList.remove("ready");}
-    const watch=document.getElementById("watchMessage");
-    if(watch){watch.style.display="none";watch.textContent="";}
-    updateSelectedCards();
-    renderCardSelection();
-    showPage("page2");
-}
-
-function stopSelectionTimer(){
-    if(selectionTimerInterval){clearInterval(selectionTimerInterval);selectionTimerInterval=null;}
-}
-
-function startSelectionTimer(){
-    stopSelectionTimer();
-    selectionSeconds=35;
-    const timer=document.getElementById("selectionTimer");
-    if(timer){timer.textContent="35";timer.classList.add("counting");}
-    selectionTimerInterval=setInterval(()=>{
-        selectionSeconds=Math.max(0,selectionSeconds-1);
-        if(timer) timer.textContent=String(selectionSeconds);
-        if(selectionSeconds<=0){stopSelectionTimer();finishSelectionPeriod();}
-    },1000);
-}
-
+function openCardSelection(){  
+  
+    selectedCards = [];  
+  
+    updateSelectedCards();  
+  
+    renderCardSelection();  
+  
+    showPage("page2");  
+  
+}  
+  
+  
 /* ==================================================  
    CARD SELECTION BOARD  
 ================================================== */  
@@ -3120,13 +3144,8 @@ function selectCard(number){
     }  
   
   
-    selectedCards.push(number);
-
-    // Start the 35-second countdown immediately after the first card is selected.
-    if(selectedCards.length === 1 && !selectionTimerInterval && !playerReady){
-        startSelectionTimer();
-    }
-
+    selectedCards.push(number);  
+  
     updateSelectedCards();  
   
 }  
@@ -3466,162 +3485,233 @@ function createCardElement(cardNumber){
    READY FOR GAME  
 ================================================== */  
   
-async function readyForGame(){
-    if(playerReady) return;
-    if(!selectedCards.length){showToast("Please select at least one card.");return;}
-    if(selectedCards.length>MAX_CARDS){showToast("Maximum 2 cards.");return;}
-
-    const cost = selectedStake * selectedCards.length;
-    if(getMainBalance() + getPlayBalance() < cost){
-        showToast(`You need ${money(cost)} ETB in your wallet.`);
-        return;
-    }
-
-    playerReady=true;
-    const button=document.getElementById("readyButton");
-    if(button){button.disabled=false;button.textContent="✓ ACCEPTED";button.classList.add("ready");}
-    const watch=document.getElementById("watchMessage");
-    if(watch){watch.style.display="block";watch.innerHTML="⏳ Waiting for at least 2 players…";}
-    showPage("page3");
-    updateGameStats();
-    renderPlayingPage();
-    showToast("Accepted. Waiting for the 35-second countdown.");
-
-    if(selectionSeconds<=0) await finishSelectionPeriod();
-}
-
-async function finishSelectionPeriod(){
-    stopSelectionTimer();
-    if(lobbyPollInterval){clearInterval(lobbyPollInterval);lobbyPollInterval=null;}
-
-    if(!selectedCards.length){
-        showPage("page2");
-        return;
-    }
-
-    const watch=document.getElementById("watchMessage");
-    let players=Math.max(1,Number(fakePlayers||1));
-
-    try{
-        const data=await apiFetch("/api/game/lobby?stake="+encodeURIComponent(selectedStake));
-        players=Number(data?.players??data?.playerCount??data?.player_count??players);
-    }catch(_){}
-
-    fakePlayers=Math.max(1,players);
-    updateGameStats();
-
-    if(fakePlayers<2){
-        showPage("page3");
-        if(watch){
-            watch.style.display="block";
-            watch.innerHTML="⏳ Wait to play — at least 2 players are required.";
-        }
-        showToast("Wait to play: at least 2 players are required.");
-
-        // Keep checking the optional lobby endpoint until another player joins.
-        let attempts=0;
-        lobbyPollInterval=setInterval(async()=>{
-            attempts++;
-            try{
-                const data=await apiFetch("/api/game/lobby?stake="+encodeURIComponent(selectedStake));
-                const count=Number(data?.players??data?.playerCount??data?.player_count??1);
-                fakePlayers=Math.max(1,count);
-                updateGameStats();
-
-                if(fakePlayers>=2){
-                    clearInterval(lobbyPollInterval);
-                    lobbyPollInterval=null;
-                    await createGameAfterLobby();
-                }
-            }catch(_){
-                if(attempts >= 5){
-                    clearInterval(lobbyPollInterval);
-                    lobbyPollInterval=null;
-                    fakePlayers=2;
-                    totalGameCards=Math.max(1, selectedCards.length) * fakePlayers;
-                    await createGameAfterLobby();
-                    return;
-                }
-            }
-
-            if(attempts>=300){
-                clearInterval(lobbyPollInterval);
-                lobbyPollInterval=null;
-            }
-        },1000);
-        return;
-    }
-
-    await createGameAfterLobby();
-}
-
-
-async function createGameAfterLobby(){
-    if(actualGameStarted) return;
-    const button=document.getElementById("readyButton");
-    try{
-        if(button){button.disabled=true;button.textContent="STARTING…";}
-        const data=await apiFetch("/api/game/start",{
-            method:"POST",body:JSON.stringify({stake:selectedStake,cards:selectedCards.length})
-        });
-        currentGameId=data.gameId||data.game_id||data.id||data.game?.id||null;
-        if(currentUser){
-            if(data.mainBalance!==undefined) currentUser.mainBalance=Number(data.mainBalance);
-            if(data.playBalance!==undefined) currentUser.playBalance=Number(data.playBalance);
-        }
-        fakePlayers=Math.max(2,Number(data.players||data.playerCount||data.player_count||fakePlayers));
-        totalGameCards = Math.max(1, Number(data.totalCards ?? data.total_cards ?? data.cardsTotal ?? (selectedCards.length * fakePlayers)));
-        updateAllDisplays();
-        beginActualGame();
-    }catch(error){
-        currentGameId = null;
-        fakePlayers = Math.max(2, Number(fakePlayers || 2));
-        totalGameCards = Math.max(1, selectedCards.length) * fakePlayers;
-        if(button){button.disabled=true;button.textContent="✓ ACCEPTED";button.classList.add("ready");}
-        showToast("Game started in local mode.");
-        beginActualGame();
-    }
-}
-
+async function readyForGame(){  
+  
+    if(selectedCards.length === 0){  
+  
+        showToast(  
+            "Please select at least one card."  
+        );  
+  
+        return;  
+  
+    }  
+  
+  
+    if(selectedCards.length > MAX_CARDS){  
+  
+        showToast(  
+            "Maximum 2 cards."  
+        );  
+  
+        return;  
+  
+    }  
+  
+  
+    const playBalance =  
+        getPlayBalance();  
+  
+  
+    if(  
+        playBalance < selectedStake  
+    ){  
+  
+        showToast(  
+            "Insufficient play wallet balance."  
+        );  
+  
+        return;  
+  
+    }  
+  
+  
+    showLoading();  
+  
+  
+    try{  
+  
+        const data =  
+            await apiFetch(  
+                "/api/game/start",  
+                {  
+                    method:"POST",  
+  
+                    body:JSON.stringify({  
+  
+                        stake:selectedStake,  
+  
+                        cards:selectedCards.length  
+  
+                    })  
+  
+                }  
+            );  
+  
+  
+        currentGameId =  
+            data.gameId ||  
+            data.game_id ||  
+            data.id ||  
+            data.game?.id ||  
+            null;  
+  
+  
+        if(  
+            !currentGameId  
+        ){  
+  
+            console.log(  
+                "Game response:",  
+                data  
+            );  
+  
+        }  
+  
+  
+        fakePlayers =  
+            Number(  
+                data.players ||  
+                data.playerCount ||  
+                data.player_count ||  
+                1  
+            );  
+  
+  
+        updateGameStats();  
+  
+        beginActualGame();  
+  
+  
+    }catch(error){  
+  
+        showToast(  
+            error.message ||  
+            "Unable to start game."  
+        );  
+  
+    }finally{  
+  
+        hideLoading();  
+  
+    }  
+  
+}  
+  
+  
 /* ==================================================  
    BEGIN GAME  
 ================================================== */  
   
-function beginActualGame(){
-    if(actualGameStarted||!selectedCards.length) return;
-    if(Number(fakePlayers||1)<2){showToast("Wait to play — at least 2 players are required.");return;}
-    actualGameStarted=true;gameRunning=true;calledNumbers=[];lastCalledNumber=null;
-    renderBigBoard();renderPlayingPage();updateGameStats();showPage("page3");
-    const watch=document.getElementById("watchMessage"); if(watch) watch.style.display="none";
-    if(gameInterval) clearInterval(gameInterval);
-    if(automaticMode) gameInterval=setInterval(()=>{if(gameRunning) callNextNumber();},3000);
-}
-
-
+function beginActualGame(){  
+  
+    calledNumbers = [];  
+  
+    lastCalledNumber = null;  
+  
+    gameRunning = true;  
+  
+    renderBigBoard();  
+  
+    renderPlayingPage();  
+  
+    updateGameStats();  
+  
+    showPage("page3");  
+  
+  
+    if(gameInterval){  
+  
+        clearInterval(  
+            gameInterval  
+        );  
+  
+    }  
+  
+  
+    if(automaticMode){  
+  
+        gameInterval =  
+            setInterval(  
+                ()=>{  
+                    if(gameRunning){  
+                        callNextNumber();  
+                    }  
+                },  
+                3000  
+            );  
+  
+    }  
+  
+}  
+  
+  
 /* ==================================================  
    GAME STATS  
 ================================================== */  
   
-function updateGameStats(){
-    const players = document.getElementById("gamePlayers");
-    const stake = document.getElementById("gameStake");
-    const pot = document.getElementById("gamePot");
-    const players2 = document.getElementById("playerCount2");
-
-    if(players) players.textContent = fakePlayers;
-    if(stake) stake.textContent = selectedStake + " ETB";
-
-    const totalCards = totalGameCards > 0
-        ? totalGameCards
-        : Math.max(1, selectedCards.length) * Math.max(1, Number(fakePlayers || 1));
-    const prize = selectedStake * totalCards * WIN_RATE;
-    const derash = document.getElementById("derashDisplay");
-    if(pot) pot.textContent = money(prize) + " ETB";
-    if(derash) derash.textContent = money(prize);
-    if(players2) players2.textContent = fakePlayers;
-}
-
-
+function updateGameStats(){  
+  
+    const players =  
+        document.getElementById(  
+            "gamePlayers"  
+        );  
+  
+    const stake =  
+        document.getElementById(  
+            "gameStake"  
+        );  
+  
+    const pot =  
+        document.getElementById(  
+            "gamePot"  
+        );  
+  
+    const players2 =  
+        document.getElementById(  
+            "playerCount2"  
+        );  
+  
+  
+    if(players){  
+  
+        players.textContent =  
+            fakePlayers;  
+  
+    }  
+  
+  
+    if(stake){  
+  
+        stake.textContent =  
+            selectedStake +  
+            " ETB";  
+  
+    }  
+  
+  
+    if(pot){  
+  
+        pot.textContent =  
+            money(  
+                selectedStake *  
+                fakePlayers  
+            ) +  
+            " ETB";  
+  
+    }  
+  
+  
+    if(players2){  
+  
+        players2.textContent =  
+            fakePlayers;  
+  
+    }  
+  
+}  
+  
+  
 /* ==================================================  
    BIG BOARD  
 ================================================== */  
@@ -4135,19 +4225,10 @@ async function finishGame(playerWon=false){
             );  
   
   
-        const winningCard = selectedCards.find(number=>{
-            const el=document.querySelector(`#playingCards .bingo-card[data-card-number="${number}"]`);
-            if(!el) return false;
-            const cells=Array.from(el.querySelectorAll(".bingo-cell"));
-            const values=cells.map(c=>c.dataset.number==="FREE" ? true : calledNumbers.includes(Number(c.dataset.number)));
-            for(let r=0;r<5;r++) if([0,1,2,3,4].every(c=>values[r*5+c])) return true;
-            for(let c=0;c<5;c++) if([0,1,2,3,4].every(r=>values[r*5+c])) return true;
-            if([0,1,2,3,4].every(i=>values[i*5+i])) return true;
-            if([0,1,2,3,4].every(i=>values[i*5+(4-i)])) return true;
-            return values[0]&&values[4]&&values[20]&&values[24];
-        }) || selectedCards[0];
-
-        showWinner("You",prize,winningCard);  
+        showWinner(  
+            "You",  
+            prize  
+        );  
   
     }else{  
   
@@ -4167,51 +4248,49 @@ async function finishGame(playerWon=false){
    WINNER  
 ================================================== */  
   
-function showWinner(name,prize,cardNumber,card){
-    winnerShown=true;gameRunning=false;actualGameStarted=false;
-    if(gameInterval){clearInterval(gameInterval);gameInterval=null;}
-    const n=document.getElementById("winnerName");
-    const p=document.getElementById("winnerPrize");
-    const cn=document.getElementById("winnerCardNumber");
-    const wrap=document.getElementById("winnerCardWrap");
-    const cd=document.getElementById("winnerCountdown");
-    if(n) n.textContent=name || currentUser?.firstName || currentUser?.first_name || "Winner";
-    if(p) p.textContent=money(prize)+" ETB";
-    if(cn) cn.textContent=cardNumber?("Card "+cardNumber):"Winning Card";
-    if(wrap){
-        wrap.innerHTML="";
-        const no=cardNumber||selectedCards[0];
-        if(no){
-            const el=createCardElement(no);
-            el.querySelectorAll(".bingo-cell").forEach(cell=>{
-                const v=Number(cell.dataset.number);
-                if(Number.isFinite(v)&&calledNumbers.includes(v)) cell.classList.add("called");
-            });
-            wrap.appendChild(el);
-        }
-    }
-    document.getElementById("winnerOverlay")?.classList.add("show");
-    haptic("success");
-    let seconds=5;if(cd) cd.textContent="5";
-    clearInterval(winnerResetInterval);
-    winnerResetInterval=setInterval(()=>{
-        seconds--;if(cd) cd.textContent=String(Math.max(0,seconds));
-        if(seconds<=0){clearInterval(winnerResetInterval);winnerResetInterval=null;closeWinner();}
-    },1000);
-}
-
-function closeWinner(){
-    document.getElementById("winnerOverlay")?.classList.remove("show");
-    clearInterval(winnerResetInterval);winnerResetInterval=null;
-    winnerShown=false;actualGameStarted=false;gameRunning=false;currentGameId=null;
-    selectedCards=[];selectionSeconds=35;playerReady=false;totalGameCards=0;
-    const timer=document.getElementById("selectionTimer");if(timer) timer.textContent="Waiting for card selection";
-    const button=document.getElementById("readyButton");if(button){button.disabled=true;button.textContent="ACCEPT";button.classList.remove("ready");}
-    const watch=document.getElementById("watchMessage");if(watch){watch.style.display="none";watch.textContent="";}
-    renderCardSelection();updateSelectedCards();updateAllDisplays();showPage("page2");
-}
-
-
+function showWinner(  
+    name,  
+    prize  
+){  
+  
+    document  
+        .getElementById(  
+            "winnerName"  
+        )  
+        .textContent =  
+            name;  
+  
+    document  
+        .getElementById(  
+            "winnerPrize"  
+        )  
+        .textContent =  
+            money(prize) +  
+            " ETB";  
+  
+  
+    document  
+        .getElementById(  
+            "winnerOverlay"  
+        )  
+        .classList.add("show");  
+  
+}  
+  
+  
+function closeWinner(){  
+  
+    document  
+        .getElementById(  
+            "winnerOverlay"  
+        )  
+        .classList.remove("show");  
+  
+    showPage("page1");  
+  
+}  
+  
+  
 /* ==================================================  
    LEAVE GAME  
 ================================================== */  
@@ -4228,11 +4307,8 @@ function leaveGame(){
   
     }  
   
-    gameRunning = false;
-    actualGameStarted = false;
-    playerReady = false;
-    if(selectionTimerInterval){clearInterval(selectionTimerInterval);selectionTimerInterval=null;}
-    if(lobbyPollInterval){clearInterval(lobbyPollInterval);lobbyPollInterval=null;}
+    gameRunning = false;  
+  
     showPage("page1");  
   
 }  
@@ -4560,7 +4636,7 @@ async function init(){
   
     renderCardSelection();  
   
-    class="renderBigBoard()";  
+    renderBigBoard();  
   
     updateSelectedCards();  
   
@@ -4578,6 +4654,3554 @@ async function init(){
 document.addEventListener(  
     "DOMContentLoaded",  
     init  
+);  
+  
+</script>  </body>  
+</html>  <div class="selection-title">  
+   Frick Bingo • LIVE  
+  </div>  <button  
+class="refresh-btn"  
+type="button"  
+onclick="refreshGame()">
+🔄
+</button>
+
+ </div>   <div class="game-stats">    <div class="game-stat">  
+   <small>Main</small>  
+   <b id="mainBalance3">0.00</b>  
+  </div>    <div class="game-stat">  
+   <small>Play</small>  
+   <b id="playBalance3">0.00</b>  
+  </div>    <div class="game-stat">  
+   <small>Stake</small>  
+   <b id="stakeDisplay3">0</b>  
+  </div>    <div class="game-stat">  
+   <small>Derash</small>  
+   <b id="derashDisplay">0.00</b>  
+  </div>    <div class="game-stat">  
+   <small>Potential</small>  
+   <b id="potentialDisplay">0.00</b>  
+  </div>   </div>   <div class="game-board-panel">    <div class="panel-title">  
+   BINGO BOARD  
+  </div>    <div class="big-board-header">  
+   <div>B</div>  
+   <div>I</div>  
+   <div>N</div>  
+   <div>G</div>  
+   <div>O</div>  
+  </div>    <div  
+   id="bigBingoBoard"  
+   class="big-board">  
+  </div>   </div>   <div class="live-controls">    <div class="call-display">  <small>LAST CALLED</small>
+
+   <div  
+    id="calledNumberDisplay"  
+    class="called-number">  
+    --  
+   </div>    </div>  <button  
+id="autoBtn"  
+class="control-btn on"  
+type="button"  
+onclick="toggleAuto()">
+🔄 Auto ON
+</button>
+
+<button  
+id="voiceBtn"  
+class="control-btn on"  
+type="button"  
+onclick="toggleVoice()">
+🔊 Voice ON
+</button>
+
+ </div>  <button  
+id="callBtn"  
+class="call-btn"  
+type="button"  
+onclick="callNumber()"  
+disabled>
+CALL NUMBER
+</button>
+
+ <div class="your-card-section">    <div class="player-card-title">  
+   YOUR 5×5 BINGO CARD  
+  </div>    <div  
+   id="playingCards"  
+   class="playing-cards">  
+  </div>   </div>  </div>  <!-- HISTORY -->  <div id="historyPage" class="page">   <div class="simple-panel">    <h2>History</h2>    <div id="historyList"></div>   </div>  </div>  <!-- SCORE -->  <div id="scorePage" class="page">   <div class="simple-panel">    <h2>Top Score</h2>    <div id="scoreList"></div>   </div>  </div>  <!-- WALLET -->  <div id="walletPage" class="page">   <div class="simple-panel">    <h2>Wallet</h2>    <div class="wallet-balance">  
+   <span>Main Balance</span>  
+   <strong id="walletMain">0.00</strong>  
+  </div>    <div class="wallet-balance">  
+   <span>Play Balance</span>  
+   <strong id="walletPlay">0.00</strong>  
+  </div>    <p style="color:var(--muted);margin-top:15px;text-align:center;line-height:1.6">  
+   Deposit and withdrawal are handled through the Telegram bot.  
+  </p>   </div>  </div>  <!-- PROFILE -->  <div id="profilePage" class="page">   <div class="simple-panel">    <h2>Profile</h2>    <div class="profile-row">  
+   <span>Telegram ID</span>  
+   <strong id="profileId">—</strong>  
+  </div>    <div class="profile-row">  
+   <span>Name</span>  
+   <strong id="profileName">Player</strong>  
+  </div>    <div class="profile-row">  
+   <span>Username</span>  
+   <strong id="profileUsername">—</strong>  
+  </div>   </div>  </div>  <!-- NAV -->  <div class="bottom-nav">  <button  
+class="nav-btn active"  
+type="button"  
+onclick="navPage('page1',this)">
+<span class="nav-icon">🎮</span>
+Game
+</button>
+
+<button  
+class="nav-btn"  
+type="button"  
+onclick="navPage('historyPage',this)">
+<span class="nav-icon">📜</span>
+History
+</button>
+
+<button  
+class="nav-btn"  
+type="button"  
+onclick="navPage('scorePage',this)">
+<span class="nav-icon">🏆</span>
+Score
+</button>
+
+<button  
+class="nav-btn"  
+type="button"  
+onclick="navPage('walletPage',this)">
+<span class="nav-icon">💰</span>
+Wallet
+</button>
+
+<button  
+class="nav-btn"  
+type="button"  
+onclick="navPage('profilePage',this)">
+<span class="nav-icon">👤</span>
+Profile
+</button>
+
+</div>  </div>  <!-- RULES -->  <div  
+ id="rulesModal"  
+ class="modal">   <div class="modal-box">    <div class="modal-title">  
+   የቢንጎ ህግ  
+  </div>    <div class="rule">  
+   1. የመጫወቻ መጠን መርጠዉ PLAY ይጫኑ።  
+  </div>    <div class="rule">  
+   2. እስከ ሁለት ካርቴላ ቁጥሮች መምረጥ ይችላሉ።  
+  </div>    <div class="rule">  
+   3. የመረጡትን ካርቴላ ለመቀየር የተመረጠውን ቁጥር እንደገና ይንኩ።  
+  </div>    <div class="rule">  
+   4. የምርጫ ጊዜው ሲያልቅ ጨዋታው ይጀምራል።  
+  </div>    <div class="rule">  
+   5. ጨዋታው ከጀመረ በኋላ ማቋረጥ አይቻልም።  
+  </div>    <div class="rule">  
+   6. በአግድም፣ በቁም፣ በዲያጎናል ወይም በአራት ኮርነር ሲሟላ አሸናፊ ይሆናሉ።  
+  </div>  <button  
+class="close-btn"  
+type="button"  
+onclick="closeRules()">
+CLOSE
+</button>
+
+ </div>  </div>  <!-- WINNER -->  <div  
+ id="winnerOverlay"  
+ class="winner-overlay">   <div class="winner-box">    <div class="winner-title">  
+   🎉 BINGO! 🎉  
+  </div>    <div  
+   class="winner-name"  
+   id="winnerName">  
+   Winner  
+  </div>    <div class="winner-info">  Card Number:
+<strong id="winnerCardNumber">--</strong>
+
+   <br>  Winner Count:
+<strong>1</strong>
+
+  </div>    <div class="winner-prize">  
+   Prize:  
+   <span id="winnerPrize">0.00</span>  
+   ETB  
+  </div>    <div  
+   id="winnerCardWrap"  
+   class="winner-card-wrap">  
+  </div>    <div class="reset-count">  
+   Next game in  
+   <strong id="winnerCountdown">5</strong>  
+   seconds  
+  </div>   </div>  </div>  <!-- TOAST -->  <div  
+ id="toast"  
+ class="toast">  
+</div>  <script>  
+"use strict";  
+  
+/* =====================================================  
+   CONFIG  
+===================================================== */  
+  
+/*  
+ IMPORTANT:  
+ index.html is served from the SAME Render server.  
+  
+ Keep this EMPTY.  
+  
+ Do NOT use:  
+ http://192.168.1.15:3000  
+  
+ Do NOT use GitHub Pages here.  
+*/  
+const SERVER_URL = "";  
+  
+  
+/* =====================================================  
+   TELEGRAM  
+===================================================== */  
+  
+let tg = null;  
+let telegramInitData = "";  
+  
+  
+/* =====================================================  
+   GAME STATE  
+===================================================== */  
+  
+let selectedStake = 0;  
+let selectedCards = [];  
+let calledNumbers = [];  
+  
+let selectionSeconds = 30;  
+let selectionTimerInterval = null;  
+  
+let actualGameStarted = false;  
+let playerReady = false;  
+  
+let autoMode = true;  
+let voiceMode = true;  
+  
+let autoInterval = null;  
+let winnerResetInterval = null;  
+  
+let winnerShown = false;  
+let currentGameId = null;  
+  
+let profileData = {  
+ id:"",  
+ name:"Player",  
+ username:""  
+};  
+  
+let mainBalance = 0;  
+let playBalance = 0;  
+  
+  
+/* =====================================================  
+   HAPTIC  
+===================================================== */  
+  
+function haptic(type="light"){  
+  
+ try{  
+  
+  if(  
+   tg &&  
+   tg.HapticFeedback  
+  ){  
+  
+   if(type === "success"){  
+  
+    tg.HapticFeedback.notificationOccurred("success");  
+  
+   }else if(type === "error"){  
+  
+    tg.HapticFeedback.notificationOccurred("error");  
+  
+   }else{  
+  
+    tg.HapticFeedback.impactOccurred("light");  
+  
+   }  
+  
+  }  
+  
+ }catch(e){}  
+  
+}  
+  
+  
+/* =====================================================  
+   TOAST  
+===================================================== */  
+  
+let toastTimer = null;  
+  
+function showToast(message){  
+  
+ const toast =  
+  document.getElementById("toast");  
+  
+ if(!toast){  
+  
+  return;  
+  
+ }  
+  
+ toast.textContent =  
+  String(message || "");  
+  
+ toast.classList.add("show");  
+  
+ clearTimeout(toastTimer);  
+  
+ toastTimer =  
+  setTimeout(  
+   ()=>{  
+    toast.classList.remove("show");  
+   },  
+   2600  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   TELEGRAM INITIALIZATION  
+===================================================== */  
+  
+function initializeTelegram(){  
+  
+ tg =  
+  window.Telegram &&  
+  window.Telegram.WebApp  
+   ? window.Telegram.WebApp  
+   : null;  
+  
+ if(!tg){  
+  
+  console.warn(  
+   "Telegram WebApp SDK is not available."  
+  );  
+  
+  return false;  
+  
+ }  
+  
+ try{  
+  
+  tg.ready();  
+  
+  tg.expand();  
+  
+  telegramInitData =  
+   tg.initData || "";  
+  
+  console.log(  
+   "Telegram initData:",  
+   telegramInitData  
+    ? "AVAILABLE"  
+    : "EMPTY"  
+  );  
+  
+  return true;  
+  
+ }catch(error){  
+  
+  console.error(  
+   "Telegram initialization error:",  
+   error  
+  );  
+  
+  return false;  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   API HEADERS  
+===================================================== */  
+  
+function headers(){  
+  
+ return {  
+  "Content-Type":"application/json",  
+  "X-Telegram-Init-Data":  
+   telegramInitData  
+ };  
+  
+}  
+  
+  
+/* =====================================================  
+   API  
+===================================================== */  
+  
+async function api(  
+ path,  
+ options={}  
+){  
+  
+ try{  
+  
+  const response =  
+   await fetch(  
+    SERVER_URL + path,  
+    {  
+     ...options,  
+     cache:"no-store",  
+     headers:{  
+      ...headers(),  
+      ...(options.headers || {})  
+     }  
+    }  
+   );  
+  
+  
+  const text =  
+   await response.text();  
+  
+  
+  let data = {};  
+  
+  try{  
+  
+   data =  
+    text  
+     ? JSON.parse(text)  
+     : {};  
+  
+  }catch(e){  
+  
+   throw new Error(  
+    "Server returned invalid JSON."  
+   );  
+  
+  }  
+  
+  
+  if(!response.ok){  
+  
+   throw new Error(  
+    data.error ||  
+    data.message ||  
+    `Server error (${response.status})`  
+   );  
+  
+  }  
+  
+  
+  return data;  
+  
+ }catch(error){  
+  
+  console.error(  
+   "API ERROR:",  
+   path,  
+   error  
+  );  
+  
+  throw error;  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   PROFILE  
+===================================================== */  
+  
+async function loadProfile(  
+ showError=true  
+){  
+  
+ try{  
+  
+  const telegramOK =  
+   initializeTelegram();  
+  
+  
+  if(!telegramOK){  
+  
+   if(showError){  
+  
+    showToast(  
+     "እባክዎ Frick Bingoን ከTelegram ውስጥ ይክፈቱ።"  
+    );  
+  
+   }  
+  
+   return false;  
+  
+  }  
+  
+  
+  if(!telegramInitData){  
+  
+   if(showError){  
+  
+    showToast(  
+     "Telegram user information አልተገኘም።"  
+    );  
+  
+   }  
+  
+   return false;  
+  
+  }  
+  
+  
+  const data =  
+   await api("/api/me");  
+  
+  
+  console.log(  
+   "/api/me response:",  
+   data  
+  );  
+  
+  
+  if(  
+   !data ||  
+   data.ok === false ||  
+   !data.user  
+  ){  
+  
+   throw new Error(  
+    data?.error ||  
+    "Could not load user account."  
+   );  
+  
+  }  
+  
+  
+  const user =  
+   data.user;  
+  
+  
+  profileData = {  
+  
+   id:  
+    String(  
+     user.telegramId ??  
+     user.telegram_id ??  
+     user.id ??  
+     ""  
+    ),  
+  
+   name:  
+    String(  
+     user.firstName ??  
+     user.first_name ??  
+     user.name ??  
+     "Player"  
+    ),  
+  
+   username:  
+    String(  
+     user.username ??  
+     ""  
+    )  
+  
+  };  
+  
+  
+  mainBalance =  
+   Number(  
+    user.mainBalance ??  
+    user.balance ??  
+    0  
+   );  
+  
+  
+  playBalance =  
+   Number(  
+    user.playBalance ??  
+    user.play_balance ??  
+    0  
+   );  
+  
+  
+  if(!Number.isFinite(mainBalance)){  
+  
+   mainBalance = 0;  
+  
+  }  
+  
+  
+  if(!Number.isFinite(playBalance)){  
+  
+   playBalance = 0;  
+  
+  }  
+  
+  
+  updateAllDisplays();  
+  
+  renderProfile();  
+  
+  
+  console.log(  
+   "BALANCE:",  
+   mainBalance,  
+   playBalance  
+  );  
+  
+  
+  return true;  
+  
+ }catch(error){  
+  
+  console.error(  
+   "loadProfile error:",  
+   error  
+  );  
+  
+  
+  if(showError){  
+  
+   showToast(  
+    error.message ||  
+    "Could not load balance."  
+   );  
+  
+  }  
+  
+  
+  return false;  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   BALANCE REFRESH  
+===================================================== */  
+  
+setInterval(  
+ ()=>{  
+  
+  if(  
+   !actualGameStarted &&  
+   !winnerShown &&  
+   telegramInitData  
+  ){  
+  
+   loadProfile(false);  
+  
+  }  
+  
+ },  
+ 10000  
+);  
+  
+  
+/* =====================================================  
+   PAGE  
+===================================================== */  
+  
+function showPage(id){  
+  
+ document  
+  .querySelectorAll(".page")  
+  .forEach(  
+   page=>  
+    page.classList.remove("active")  
+  );  
+  
+  
+ const page =  
+  document.getElementById(id);  
+  
+  
+ if(page){  
+  
+  page.classList.add("active");  
+  
+ }  
+  
+  
+ updateAllDisplays();  
+  
+}  
+  
+  
+/* =====================================================  
+   NAVIGATION  
+===================================================== */  
+  
+function navPage(  
+ id,  
+ button  
+){  
+  
+ if(  
+  actualGameStarted &&  
+  id !== "page3"  
+ ){  
+  
+  showToast(  
+   "ጨዋታው እየተካሄደ ነው።"  
+  );  
+  
+  haptic("error");  
+  
+  return;  
+  
+ }  
+  
+  
+ showPage(id);  
+  
+  
+ document  
+  .querySelectorAll(".nav-btn")  
+  .forEach(  
+   item=>  
+    item.classList.remove("active")  
+  );  
+  
+  
+ if(button){  
+  
+  button.classList.add("active");  
+  
+ }  
+  
+  
+ if(id === "historyPage"){  
+  
+  renderHistory();  
+  
+ }  
+  
+  
+ if(id === "scorePage"){  
+  
+  renderScore();  
+  
+ }  
+  
+  
+ if(id === "profilePage"){  
+  
+  renderProfile();  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   RULES  
+===================================================== */  
+  
+function openRules(){  
+  
+ document  
+  .getElementById("rulesModal")  
+  ?.classList.add("show");  
+  
+ haptic();  
+  
+}  
+  
+function closeRules(){  
+  
+ document  
+  .getElementById("rulesModal")  
+  ?.classList.remove("show");  
+  
+}  
+  
+  
+/* =====================================================  
+   STAKE  
+===================================================== */  
+  
+function chooseStake(  
+ value,  
+ button  
+){  
+  
+ const stake =  
+  Number(value);  
+  
+  
+ if(  
+  ![10,20].includes(stake)  
+ ){  
+  
+  showToast(  
+   "Invalid stake."  
+  );  
+  
+  return;  
+  
+ }  
+  
+  
+ selectedStake =  
+  stake;  
+  
+  
+ document  
+  .querySelectorAll(".stake-btn")  
+  .forEach(  
+   item=>  
+    item.classList.remove("selected")  
+  );  
+  
+  
+ if(button){  
+  
+  button.classList.add("selected");  
+  
+ }  
+  
+  
+ haptic();  
+  
+ updateAllDisplays();  
+  
+}  
+  
+  
+/* =====================================================  
+   PLAY  
+===================================================== */  
+  
+function goToCardSelection(){  
+  
+ if(actualGameStarted){  
+  
+  return;  
+  
+ }  
+  
+  
+ if(!selectedStake){  
+  
+  showToast(  
+   "Please choose your stake first."  
+  );  
+  
+  haptic("error");  
+  
+  return;  
+  
+ }  
+  
+  
+ if(  
+  !Number.isFinite(mainBalance) ||  
+  mainBalance < selectedStake  
+ ){  
+  
+  showToast(  
+   "Insufficient Main Balance."  
+  );  
+  
+  haptic("error");  
+  
+  return;  
+  
+ }  
+  
+  
+ resetSelection();  
+  
+ showPage("page2");  
+  
+ renderCardSelection();  
+  
+ startSelectionTimer();  
+  
+ haptic("success");  
+  
+}  
+  
+  
+/* =====================================================  
+   BACK HOME  
+===================================================== */  
+  
+function backToHome(){  
+  
+ if(actualGameStarted){  
+  
+  showToast(  
+   "ጨዋታው ከጀመረ በኋላ ማቋረጥ አይቻልም።"  
+  );  
+  
+  return;  
+  
+ }  
+  
+  
+ stopSelectionTimer();  
+  
+ showPage("page1");  
+  
+}  
+  
+  
+/* =====================================================  
+   RESET SELECTION  
+===================================================== */  
+  
+function resetSelection(){  
+  
+ stopSelectionTimer();  
+  
+ selectedCards = [];  
+ playerReady = false;  
+ actualGameStarted = false;  
+ calledNumbers = [];  
+ winnerShown = false;  
+ currentGameId = null;  
+  
+ selectionSeconds = 30;  
+  
+ const timer =  
+  document.getElementById(  
+   "selectionTimer"  
+  );  
+  
+ if(timer){  
+  
+  timer.textContent = "30";  
+  
+ }  
+  
+ const ready =  
+  document.getElementById(  
+   "readyButton"  
+  );  
+  
+ if(ready){  
+  
+  ready.style.display = "block";  
+  ready.disabled = false;  
+  ready.textContent = "START GAME";  
+  ready.classList.remove("ready");  
+  
+ }  
+  
+ const watch =  
+  document.getElementById(  
+   "watchMessage"  
+  );  
+  
+ if(watch){  
+  
+  watch.style.display = "none";  
+  watch.textContent = "";  
+  
+ }  
+  
+ updateAllDisplays();  
+  
+}  
+  
+  
+/* =====================================================  
+   TIMER STOP  
+===================================================== */  
+  
+function stopSelectionTimer(){  
+  
+ if(selectionTimerInterval){  
+  
+  clearInterval(  
+   selectionTimerInterval  
+  );  
+  
+  selectionTimerInterval = null;  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   REFRESH SELECTION  
+===================================================== */  
+  
+function refreshSelection(){  
+  
+ if(playerReady){  
+  
+  showToast(  
+   "You are already ready."  
+  );  
+  
+  return;  
+  
+ }  
+  
+ renderCardSelection();  
+  
+ updateSelectedCards();  
+  
+ haptic();  
+  
+}  
+  
+  
+/* =====================================================  
+   CARD BOARD  
+===================================================== */  
+  
+function renderCardSelection(){  
+  
+ const board =  
+  document.getElementById(  
+   "cardNumberBoard"  
+  );  
+  
+  
+ if(!board){  
+  
+  return;  
+  
+ }  
+  
+  
+ board.innerHTML = "";  
+  
+  
+ for(  
+  let number=1;  
+  number<=200;  
+  number++  
+ ){  
+  
+  const button =  
+   document.createElement("button");  
+  
+  
+  button.type = "button";  
+  
+  button.className =  
+   "card-number";  
+  
+  
+  button.textContent =  
+   String(number);  
+  
+  
+  button.dataset.number =  
+   String(number);  
+  
+  
+  if(  
+   selectedCards.includes(number)  
+  ){  
+  
+   button.classList.add(  
+    "selected"  
+   );  
+  
+  }  
+  
+  
+  button.addEventListener(  
+   "click",  
+   ()=>{  
+    selectCard(number);  
+   }  
+  );  
+  
+  
+  board.appendChild(  
+   button  
+  );  
+  
+ }  
+  
+  
+ updateSelectedCards();  
+  
+}  
+  
+  
+/* =====================================================  
+   SELECT CARD  
+===================================================== */  
+  
+function selectCard(number){  
+  
+ if(playerReady){  
+  
+  showToast(  
+   "You are already ready."  
+  );  
+  
+  return;  
+  
+ }  
+  
+  
+ if(  
+  selectedCards.includes(number)  
+ ){  
+  
+  removeCard(number);  
+  
+  return;  
+  
+ }  
+  
+  
+ if(  
+  selectedCards.length >= 2  
+ ){  
+  
+  showToast(  
+   "Maximum 2 cards."  
+  );  
+  
+  haptic("error");  
+  
+  return;  
+  
+ }  
+  
+  
+ selectedCards.push(number);  
+  
+ haptic();  
+  
+ updateSelectedCards();  
+  
+}  
+  
+  
+/* =====================================================  
+   REMOVE CARD  
+===================================================== */  
+  
+function removeCard(number){  
+  
+ if(playerReady){  
+  
+  return;  
+  
+ }  
+  
+  
+ selectedCards =  
+  selectedCards.filter(  
+   item=>  
+    item !== number  
+  );  
+  
+  
+ const button =  
+  document.querySelector(  
+   `.card-number[data-number="${number}"]`  
+  );  
+  
+  
+ if(button){  
+  
+  button.classList.remove(  
+   "selected"  
+  );  
+  
+ }  
+  
+  
+ updateSelectedCards();  
+  
+}  
+  
+  
+/* =====================================================  
+   UPDATE SELECTED  
+===================================================== */  
+  
+function updateSelectedCards(){  
+  
+ const container =  
+  document.getElementById(  
+   "selectedCards"  
+  );  
+  
+ const preview =  
+  document.getElementById(  
+   "cardsPreview"  
+  );  
+  
+  
+ if(!container || !preview){  
+  
+  return;  
+  
+ }  
+  
+  
+ container.innerHTML = "";  
+ preview.innerHTML = "";  
+  
+  
+ selectedCards.forEach(  
+  number=>{  
+  
+   const chip =  
+    document.createElement("button");  
+  
+   chip.type = "button";  
+  
+   chip.className =  
+    "selected-chip";  
+  
+   chip.textContent =  
+    `Card ${number} ✕`;  
+  
+   chip.onclick =  
+    ()=>removeCard(number);  
+  
+   container.appendChild(  
+    chip  
+   );  
+  
+  
+   preview.appendChild(  
+    createCardElement(number)  
+   );  
+  
+  }  
+ );  
+  
+  
+ updateAllDisplays();  
+  
+}  
+  
+  
+/* =====================================================  
+   TIMER  
+===================================================== */  
+  
+function startSelectionTimer(){  
+  
+ stopSelectionTimer();  
+  
+ selectionSeconds = 30;  
+  
+  
+ const timer =  
+  document.getElementById(  
+   "selectionTimer"  
+  );  
+  
+  
+ if(timer){  
+  
+  timer.textContent = "30";  
+  
+ }  
+  
+  
+ selectionTimerInterval =  
+  setInterval(  
+   async()=>{  
+  
+    selectionSeconds--;  
+  
+    if(timer){  
+  
+     timer.textContent =  
+      String(  
+       Math.max(  
+        0,  
+        selectionSeconds  
+       )  
+      );  
+  
+    }  
+  
+  
+    if(  
+     selectionSeconds <= 0  
+    ){  
+  
+     stopSelectionTimer();  
+  
+     await finishSelectionPeriod();  
+  
+    }  
+  
+   },  
+   1000  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   START GAME  
+===================================================== */  
+  
+async function readyForGame(){  
+  
+ if(playerReady){  
+  
+  return;  
+  
+ }  
+  
+  
+ if(!selectedStake){  
+  
+  showToast(  
+   "Please select a stake."  
+  );  
+  
+  return;  
+  
+ }  
+  
+  
+ if(!selectedCards.length){  
+  
+  showToast(  
+   "Please select at least one Bingo card."  
+  );  
+  
+  haptic("error");  
+  
+  return;  
+  
+ }  
+  
+  
+ const cost =  
+  selectedStake *  
+  selectedCards.length;  
+  
+  
+ if(mainBalance < cost){  
+  
+  showToast(  
+   `You need ${cost.toFixed(2)} ETB.`  
+  );  
+  
+  haptic("error");  
+  
+  return;  
+  
+ }  
+  
+  
+ const button =  
+  document.getElementById(  
+   "readyButton"  
+  );  
+  
+  
+ try{  
+  
+  if(button){  
+  
+   button.disabled = true;  
+   button.textContent =  
+    "CONNECTING...";  
+  
+  }  
+  
+  
+  if(!telegramInitData){  
+  
+   initializeTelegram();  
+  
+  }  
+  
+  
+  if(!telegramInitData){  
+  
+   throw new Error(  
+    "Open Frick Bingo from the Telegram bot."  
+   );  
+  
+  }  
+  
+  
+  const data =  
+   await api(  
+    "/api/game/start",  
+    {  
+     method:"POST",  
+     body:JSON.stringify({  
+  
+      stake:selectedStake,  
+  
+      cards:selectedCards.length  
+  
+     })  
+    }  
+   );  
+  
+  
+  console.log(  
+   "GAME START:",  
+   data  
+  );  
+  
+  
+  if(  
+   !data ||  
+   data.ok === false  
+  ){  
+  
+   throw new Error(  
+    data?.error ||  
+    "Server rejected the game."  
+   );  
+  
+  }  
+  
+  
+  /*  
+   Accept different common server response formats.  
+  */  
+  
+  const gameId =  
+   data.gameId ??  
+   data.game_id ??  
+   data.id ??  
+   data.game?.id ??  
+   null;  
+  
+  
+  if(!gameId){  
+  
+   throw new Error(  
+    "Server created no game ID."  
+   );  
+  
+  }  
+  
+  
+  currentGameId =  
+   gameId;  
+  
+  
+  if(  
+   data.mainBalance !== undefined  
+  ){  
+  
+   mainBalance =  
+    Number(  
+     data.mainBalance  
+    );  
+  
+  }  
+  
+  
+  if(  
+   data.playBalance !== undefined  
+  ){  
+  
+   playBalance =  
+    Number(  
+     data.playBalance  
+    );  
+  
+  }  
+  
+  
+  playerReady = true;  
+  
+  
+  if(button){  
+  
+   button.disabled = false;  
+   button.textContent = "✓ READY";  
+   button.classList.add("ready");  
+  
+  }  
+  
+  
+  updateAllDisplays();  
+  
+  haptic("success");  
+  
+  
+  /*  
+   If timer already ended,  
+   immediately enter the game.  
+  */  
+  
+  if(selectionSeconds <= 0){  
+  
+   beginActualGame();  
+  
+  }else{  
+  
+   showToast(  
+    "You are ready. Game starts when selection time ends."  
+   );  
+  
+  }  
+  
+  
+ }catch(error){  
+  
+  console.error(  
+   "GAME START ERROR:",  
+   error  
+  );  
+  
+  
+  playerReady = false;  
+  
+  
+  if(button){  
+  
+   button.disabled = false;  
+   button.textContent = "START GAME";  
+   button.classList.remove("ready");  
+  
+  }  
+  
+  
+  showToast(  
+   error.message ||  
+   "Could not start game."  
+  );  
+  
+  haptic("error");  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   FINISH SELECTION  
+===================================================== */  
+  
+async function finishSelectionPeriod(){  
+  
+ stopSelectionTimer();  
+  
+  
+ if(!selectedCards.length){  
+  
+  const message =  
+   document.getElementById(  
+    "watchMessage"  
+   );  
+  
+  if(message){  
+  
+   message.style.display =  
+    "block";  
+  
+   message.innerHTML =  
+    "የካርቴላ ምርጫ ጊዜ አልቋል።<br>እባክዎ ቀጣዩን ጨዋታ ይጠብቁ 👀";  
+  
+  }  
+  
+  
+  const button =  
+   document.getElementById(  
+    "readyButton"  
+   );  
+  
+  if(button){  
+  
+   button.style.display =  
+    "none";  
+  
+  }  
+  
+  
+  return;  
+  
+ }  
+  
+  
+ if(!playerReady){  
+  
+  await readyForGame();  
+  
+  return;  
+  
+ }  
+  
+  
+ beginActualGame();  
+  
+}  
+  
+  
+/* =====================================================  
+   BEGIN GAME  
+===================================================== */  
+  
+function beginActualGame(){  
+  
+ if(actualGameStarted){  
+  
+  return;  
+  
+ }  
+  
+  
+ if(!selectedCards.length){  
+  
+  return;  
+  
+ }  
+  
+  
+ actualGameStarted = true;  
+  
+ stopSelectionTimer();  
+  
+ stopAutoCalling();  
+  
+  
+ showPage("page3");  
+  
+  
+ const callButton =  
+  document.getElementById(  
+   "callBtn"  
+  );  
+  
+  
+ if(callButton){  
+  
+  callButton.disabled = false;  
+  
+ }  
+  
+  
+ renderPlayingPage();  
+  
+  
+ if(autoMode){  
+  
+  startAutoCalling();  
+  
+ }  
+  
+  
+ haptic("success");  
+  
+}  
+  
+  
+/* =====================================================  
+   RANGE  
+===================================================== */  
+  
+function range(  
+ start,  
+ end  
+){  
+  
+ const result = [];  
+  
+ for(  
+  let i=start;  
+  i<=end;  
+  i++  
+ ){  
+  
+  result.push(i);  
+  
+ }  
+  
+ return result;  
+  
+}  
+  
+  
+/* =====================================================  
+   SEEDED RANDOM  
+===================================================== */  
+  
+function seededRandom(seed){  
+  
+ let value =  
+  Number(seed) %  
+  2147483647;  
+  
+  
+ if(value <= 0){  
+  
+  value += 2147483646;  
+  
+ }  
+  
+  
+ return ()=>{  
+  
+  value =  
+   value *  
+   16807 %  
+   2147483647;  
+  
+  
+  return (  
+   (value-1) /  
+   2147483646  
+  );  
+  
+ };  
+  
+}  
+  
+  
+/* =====================================================  
+   SHUFFLE  
+===================================================== */  
+  
+function shuffle(  
+ array,  
+ random  
+){  
+  
+ for(  
+  let i=array.length-1;  
+  i>0;  
+  i--  
+ ){  
+  
+  const j =  
+   Math.floor(  
+    random() *  
+    (i+1)  
+   );  
+  
+  
+  [  
+   array[i],  
+   array[j]  
+  ] =  
+  [  
+   array[j],  
+   array[i]  
+  ];  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   BINGO CARD  
+===================================================== */  
+  
+function generateBingoCard(seed){  
+  
+ const columns = [  
+  
+  range(1,15),  
+  range(16,30),  
+  range(31,45),  
+  range(46,60),  
+  range(61,75)  
+  
+ ];  
+  
+  
+ const random =  
+  seededRandom(seed);  
+  
+  
+ const card =  
+  Array.from(  
+   {length:5},  
+   ()=>Array(5)  
+  );  
+  
+  
+ for(  
+  let column=0;  
+  column<5;  
+  column++  
+ ){  
+  
+  const numbers =  
+   [...columns[column]];  
+  
+  
+  shuffle(  
+   numbers,  
+   random  
+  );  
+  
+  
+  for(  
+   let row=0;  
+   row<5;  
+   row++  
+  ){  
+  
+   card[row][column] =  
+    numbers[row];  
+  
+  }  
+  
+ }  
+  
+  
+ card[2][2] =  
+  "FREE";  
+  
+  
+ return card;  
+  
+}  
+  
+  
+/* =====================================================  
+   CREATE CARD  
+===================================================== */  
+  
+function createCardElement(number){  
+  
+ const card =  
+  generateBingoCard(number);  
+  
+  
+ const wrapper =  
+  document.createElement("div");  
+  
+  
+ wrapper.className =  
+  "bingo-card";  
+  
+  
+ const header =  
+  document.createElement("div");  
+  
+  
+ header.className =  
+  "bingo-header";  
+  
+  
+ [  
+  "B",  
+  "I",  
+  "N",  
+  "G",  
+  "O"  
+ ]  
+ .forEach(  
+  letter=>{  
+  
+   const element =  
+    document.createElement("div");  
+  
+   element.textContent =  
+    letter;  
+  
+   header.appendChild(  
+    element  
+   );  
+  
+  }  
+ );  
+  
+  
+ wrapper.appendChild(  
+  header  
+ );  
+  
+  
+ const grid =  
+  document.createElement("div");  
+  
+  
+ grid.className =  
+  "bingo-grid";  
+  
+  
+ for(  
+  let row=0;  
+  row<5;  
+  row++  
+ ){  
+  
+  for(  
+   let column=0;  
+   column<5;  
+   column++  
+  ){  
+  
+   const cell =  
+    document.createElement("div");  
+  
+  
+   cell.className =  
+    "bingo-cell";  
+  
+  
+   const value =  
+    card[row][column];  
+  
+  
+   cell.textContent =  
+    String(value);  
+  
+  
+   cell.dataset.value =  
+    String(value);  
+  
+  
+   if(value === "FREE"){  
+  
+    cell.classList.add("free");  
+  
+   }  
+  
+  
+   grid.appendChild(  
+    cell  
+   );  
+  
+  }  
+  
+ }  
+  
+  
+ wrapper.appendChild(  
+  grid  
+ );  
+  
+  
+ return wrapper;  
+  
+}  
+  
+  
+/* =====================================================  
+   BINGO LETTER  
+===================================================== */  
+  
+function getBingoLetter(number){  
+  
+ if(number <= 15) return "B";  
+  
+ if(number <= 30) return "I";  
+  
+ if(number <= 45) return "N";  
+  
+ if(number <= 60) return "G";  
+  
+ return "O";  
+  
+}  
+  
+  
+/* =====================================================  
+   AMHARIC VOICE  
+===================================================== */  
+  
+function getAmharicLetter(letter){  
+  
+ const map = {  
+  
+  B:"ቢ",  
+  I:"አይ",  
+  N:"ኤን",  
+  G:"ጂ",  
+  O:"ኦ"  
+  
+ };  
+  
+ return map[letter] || letter;  
+  
+}  
+  
+  
+/* =====================================================  
+   CALL NUMBER  
+===================================================== */  
+  
+function callNumber(){  
+  
+ if(  
+  !actualGameStarted ||  
+  winnerShown  
+ ){  
+  
+  return;  
+  
+ }  
+  
+  
+ if(  
+  calledNumbers.length >= 75  
+ ){  
+  
+  stopAutoCalling();  
+  
+  showToast(  
+   "All numbers have been called."  
+  );  
+  
+  return;  
+  
+ }  
+  
+  
+ const available = [];  
+  
+  
+ for(  
+  let number=1;  
+  number<=75;  
+  number++  
+ ){  
+  
+  if(  
+   !calledNumbers.includes(number)  
+  ){  
+  
+   available.push(number);  
+  
+  }  
+  
+ }  
+  
+  
+ if(!available.length){  
+  
+  stopAutoCalling();  
+  
+  return;  
+  
+ }  
+  
+  
+ const index =  
+  Math.floor(  
+   Math.random() *  
+   available.length  
+  );  
+  
+  
+ const number =  
+  available[index];  
+  
+  
+ calledNumbers.push(  
+  number  
+ );  
+  
+  
+ const letter =  
+  getBingoLetter(number);  
+  
+  
+ const display =  
+  document.getElementById(  
+   "calledNumberDisplay"  
+  );  
+  
+  
+ if(display){  
+  
+  display.textContent =  
+   `${letter}-${number}`;  
+  
+ }  
+  
+  
+ renderBigBoard();  
+  
+ markPlayerCards();  
+  
+ speakNumber(  
+  letter,  
+  number  
+ );  
+  
+ checkWinner();  
+  
+ updateAllDisplays();  
+  
+ haptic();  
+  
+}  
+  
+  
+/* =====================================================  
+   VOICE  
+===================================================== */  
+  
+function speakNumber(  
+ letter,  
+ number  
+){  
+  
+ if(  
+  !voiceMode ||  
+  !("speechSynthesis" in window)  
+ ){  
+  
+  return;  
+  
+ }  
+  
+  
+ try{  
+  
+  window.speechSynthesis.cancel();  
+  
+  
+  const speech =  
+   new SpeechSynthesisUtterance(  
+    `${getAmharicLetter(letter)}, ${number}`  
+   );  
+  
+  
+  speech.lang = "am-ET";  
+  speech.rate = .85;  
+  speech.pitch = 1;  
+  speech.volume = 1;  
+  
+  
+  window.speechSynthesis.speak(  
+   speech  
+  );  
+  
+ }catch(error){  
+  
+  console.warn(  
+   "Voice error:",  
+   error  
+  );  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   AUTO  
+===================================================== */  
+  
+function toggleAuto(){  
+  
+ autoMode =  
+  !autoMode;  
+  
+  
+ const button =  
+  document.getElementById(  
+   "autoBtn"  
+  );  
+  
+  
+ if(button){  
+  
+  button.textContent =  
+   autoMode  
+    ? "🔄 Auto ON"  
+    : "🔄 Auto OFF";  
+  
+  
+  button.classList.toggle(  
+   "on",  
+   autoMode  
+  );  
+  
+ }  
+  
+  
+ if(autoMode){  
+  
+  startAutoCalling();  
+  
+ }else{  
+  
+  stopAutoCalling();  
+  
+ }  
+  
+  
+ haptic();  
+  
+}  
+  
+  
+/* =====================================================  
+   AUTO START  
+===================================================== */  
+  
+function startAutoCalling(){  
+  
+ stopAutoCalling();  
+  
+  
+ if(  
+  !autoMode ||  
+  !actualGameStarted ||  
+  winnerShown  
+ ){  
+  
+  return;  
+  
+ }  
+  
+  
+ autoInterval =  
+  setInterval(  
+   ()=>{  
+  
+    if(  
+     actualGameStarted &&  
+     !winnerShown  
+    ){  
+  
+     callNumber();  
+  
+    }  
+  
+   },  
+   3000  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   AUTO STOP  
+===================================================== */  
+  
+function stopAutoCalling(){  
+  
+ if(autoInterval){  
+  
+  clearInterval(  
+   autoInterval  
+  );  
+  
+  autoInterval = null;  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   VOICE TOGGLE  
+===================================================== */  
+  
+function toggleVoice(){  
+  
+ voiceMode =  
+  !voiceMode;  
+  
+  
+ const button =  
+  document.getElementById(  
+   "voiceBtn"  
+  );  
+  
+  
+ if(button){  
+  
+  button.textContent =  
+   voiceMode  
+    ? "🔊 Voice ON"  
+    : "🔇 Voice OFF";  
+  
+  
+  button.classList.toggle(  
+   "on",  
+   voiceMode  
+  );  
+  
+ }  
+  
+  
+ if(  
+  !voiceMode &&  
+  "speechSynthesis" in window  
+ ){  
+  
+  window.speechSynthesis.cancel();  
+  
+ }  
+  
+  
+ haptic();  
+  
+}  
+  
+  
+/* =====================================================  
+   BOARD  
+===================================================== */  
+  
+function renderBigBoard(){  
+  
+ const board =  
+  document.getElementById(  
+   "bigBingoBoard"  
+  );  
+  
+  
+ if(!board){  
+  
+  return;  
+  
+ }  
+  
+  
+ board.innerHTML = "";  
+  
+  
+ const last =  
+  calledNumbers[  
+   calledNumbers.length-1  
+  ];  
+  
+  
+ for(  
+  let number=1;  
+  number<=75;  
+  number++  
+ ){  
+  
+  const cell =  
+   document.createElement("div");  
+  
+  
+  cell.className =  
+   "board-number";  
+  
+  
+  cell.textContent =  
+   String(number);  
+  
+  
+  if(  
+   calledNumbers.includes(number)  
+  ){  
+  
+   cell.classList.add(  
+    "called"  
+   );  
+  
+  }  
+  
+  
+  if(last === number){  
+  
+   cell.classList.add(  
+    "last-called"  
+   );  
+  
+  }  
+  
+  
+  board.appendChild(  
+   cell  
+  );  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   PLAYING PAGE  
+===================================================== */  
+  
+function renderPlayingPage(){  
+  
+ const container =  
+  document.getElementById(  
+   "playingCards"  
+  );  
+  
+  
+ if(!container){  
+  
+  return;  
+  
+ }  
+  
+  
+ container.innerHTML = "";  
+  
+  
+ selectedCards.forEach(  
+  number=>{  
+  
+   container.appendChild(  
+    createCardElement(number)  
+   );  
+  
+  }  
+ );  
+  
+  
+ renderBigBoard();  
+  
+ markPlayerCards();  
+  
+ updateAllDisplays();  
+  
+}  
+  
+  
+/* =====================================================  
+   MARK CARDS  
+===================================================== */  
+  
+function markPlayerCards(){  
+  
+ document  
+  .querySelectorAll(  
+   "#playingCards .bingo-cell"  
+  )  
+  .forEach(  
+   cell=>{  
+  
+    const value =  
+     cell.dataset.value;  
+  
+  
+    if(value === "FREE"){  
+  
+     cell.classList.remove("called");  
+     cell.classList.add("free");  
+  
+     return;  
+  
+    }  
+  
+  
+    const number =  
+     Number(value);  
+  
+  
+    cell.classList.toggle(  
+     "called",  
+     calledNumbers.includes(number)  
+    );  
+  
+   }  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   MARKED  
+===================================================== */  
+  
+function isMarked(value){  
+  
+ return (  
+  value === "FREE" ||  
+  calledNumbers.includes(  
+   Number(value)  
+  )  
+ );  
+  
+}  
+  
+  
+/* =====================================================  
+   WINNING CARD  
+===================================================== */  
+  
+function isWinningCard(card){  
+  
+ /* ROWS */  
+  
+ for(  
+  let row=0;  
+  row<5;  
+  row++  
+ ){  
+  
+  if(  
+   card[row].every(  
+    isMarked  
+   )  
+  ){  
+  
+   return true;  
+  
+  }  
+  
+ }  
+  
+  
+ /* COLUMNS */  
+  
+ for(  
+  let column=0;  
+  column<5;  
+  column++  
+ ){  
+  
+  let complete = true;  
+  
+  
+  for(  
+   let row=0;  
+   row<5;  
+   row++  
+  ){  
+  
+   if(  
+    !isMarked(  
+     card[row][column]  
+    )  
+   ){  
+  
+    complete = false;  
+  
+    break;  
+  
+   }  
+  
+  }  
+  
+  
+  if(complete){  
+  
+   return true;  
+  
+  }  
+  
+ }  
+  
+  
+ /* DIAGONAL 1 */  
+  
+ if(  
+  [0,1,2,3,4].every(  
+   index=>  
+    isMarked(  
+     card[index][index]  
+    )  
+  )  
+ ){  
+  
+  return true;  
+  
+ }  
+  
+  
+ /* DIAGONAL 2 */  
+  
+ if(  
+  [0,1,2,3,4].every(  
+   index=>  
+    isMarked(  
+     card[index][4-index]  
+    )  
+  )  
+ ){  
+  
+  return true;  
+  
+ }  
+  
+  
+ /* FOUR CORNERS */  
+  
+ return (  
+  isMarked(card[0][0]) &&  
+  isMarked(card[0][4]) &&  
+  isMarked(card[4][0]) &&  
+  isMarked(card[4][4])  
+ );  
+  
+}  
+  
+  
+/* =====================================================  
+   CHECK WINNER  
+===================================================== */  
+  
+function checkWinner(){  
+  
+ if(winnerShown){  
+  
+  return;  
+  
+ }  
+  
+  
+ for(  
+  const number of selectedCards  
+ ){  
+  
+  const card =  
+   generateBingoCard(number);  
+  
+  
+  if(  
+   isWinningCard(card)  
+  ){  
+  
+   showWinner(  
+    number,  
+    card  
+   );  
+  
+   return;  
+  
+  }  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   SHOW WINNER  
+===================================================== */  
+  
+async function showWinner(  
+ cardNumber,  
+ card  
+){  
+  
+ if(winnerShown){  
+  
+  return;  
+  
+ }  
+  
+  
+ winnerShown = true;  
+  
+ stopAutoCalling();  
+  
+  
+ const callButton =  
+  document.getElementById(  
+   "callBtn"  
+  );  
+  
+  
+ if(callButton){  
+  
+  callButton.disabled = true;  
+  
+ }  
+  
+  
+ const prize =  
+  selectedCards.length *  
+  selectedStake *  
+  .85;  
+  
+  
+ const winnerName =  
+  document.getElementById(  
+   "winnerName"  
+  );  
+  
+  
+ const winnerNumber =  
+  document.getElementById(  
+   "winnerCardNumber"  
+  );  
+  
+  
+ const winnerPrize =  
+  document.getElementById(  
+   "winnerPrize"  
+  );  
+  
+  
+ if(winnerName){  
+  
+  winnerName.textContent =  
+   profileData.name ||  
+   "Winner";  
+  
+ }  
+  
+  
+ if(winnerNumber){  
+  
+  winnerNumber.textContent =  
+   String(cardNumber);  
+  
+ }  
+  
+  
+ if(winnerPrize){  
+  
+  winnerPrize.textContent =  
+   prize.toFixed(2);  
+  
+ }  
+  
+  
+ const wrapper =  
+  document.getElementById(  
+   "winnerCardWrap"  
+  );  
+  
+  
+ if(wrapper){  
+  
+  wrapper.innerHTML = "";  
+  
+  
+  const cardElement =  
+   createCardElement(cardNumber);  
+  
+  
+  wrapper.appendChild(  
+   cardElement  
+  );  
+  
+  
+  cardElement  
+   .querySelectorAll(  
+    ".bingo-cell"  
+   )  
+   .forEach(  
+    cell=>{  
+  
+     const value =  
+      cell.dataset.value;  
+  
+  
+     if(  
+      value !== "FREE" &&  
+      calledNumbers.includes(  
+       Number(value)  
+      )  
+     ){  
+  
+      cell.classList.add(  
+       "called"  
+      );  
+  
+     }  
+  
+    }  
+   );  
+  
+ }  
+  
+  
+ document  
+  .getElementById(  
+   "winnerOverlay"  
+  )  
+  ?.classList.add("show");  
+  
+  
+ haptic("success");  
+  
+  
+ /*  
+  Send result to backend.  
+ */  
+  
+ try{  
+  
+  if(!currentGameId){  
+  
+   console.warn(  
+    "No currentGameId available."  
+   );  
+  
+  }else{  
+  
+   const data =  
+    await api(  
+     "/api/game/finish",  
+     {  
+      method:"POST",  
+      body:JSON.stringify({  
+  
+       gameId:  
+        currentGameId,  
+  
+       result:  
+        "WIN",  
+  
+       prize:  
+        Number(  
+         prize.toFixed(2)  
+        ),  
+  
+       cardNumber:  
+        cardNumber  
+  
+      })  
+     }  
+    );  
+  
+  
+   console.log(  
+    "GAME FINISH:",  
+    data  
+   );  
+  
+  
+   if(  
+    data.mainBalance !== undefined  
+   ){  
+  
+    mainBalance =  
+     Number(  
+      data.mainBalance  
+     );  
+  
+   }  
+  
+  
+   if(  
+    data.playBalance !== undefined  
+   ){  
+  
+    playBalance =  
+     Number(  
+      data.playBalance  
+     );  
+  
+   }  
+  
+  
+   updateAllDisplays();  
+  
+  }  
+  
+ }catch(error){  
+  
+  console.error(  
+   "Finish game error:",  
+   error  
+  );  
+  
+  showToast(  
+   "Winner saved locally. Server update failed."  
+  );  
+  
+ }  
+  
+  
+ let seconds = 5;  
+  
+  
+ const countdown =  
+  document.getElementById(  
+   "winnerCountdown"  
+  );  
+  
+  
+ if(countdown){  
+  
+  countdown.textContent =  
+   String(seconds);  
+  
+ }  
+  
+  
+ clearInterval(  
+  winnerResetInterval  
+ );  
+  
+  
+ winnerResetInterval =  
+  setInterval(  
+   ()=>{  
+  
+    seconds--;  
+  
+  
+    if(countdown){  
+  
+     countdown.textContent =  
+      String(  
+       Math.max(  
+        0,  
+        seconds  
+       )  
+      );  
+  
+    }  
+  
+  
+    if(seconds <= 0){  
+  
+     clearInterval(  
+      winnerResetInterval  
+     );  
+  
+     winnerResetInterval = null;  
+  
+     resetAfterWinner();  
+  
+    }  
+  
+   },  
+   1000  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   RESET AFTER WIN  
+===================================================== */  
+  
+async function resetAfterWinner(){  
+  
+ document  
+  .getElementById(  
+   "winnerOverlay"  
+  )  
+  ?.classList.remove("show");  
+  
+  
+ stopAutoCalling();  
+ stopSelectionTimer();  
+  
+  
+ actualGameStarted = false;  
+ playerReady = false;  
+ winnerShown = false;  
+  
+ selectedCards = [];  
+ calledNumbers = [];  
+  
+ currentGameId = null;  
+  
+  
+ const callButton =  
+  document.getElementById(  
+   "callBtn"  
+  );  
+  
+  
+ if(callButton){  
+  
+  callButton.disabled = true;  
+  
+ }  
+  
+  
+ showPage("page1");  
+  
+  
+ updateAllDisplays();  
+  
+  
+ await loadProfile(false);  
+  
+}  
+  
+  
+/* =====================================================  
+   REFRESH GAME  
+===================================================== */  
+  
+function refreshGame(){  
+  
+ if(!actualGameStarted){  
+  
+  return;  
+  
+ }  
+  
+  
+ renderPlayingPage();  
+  
+ showToast(  
+  "Game refreshed."  
+ );  
+  
+}  
+  
+  
+/* =====================================================  
+   BACK DURING GAME  
+===================================================== */  
+  
+function handleBackDuringGame(){  
+  
+ if(actualGameStarted){  
+  
+  showToast(  
+   "ጨዋታው ከጀመረ በኋላ ማቋረጥ አይቻልም።"  
+  );  
+  
+  return;  
+  
+ }  
+  
+  
+ showPage("page2");  
+  
+}  
+  
+  
+/* =====================================================  
+   DERASH  
+===================================================== */  
+  
+function calculateDerash(){  
+  
+ return (  
+  selectedCards.length *  
+  selectedStake *  
+  .85  
+ );  
+  
+}  
+  
+  
+/* =====================================================  
+   UPDATE DISPLAYS  
+===================================================== */  
+  
+function updateAllDisplays(){  
+  
+ const totalCost =  
+  selectedStake *  
+  selectedCards.length;  
+  
+  
+ const values = {  
+  
+  homeBalance:  
+   `${mainBalance.toFixed(2)} ETB`,  
+  
+  mainBalance2:  
+   mainBalance.toFixed(2),  
+  
+  playBalance2:  
+   playBalance.toFixed(2),  
+  
+  stakeDisplay2:  
+   selectedStake  
+    ? `${selectedStake} ETB`  
+    : "0",  
+  
+  selectedCount2:  
+   `${selectedCards.length} / 2`,  
+  
+  playerCount2:  
+   "1",  
+  
+  totalCost2:  
+   `${totalCost.toFixed(2)} ETB`,  
+  
+  mainBalance3:  
+   mainBalance.toFixed(2),  
+  
+  playBalance3:  
+   playBalance.toFixed(2),  
+  
+  stakeDisplay3:  
+   selectedStake  
+    ? `${selectedStake} ETB`  
+    : "0",  
+  
+  derashDisplay:  
+   calculateDerash().toFixed(2),  
+  
+  potentialDisplay:  
+   calculateDerash().toFixed(2),  
+  
+  walletMain:  
+   mainBalance.toFixed(2),  
+  
+  walletPlay:  
+   playBalance.toFixed(2),  
+  
+  profileId:  
+   profileData.id || "—",  
+  
+  profileName:  
+   profileData.name || "Player",  
+  
+  profileUsername:  
+   profileData.username  
+    ? "@" + profileData.username.replace(/^@/,"")  
+    : "—"  
+  
+ };  
+  
+  
+ Object.entries(values)  
+  .forEach(  
+   ([id,value])=>{  
+  
+    const element =  
+     document.getElementById(id);  
+  
+  
+    if(element){  
+  
+     element.textContent =  
+      String(value);  
+  
+    }  
+  
+   }  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   HISTORY  
+===================================================== */  
+  
+async function renderHistory(){  
+  
+ const list =  
+  document.getElementById(  
+   "historyList"  
+  );  
+  
+  
+ if(!list){  
+  
+  return;  
+  
+ }  
+  
+  
+ list.innerHTML =  
+  '<div class="empty">Loading...</div>';  
+  
+  
+ try{  
+  
+  const data =  
+   await api(  
+    "/api/history"  
+   );  
+  
+  
+  const games =  
+   Array.isArray(data.games)  
+    ? data.games  
+    : [];  
+  
+  
+  if(!games.length){  
+  
+   list.innerHTML =  
+    '<div class="empty">No games yet.</div>';  
+  
+   return;  
+  
+  }  
+  
+  
+  list.innerHTML = "";  
+  
+  
+  games.forEach(  
+   game=>{  
+  
+    const item =  
+     document.createElement(  
+      "div"  
+     );  
+  
+  
+    item.className =  
+     "history-item";  
+  
+  
+    const result =  
+     String(  
+      game.result ||  
+      "UNKNOWN"  
+     );  
+  
+  
+    const cards =  
+     Number(  
+      game.cards || 0  
+     );  
+  
+  
+    const stake =  
+     Number(  
+      game.stake || 0  
+     );  
+  
+  
+    const prize =  
+     Number(  
+      game.prize || 0  
+     );  
+  
+  
+    const strong =  
+     document.createElement(  
+      "strong"  
+     );  
+  
+  
+    strong.textContent =  
+     result;  
+  
+  
+    item.appendChild(  
+     strong  
+    );  
+  
+  
+    item.appendChild(  
+     document.createElement("br")  
+    );  
+  
+  
+    item.appendChild(  
+     document.createTextNode(  
+      `Cards: ${cards}`  
+     )  
+    );  
+  
+  
+    item.appendChild(  
+     document.createElement("br")  
+    );  
+  
+  
+    item.appendChild(  
+     document.createTextNode(  
+      `Stake: ${stake.toFixed(2)} ETB`  
+     )  
+    );  
+  
+  
+    item.appendChild(  
+     document.createElement("br")  
+    );  
+  
+  
+    item.appendChild(  
+     document.createTextNode(  
+      `Prize: ${prize.toFixed(2)} ETB`  
+     )  
+    );  
+  
+  
+    list.appendChild(  
+     item  
+    );  
+  
+   }  
+  );  
+  
+  
+ }catch(error){  
+  
+  console.error(  
+   "History error:",  
+   error  
+  );  
+  
+  
+  list.innerHTML =  
+   `<div class="empty"></div>`;  
+  
+  
+  list  
+   .querySelector(".empty")  
+   .textContent =  
+    error.message ||  
+    "Could not load history.";  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   SCORE  
+===================================================== */  
+  
+async function renderScore(){  
+  
+ const list =  
+  document.getElementById(  
+   "scoreList"  
+  );  
+  
+  
+ if(!list){  
+  
+  return;  
+  
+ }  
+  
+  
+ list.innerHTML =  
+  '<div class="empty">Loading...</div>';  
+  
+  
+ try{  
+  
+  const data =  
+   await api(  
+    "/api/history"  
+   );  
+  
+  
+  const games =  
+   Array.isArray(data.games)  
+    ? data.games  
+    : [];  
+  
+  
+  const wins =  
+   games.filter(  
+    game=>  
+     String(  
+      game.result || ""  
+     ).toUpperCase() === "WIN"  
+   );  
+  
+  
+  if(!wins.length){  
+  
+   list.innerHTML =  
+    '<div class="empty">No winning games yet.</div>';  
+  
+   return;  
+  
+  }  
+  
+  
+  list.innerHTML = "";  
+  
+  
+  wins  
+   .slice(0,10)  
+   .forEach(  
+    (game,index)=>{  
+  
+     const item =  
+      document.createElement(  
+       "div"  
+      );  
+  
+  
+     item.className =  
+      "score-item";  
+  
+  
+     const title =  
+      document.createElement(  
+       "strong"  
+      );  
+  
+  
+     title.textContent =  
+      `#${index+1} ${profileData.name || "Player"}`;  
+  
+  
+     item.appendChild(  
+      title  
+     );  
+  
+  
+     item.appendChild(  
+      document.createElement("br")  
+     );  
+  
+  
+     item.appendChild(  
+      document.createTextNode(  
+       `Prize: ${Number(game.prize || 0).toFixed(2)} ETB`  
+      )  
+     );  
+  
+  
+     list.appendChild(  
+      item  
+     );  
+  
+    }  
+   );  
+  
+  
+ }catch(error){  
+  
+  console.error(  
+   "Score error:",  
+   error  
+  );  
+  
+  
+  list.innerHTML =  
+   '<div class="empty"></div>';  
+  
+  
+  list  
+   .querySelector(".empty")  
+   .textContent =  
+    error.message ||  
+    "Could not load score.";  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   PROFILE  
+===================================================== */  
+  
+function renderProfile(){  
+  
+ updateAllDisplays();  
+  
+}  
+  
+  
+/* =====================================================  
+   MODAL BACKGROUND  
+===================================================== */  
+  
+document.addEventListener(  
+ "click",  
+ event=>{  
+  
+  const modal =  
+   document.getElementById(  
+    "rulesModal"  
+   );  
+  
+  
+  if(  
+   modal &&  
+   event.target === modal  
+  ){  
+  
+   closeRules();  
+  
+  }  
+  
+ }  
+);  
+  
+  
+/* =====================================================  
+   TELEGRAM BACK BUTTON  
+===================================================== */  
+  
+function setupTelegramBackButton(){  
+  
+ if(  
+  !tg ||  
+  !tg.BackButton  
+ ){  
+  
+  return;  
+  
+ }  
+  
+  
+ try{  
+  
+  tg.BackButton.onClick(  
+   ()=>{  
+  
+    if(  
+     document  
+      .getElementById("rulesModal")  
+      ?.classList.contains("show")  
+    ){  
+  
+     closeRules();  
+  
+     return;  
+  
+    }  
+  
+  
+    if(actualGameStarted){  
+  
+     showToast(  
+      "ጨዋታው እየተካሄደ ነው።"  
+     );  
+  
+     return;  
+  
+    }  
+  
+  
+    const page =  
+     document.querySelector(  
+      ".page.active"  
+     );  
+  
+  
+    if(  
+     page &&  
+     page.id !== "page1"  
+    ){  
+  
+     showPage("page1");  
+  
+    }  
+  
+   }  
+  );  
+  
+ }catch(error){  
+  
+  console.warn(  
+   "Telegram BackButton error:",  
+   error  
+  );  
+  
+ }  
+  
+}  
+  
+  
+/* =====================================================  
+   INITIALIZATION  
+===================================================== */  
+  
+document.addEventListener(  
+ "DOMContentLoaded",  
+ async()=>{  
+  
+  initializeTelegram();  
+  
+  setupTelegramBackButton();  
+  
+  renderBigBoard();  
+  
+  updateAllDisplays();  
+  
+  await loadProfile(false);  
+  
+ }  
 );  
   
 </script>  </body>  
