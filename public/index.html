@@ -2,1192 +2,1716 @@
 <html lang="am">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080511">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <title>Frick Bingo</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+
 :root{
- --bg:#070511;
- --bg2:#0d081b;
- --panel:#121027;
- --panel2:#1a1433;
- --panel3:#251a49;
- --purple:#7c3cff;
- --purple2:#b06cff;
- --purple3:#d19cff;
- --green:#20e59b;
- --green2:#69ffc6;
- --red:#ff4d67;
- --yellow:#ffd34d;
- --white:#fff;
- --muted:#aaa3c4;
- --border:#392866;
+    --bg:#080612;
+    --panel:#131025;
+    --panel2:#1b1733;
+    --panel3:#241d42;
 
- --glow-purple:
-  0 0 8px rgba(124,60,255,.75),
-  0 0 22px rgba(124,60,255,.45),
-  0 0 45px rgba(124,60,255,.18);
+    --purple:#7c3cff;
+    --purple2:#a56bff;
+    --purple3:#d0a8ff;
 
- --glow-green:
-  0 0 8px rgba(32,229,155,.8),
-  0 0 22px rgba(32,229,155,.4);
+    --green:#35e59a;
+    --red:#ff4f70;
+    --yellow:#ffd45a;
 
- --glow-yellow:
-  0 0 10px rgba(255,211,77,.9),
-  0 0 25px rgba(255,211,77,.45);
+    --text:#ffffff;
+    --muted:#9992b5;
+
+    --shadow:0 0 18px rgba(124,60,255,.25);
 }
 
 *{
- box-sizing:border-box;
- margin:0;
- padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
 }
 
-html,body{
- min-height:100%;
- background:
-  radial-gradient(circle at 50% -10%,#48208a 0%,transparent 34%),
-  radial-gradient(circle at 0% 40%,#211047 0%,transparent 36%),
-  radial-gradient(circle at 100% 75%,#2b1055 0%,transparent 38%),
-  linear-gradient(160deg,#080511,#05030b);
- color:#fff;
- font-family:Arial,"Noto Sans Ethiopic",sans-serif;
- overscroll-behavior:none;
+html,
+body{
+    margin:0;
+    padding:0;
+    width:100%;
+    min-height:100%;
+    background:
+        radial-gradient(circle at top,#20133f 0,#080612 48%,#05040b 100%);
+    color:var(--text);
+    font-family:
+        Arial,
+        "Noto Sans Ethiopic",
+        sans-serif;
 }
 
 body{
- padding-bottom:78px;
- overflow-x:hidden;
+    overflow-x:hidden;
 }
 
 button{
- font:inherit;
-}
-
-button{
- -webkit-tap-highlight-color:transparent;
- user-select:none;
- transition:
-  transform .18s ease,
-  box-shadow .18s ease,
-  border-color .18s ease,
-  background .18s ease,
-  opacity .18s ease;
-}
-
-button:active{
- transform:scale(.95);
-}
-
-button:focus-visible{
- outline:2px solid var(--purple2);
- outline-offset:2px;
+    font-family:inherit;
 }
 
 .app{
- width:100%;
- max-width:1250px;
- min-height:100vh;
- margin:auto;
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    margin:auto;
+    padding-bottom:70px;
 }
 
+/* =========================
+   COMMON
+========================= */
+
 .page{
- display:none;
- padding:14px;
+    display:none;
+    width:100%;
+    padding:8px;
 }
 
 .page.active{
- display:block;
- animation:pageIn .3s ease;
+    display:block;
 }
 
-@keyframes pageIn{
- from{
-  opacity:0;
-  transform:translateY(10px);
- }
- to{
-  opacity:1;
-  transform:translateY(0);
- }
+button{
+    border:0;
+    cursor:pointer;
 }
 
-/* HEADER */
+.glow{
+    text-shadow:
+        0 0 5px var(--purple),
+        0 0 12px var(--purple),
+        0 0 22px rgba(124,60,255,.7);
+}
 
-.header{
- height:64px;
- display:flex;
- align-items:center;
- justify-content:space-between;
- padding:10px 16px;
- position:sticky;
- top:0;
- z-index:50;
- background:
-  linear-gradient(
-   180deg,
-   rgba(9,5,21,.96),
-   rgba(8,5,18,.82)
-  );
- backdrop-filter:blur(18px);
- border-bottom:1px solid rgba(176,108,255,.4);
- box-shadow:
-  0 8px 30px rgba(0,0,0,.4),
-  0 0 28px rgba(124,60,255,.12);
+.small-muted{
+    color:var(--muted);
+    font-size:10px;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.app-header{
+    height:43px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:7px;
 }
 
 .logo{
- font-size:24px;
- font-weight:900;
- letter-spacing:.5px;
- color:#fff;
- text-shadow:
-  0 0 4px #fff,
-  0 0 10px var(--purple2),
-  0 0 22px var(--purple),
-  0 0 42px rgba(124,60,255,.8);
- animation:logoPulse 3s ease-in-out infinite;
+    font-size:22px;
+    font-weight:1000;
+    letter-spacing:.5px;
+    color:#fff;
+    text-shadow:
+        0 0 5px var(--purple),
+        0 0 15px var(--purple),
+        0 0 30px rgba(124,60,255,.7);
 }
 
-@keyframes logoPulse{
- 0%,100%{
-  text-shadow:
-   0 0 4px #fff,
-   0 0 10px var(--purple2),
-   0 0 22px var(--purple);
- }
- 50%{
-  text-shadow:
-   0 0 5px #fff,
-   0 0 14px var(--purple2),
-   0 0 30px var(--purple),
-   0 0 50px rgba(124,60,255,.8);
- }
+.header-btn{
+    min-width:45px;
+    height:31px;
+    padding:0 10px;
+    border-radius:9px;
+
+    background:linear-gradient(
+        145deg,
+        #2a1d4b,
+        #17102c
+    );
+
+    border:1px solid rgba(165,107,255,.5);
+    color:#fff;
+
+    font-size:11px;
+    font-weight:900;
+
+    box-shadow:0 0 10px rgba(124,60,255,.15);
 }
 
-.rules-btn{
- padding:8px 13px;
- border-radius:11px;
- color:#fff;
- background:linear-gradient(
-  145deg,
-  rgba(124,60,255,.3),
-  rgba(65,30,130,.2)
- );
- border:1px solid var(--purple2);
- box-shadow:
-  0 0 8px rgba(124,60,255,.4),
-  inset 0 0 10px rgba(124,60,255,.1);
- cursor:pointer;
+.header-btn:active{
+    transform:scale(.96);
 }
 
-/* WELCOME */
+/* =========================
+   HOME
+========================= */
 
-.welcome-grid{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:12px;
- max-width:700px;
- margin:22px auto;
+.hero{
+    text-align:center;
+    padding:10px 0 8px;
 }
 
-.welcome-box{
- position:relative;
- overflow:hidden;
- background:
-  linear-gradient(
-   145deg,
-   rgba(43,31,78,.96),
-   rgba(13,9,28,.98)
-  );
- border:1px solid rgba(176,108,255,.45);
- border-radius:20px;
- padding:25px 12px;
- text-align:center;
- box-shadow:
-  0 0 14px rgba(124,60,255,.2),
-  0 12px 35px rgba(0,0,0,.3),
-  inset 0 0 25px rgba(124,60,255,.07);
+.hero-title{
+    font-size:34px;
+    font-weight:1000;
+    letter-spacing:2px;
+    margin-bottom:4px;
 }
 
-.welcome-box h2{
- color:var(--purple3);
- text-shadow:
-  0 0 8px var(--purple),
-  0 0 20px rgba(124,60,255,.55);
+.hero-subtitle{
+    color:var(--muted);
+    font-size:11px;
 }
 
-.welcome-box p{
- margin-top:8px;
- color:var(--muted);
- line-height:1.5;
-}
+.stake-panel{
+    background:
+        linear-gradient(
+            145deg,
+            rgba(36,29,66,.96),
+            rgba(14,10,27,.96)
+        );
 
-/* TITLES */
+    border:1px solid rgba(165,107,255,.35);
+    border-radius:17px;
+
+    padding:11px;
+
+    box-shadow:var(--shadow);
+}
 
 .section-title{
- text-align:center;
- margin:25px 0 14px;
- font-size:19px;
- color:#eee8ff;
- text-shadow:
-  0 0 8px rgba(124,60,255,.7),
-  0 0 18px rgba(124,60,255,.25);
+    font-size:13px;
+    font-weight:900;
+    margin-bottom:8px;
 }
 
-/* STAKE */
-
-.stake-grid{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:14px;
- max-width:500px;
- margin:auto;
+.stakes{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
 }
 
 .stake-btn{
- background:
-  linear-gradient(145deg,#2b1d58,#120d25);
- color:#fff;
- border:1px solid #50398a;
- border-radius:18px;
- padding:20px 10px;
- cursor:pointer;
- font-size:23px;
- font-weight:900;
- box-shadow:
-  0 0 10px rgba(124,60,255,.18),
-  inset 0 0 18px rgba(124,60,255,.06);
+    height:43px;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #2b214c,
+            #151027
+        );
+
+    border:1px solid #443366;
+
+    color:#fff;
+
+    font-size:15px;
+    font-weight:1000;
+
+    transition:.15s;
 }
 
-.stake-btn:hover{
- border-color:var(--purple2);
- box-shadow:var(--glow-purple);
+.stake-btn.active{
+    background:
+        linear-gradient(
+            145deg,
+            var(--purple),
+            #5421bd
+        );
+
+    border-color:#bd94ff;
+
+    box-shadow:
+        0 0 12px rgba(124,60,255,.65),
+        inset 0 0 10px rgba(255,255,255,.08);
 }
 
-.stake-btn.selected{
- background:
-  linear-gradient(145deg,#7139df,#351572);
- border-color:#d1b4ff;
- box-shadow:
-  0 0 12px var(--purple),
-  0 0 28px rgba(124,60,255,.7),
-  0 0 55px rgba(124,60,255,.25),
-  inset 0 0 20px rgba(255,255,255,.1);
- transform:translateY(-2px);
+.stake-btn:active{
+    transform:scale(.97);
 }
 
-/* PANELS */
+.main-play-card{
+    margin-top:8px;
 
-.simple-panel{
- background:
-  linear-gradient(
-   145deg,
-   rgba(31,23,59,.97),
-   rgba(10,7,22,.99)
-  );
- border:1px solid rgba(124,60,255,.4);
- border-radius:19px;
- padding:17px;
- box-shadow:
-  0 0 15px rgba(124,60,255,.14),
-  0 12px 30px rgba(0,0,0,.3),
-  inset 0 0 20px rgba(124,60,255,.05);
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
 }
 
-.simple-panel h2{
- text-align:center;
- color:var(--purple3);
- margin-bottom:14px;
- text-shadow:
-  0 0 12px var(--purple),
-  0 0 24px rgba(124,60,255,.35);
+.balance-box{
+    background:#120d23;
+    border:1px solid #322650;
+    border-radius:12px;
+    padding:9px;
+    text-align:center;
 }
 
-#homeBalance{
- text-shadow:
-  0 0 8px rgba(32,229,155,.8),
-  0 0 20px rgba(32,229,155,.4);
+.balance-label{
+    font-size:9px;
+    color:var(--muted);
 }
 
-/* PLAY */
-
-.play-main,
-.call-btn{
- position:relative;
- overflow:hidden;
- display:block;
- width:min(500px,95%);
- margin:24px auto 0;
- padding:16px;
- border:1px solid #d0b0ff;
- border-radius:15px;
- background:
-  linear-gradient(
-   100deg,
-   #6725e8,
-   #ae59ff,
-   #6725e8
-  );
- background-size:200% 100%;
- color:#fff;
- font-weight:900;
- font-size:17px;
- letter-spacing:.7px;
- cursor:pointer;
- box-shadow:
-  0 0 12px rgba(124,60,255,.8),
-  0 0 28px rgba(124,60,255,.4);
- animation:buttonGlow 2.2s ease-in-out infinite;
+.balance-value{
+    margin-top:3px;
+    font-size:16px;
+    font-weight:1000;
 }
 
-.play-main:disabled,
-.call-btn:disabled{
- opacity:.4;
- cursor:not-allowed;
- animation:none;
+/* =========================
+   TOP INFO
+========================= */
+
+.top-info{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:4px;
+    margin-bottom:6px;
 }
 
-@keyframes buttonGlow{
- 0%,100%{
-  box-shadow:
-   0 0 10px rgba(124,60,255,.7),
-   0 0 24px rgba(124,60,255,.3);
-  background-position:0% 50%;
- }
- 50%{
-  box-shadow:
-   0 0 17px rgba(176,108,255,1),
-   0 0 38px rgba(124,60,255,.55);
-  background-position:100% 50%;
- }
+.info-box{
+    min-width:0;
+    padding:6px 2px;
+
+    text-align:center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #20183a,
+            #100c20
+        );
+
+    border:1px solid #352654;
+    border-radius:8px;
 }
 
-/* PAGE 2 */
-
-.page2-header{
- display:grid;
- grid-template-columns:42px 1fr 42px;
- align-items:center;
- gap:10px;
- margin-bottom:12px;
+.info-label{
+    color:var(--muted);
+    font-size:7px;
+    white-space:nowrap;
 }
 
-.back-btn,
-.refresh-btn,
-.control-btn{
- background:
-  linear-gradient(145deg,#251a45,#100b22);
- color:#fff;
- border:1px solid #4e3980;
- cursor:pointer;
- border-radius:12px;
- box-shadow:
-  0 0 8px rgba(124,60,255,.15);
+.info-value{
+    margin-top:2px;
+    font-size:10px;
+    font-weight:1000;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
-.back-btn,
-.refresh-btn{
- width:42px;
- height:42px;
- font-size:18px;
-}
-
-.selection-title{
- text-align:center;
- font-size:20px;
- font-weight:900;
- color:#fff;
- text-shadow:
-  0 0 8px rgba(176,108,255,.65),
-  0 0 20px rgba(124,60,255,.25);
-}
-
-/* INFO */
-
-.top-info,
-.game-stats{
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:8px;
- margin-bottom:11px;
-}
-
-.info-box,
-.game-stat{
- background:
-  linear-gradient(145deg,#251a44,#110c24);
- border:1px solid rgba(124,60,255,.34);
- border-radius:12px;
- padding:9px 6px;
- text-align:center;
- box-shadow:
-  inset 0 0 12px rgba(124,60,255,.05);
-}
-
-.info-box span,
-.game-stat small{
- display:block;
- color:var(--muted);
- font-size:10px;
-}
-
-.info-box strong,
-.game-stat b{
- display:block;
- color:var(--green);
- margin-top:4px;
- text-shadow:
-  0 0 7px rgba(32,229,155,.55),
-  0 0 15px rgba(32,229,155,.2);
-}
-
-/* TIMER */
-
-.timer{
- text-align:center;
- background:
-  linear-gradient(145deg,#30205d,#110b27);
- border:1px solid var(--purple2);
- border-radius:15px;
- padding:9px 20px;
- margin:9px auto 13px;
- width:max-content;
- box-shadow:
-  0 0 12px rgba(124,60,255,.4),
-  0 0 28px rgba(124,60,255,.15);
- color:#ddd6ef;
-}
-
-.timer span{
- display:block;
- color:var(--yellow);
- font-size:27px;
- font-weight:900;
- text-shadow:
-  0 0 8px #ffd34d,
-  0 0 20px rgba(255,211,77,.65);
-}
-
-/* COST */
+/* =========================
+   COST PANEL
+========================= */
 
 .cost-panel{
- display:flex;
- justify-content:space-between;
- align-items:center;
- gap:10px;
- margin-bottom:10px;
- padding:10px 13px;
- border-radius:12px;
- background:
-  linear-gradient(145deg,#21163e,#0d091c);
- border:1px solid rgba(32,229,155,.25);
-}
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 
-.cost-panel span{
- color:var(--muted);
- font-size:12px;
+    min-height:32px;
+
+    margin-bottom:5px;
+    padding:6px 9px;
+
+    border-radius:9px;
+
+    background:#171029;
+    border:1px solid #38275a;
+
+    font-size:10px;
 }
 
 .cost-panel strong{
- color:var(--green);
- text-shadow:0 0 8px rgba(32,229,155,.6);
+    color:var(--yellow);
 }
 
-/* SELECTOR */
+/* =========================
+   TIMER
+========================= */
+
+.timer{
+    min-height:31px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    margin-bottom:5px;
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #17102d,
+            #27174a,
+            #17102d
+        );
+
+    border:1px solid rgba(165,107,255,.4);
+
+    color:var(--purple3);
+
+    font-size:12px;
+    font-weight:1000;
+
+    box-shadow:0 0 12px rgba(124,60,255,.13);
+}
+
+.timer.warning{
+    color:var(--yellow);
+}
+
+.timer.danger{
+    color:var(--red);
+}
+
+/* =========================
+   PAGE 2 SELECTOR
+========================= */
 
 .selector-panel{
- height:42vh;
- min-height:240px;
- max-height:390px;
- overflow-y:auto;
- background:
-  linear-gradient(145deg,#17102f,#080611);
- border:1px solid rgba(124,60,255,.4);
- border-radius:17px;
- padding:9px;
- box-shadow:
-  inset 0 0 25px rgba(124,60,255,.07),
-  0 0 18px rgba(124,60,255,.1);
- scrollbar-width:thin;
+    background:
+        linear-gradient(
+            145deg,
+            #17102d,
+            #0d0919
+        );
+
+    border:1px solid rgba(124,60,255,.4);
+
+    border-radius:13px;
+
+    padding:7px;
+
+    height:220px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 0 15px rgba(124,60,255,.14);
 }
 
-.selector-hint{
- color:var(--muted);
- font-size:11px;
- text-align:center;
- margin-bottom:8px;
- position:sticky;
- top:0;
- background:rgba(18,13,36,.96);
- backdrop-filter:blur(12px);
- padding:7px;
- border-radius:8px;
- z-index:2;
+.selector-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-bottom:5px;
+
+    font-size:11px;
+    font-weight:1000;
+}
+
+.selector-title span:last-child{
+    color:var(--muted);
+    font-size:9px;
 }
 
 .card-number-board{
- display:grid;
- grid-template-columns:repeat(12,1fr);
- gap:5px;
+    display:grid;
+
+    grid-template-columns:
+        repeat(10,minmax(0,1fr));
+
+    gap:3px;
+
+    overflow-y:auto;
+
+    height:183px;
+
+    padding-right:2px;
+}
+
+.card-number-board::-webkit-scrollbar{
+    width:3px;
+}
+
+.card-number-board::-webkit-scrollbar-thumb{
+    background:#53348a;
+    border-radius:10px;
 }
 
 .card-number{
- min-height:35px;
- border-radius:8px;
- border:1px solid #342950;
- background:
-  linear-gradient(145deg,#211a39,#100b21);
- color:#fff;
- cursor:pointer;
- font-size:11px;
+    height:26px;
+    min-width:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:5px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #2b2347,
+            #171129
+        );
+
+    border:1px solid #3c315d;
+
+    color:#fff;
+
+    font-size:9px;
+    font-weight:900;
+
+    transition:.12s;
+}
+
+.card-number:hover{
+    border-color:#8653d8;
 }
 
 .card-number.selected{
- background:
-  linear-gradient(145deg,#7438e8,#b06cff);
- border-color:#e1cfff;
- box-shadow:
-  0 0 9px #7c3cff,
-  0 0 20px rgba(124,60,255,.7);
- font-weight:900;
+    background:
+        linear-gradient(
+            145deg,
+            #7c3cff,
+            #4f1db5
+        );
+
+    border-color:#c69dff;
+
+    color:#fff;
+
+    box-shadow:
+        0 0 7px rgba(124,60,255,.8),
+        inset 0 0 5px rgba(255,255,255,.08);
+
+    transform:translateY(-1px);
 }
 
-.card-number.selected::after{
- content:" ✓";
- color:#fff;
+.card-number:active{
+    transform:scale(.94);
 }
 
-/* SELECTED */
+/* =========================
+   SELECTED CARDS
+========================= */
+
+.selected-section{
+    margin-top:5px;
+}
 
 .selected-title{
- margin:13px 0 8px;
- color:var(--muted);
- font-size:13px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    font-size:10px;
+    font-weight:1000;
+
+    margin-bottom:4px;
 }
 
-.selected-cards{
- display:flex;
- flex-wrap:wrap;
- gap:7px;
+.selected-title span:last-child{
+    color:var(--muted);
+    font-size:9px;
+}
+
+#selectedCards{
+    display:flex;
+    align-items:center;
+
+    gap:4px;
+
+    min-height:25px;
+
+    overflow-x:auto;
+
+    scrollbar-width:none;
+}
+
+#selectedCards::-webkit-scrollbar{
+    display:none;
 }
 
 .selected-chip{
- background:
-  linear-gradient(145deg,#652fca,#28114e);
- border:1px solid var(--purple2);
- color:#fff;
- padding:8px 11px;
- border-radius:10px;
- cursor:pointer;
- font-weight:bold;
- box-shadow:
-  0 0 9px rgba(124,60,255,.35);
+    flex:0 0 auto;
+
+    height:24px;
+
+    padding:0 8px;
+
+    border-radius:7px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #6d34d9,
+            #381378
+        );
+
+    border:1px solid #a46cff;
+
+    color:#fff;
+
+    font-size:9px;
+    font-weight:1000;
+
+    box-shadow:0 0 7px rgba(124,60,255,.35);
 }
 
-.cards-preview{
- margin-top:10px;
- display:grid;
- grid-template-columns:repeat(2,minmax(0,1fr));
- gap:10px;
+.selected-empty{
+    color:var(--muted);
+    font-size:9px;
 }
 
-/* READY */
+/* =========================
+   CARD PREVIEW
+========================= */
 
-.ready-btn{
- width:100%;
- margin-top:12px;
- padding:14px;
- border:1px solid rgba(32,229,155,.7);
- border-radius:14px;
- background:
-  linear-gradient(90deg,#079665,#20e59b,#079665);
- background-size:200% 100%;
- color:#03140e;
- font-weight:900;
- cursor:pointer;
- box-shadow:
-  0 0 10px rgba(32,229,155,.4);
+.preview-title{
+    margin-top:5px;
+    margin-bottom:4px;
+
+    font-size:10px;
+    font-weight:1000;
 }
 
-.ready-btn.ready{
- background:
-  linear-gradient(90deg,#e7a915,#ffd34d,#e7a915);
- color:#201600;
- border-color:#ffe58c;
- box-shadow:var(--glow-yellow);
+#cardsPreview{
+    display:flex;
+    gap:6px;
+
+    min-height:105px;
+
+    overflow-x:auto;
+
+    scrollbar-width:none;
 }
 
-.ready-btn:disabled{
- opacity:.5;
- cursor:not-allowed;
+#cardsPreview::-webkit-scrollbar{
+    display:none;
 }
 
-/* BINGO CARD */
+#cardsPreview .bingo-card{
+    flex:0 0 108px;
+}
+
+/* =========================
+   BINGO CARD
+========================= */
 
 .bingo-card{
- background:
-  linear-gradient(145deg,#241945,#0c0818);
- border:1px solid rgba(176,108,255,.5);
- border-radius:14px;
- padding:8px;
- box-shadow:
-  0 0 12px rgba(124,60,255,.22);
+    background:
+        linear-gradient(
+            145deg,
+            #241945,
+            #0c0818
+        );
+
+    border:1px solid rgba(176,108,255,.5);
+
+    border-radius:10px;
+
+    padding:5px;
+
+    box-shadow:
+        0 0 10px rgba(124,60,255,.22);
 }
 
 .bingo-header,
 .bingo-grid{
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:3px;
+    display:grid;
+
+    grid-template-columns:
+        repeat(5,1fr);
+
+    gap:2px;
 }
 
 .bingo-header{
- margin-bottom:4px;
+    margin-bottom:3px;
 }
 
 .bingo-header div{
- text-align:center;
- color:var(--purple3);
- font-size:12px;
- font-weight:900;
- padding:3px;
- text-shadow:
-  0 0 7px var(--purple);
+    text-align:center;
+
+    color:var(--purple3);
+
+    font-size:8px;
+    font-weight:1000;
+
+    padding:2px;
+
+    text-shadow:
+        0 0 6px var(--purple);
 }
 
 .bingo-cell{
- aspect-ratio:1;
- display:flex;
- align-items:center;
- justify-content:center;
- background:
-  linear-gradient(145deg,#2b2347,#171129);
- border:1px solid #3c315d;
- border-radius:6px;
- font-size:11px;
- font-weight:bold;
-}
+    aspect-ratio:1;
 
-.bingo-cell.called{
- background:
-  radial-gradient(circle at 35% 25%,var(--green2),var(--green));
- color:#03140e;
- border-color:#8fffd4;
- box-shadow:
-  0 0 8px #20e59b,
-  0 0 17px rgba(32,229,155,.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #2b2347,
+            #171129
+        );
+
+    border:1px solid #3c315d;
+
+    border-radius:4px;
+
+    font-size:8px;
+    font-weight:1000;
 }
 
 .bingo-cell.free{
- background:
-  linear-gradient(145deg,#7c3cff,#b06cff);
- color:#fff;
- border-color:#d2b6ff;
- box-shadow:
-  0 0 9px rgba(124,60,255,.8);
+    background:
+        linear-gradient(
+            145deg,
+            #7c3cff,
+            #41158f
+        );
+
+    color:#fff;
+
+    box-shadow:
+        0 0 6px rgba(124,60,255,.5);
 }
 
-/* LIVE */
+.bingo-cell.marked{
+    background:
+        linear-gradient(
+            145deg,
+            #25c983,
+            #0d6947
+        );
 
-.game-board-panel,
-.your-card-section{
- background:
-  linear-gradient(145deg,#1a1235,#090611);
- border:1px solid rgba(124,60,255,.45);
- border-radius:19px;
- padding:11px;
- box-shadow:
-  0 0 17px rgba(124,60,255,.17);
+    border-color:#54f2ad;
+
+    box-shadow:
+        0 0 8px rgba(53,229,154,.45);
+}
+
+/* =========================
+   READY BUTTON
+========================= */
+
+.ready-button{
+    width:100%;
+    height:38px;
+
+    margin-top:6px;
+
+    border-radius:10px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #7c3cff,
+            #4c1cae
+        );
+
+    border:1px solid #c69dff;
+
+    color:#fff;
+
+    font-size:12px;
+    font-weight:1000;
+
+    box-shadow:
+        0 0 13px rgba(124,60,255,.45);
+}
+
+.ready-button:disabled{
+    opacity:.4;
+    box-shadow:none;
+}
+
+.ready-button:active{
+    transform:scale(.98);
+}
+
+/* =========================
+   WATCH MESSAGE
+========================= */
+
+.watch-message{
+    display:none;
+
+    margin-top:6px;
+
+    padding:7px;
+
+    text-align:center;
+
+    border-radius:8px;
+
+    background:#17102b;
+    border:1px solid #3b285d;
+
+    color:var(--muted);
+
+    font-size:9px;
+}
+
+/* =========================
+   PAGE 3 GAME
+========================= */
+
+.game-page{
+    padding:7px;
+}
+
+.game-stats{
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:4px;
+
+    margin-bottom:6px;
+}
+
+.game-stat{
+    background:
+        linear-gradient(
+            145deg,
+            #20183a,
+            #100c20
+        );
+
+    border:1px solid #382858;
+
+    border-radius:8px;
+
+    padding:6px 2px;
+
+    text-align:center;
+}
+
+.game-stat-label{
+    color:var(--muted);
+    font-size:7px;
+}
+
+.game-stat-value{
+    margin-top:2px;
+
+    font-size:10px;
+    font-weight:1000;
+}
+
+/* =========================
+   GAME BOARD
+========================= */
+
+.game-board-panel{
+    background:
+        linear-gradient(
+            145deg,
+            #1a1235,
+            #090611
+        );
+
+    border:1px solid rgba(124,60,255,.45);
+
+    border-radius:14px;
+
+    padding:7px;
+
+    box-shadow:
+        0 0 15px rgba(124,60,255,.17);
+
+    height:273px;
+
+    overflow:hidden;
 }
 
 .panel-title{
- text-align:center;
- color:var(--purple3);
- font-size:18px;
- font-weight:900;
- margin-bottom:9px;
- text-shadow:
-  0 0 10px var(--purple);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-bottom:4px;
+
+    font-size:10px;
+    font-weight:1000;
+}
+
+.panel-title span:last-child{
+    color:var(--muted);
+    font-size:8px;
 }
 
 .big-board-header,
 .big-board{
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:5px;
+    display:grid;
+
+    grid-template-columns:
+        repeat(5,1fr);
+
+    gap:3px;
 }
 
 .big-board-header{
- margin-bottom:5px;
+    margin-bottom:3px;
 }
 
 .big-board-header div{
- text-align:center;
- background:
-  linear-gradient(145deg,#4a238e,#241044);
- color:#e3d4ff;
- font-weight:900;
- font-size:19px;
- padding:8px;
- border-radius:8px;
- border:1px solid #7048ad;
+    text-align:center;
+
+    color:var(--purple3);
+
+    font-size:11px;
+    font-weight:1000;
+
+    padding:3px;
+
+    border-radius:5px;
+
+    background:
+        rgba(124,60,255,.13);
+
+    text-shadow:
+        0 0 7px var(--purple);
+}
+
+.big-board{
+    height:229px;
+
+    overflow:hidden;
 }
 
 .board-number{
- aspect-ratio:1;
- background:
-  linear-gradient(145deg,#201934,#100b20);
- border:1px solid #372d51;
- border-radius:8px;
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:15px;
- font-weight:bold;
+    aspect-ratio:1;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #27203f,
+            #151027
+        );
+
+    border:1px solid #3b3156;
+
+    border-radius:4px;
+
+    font-size:9px;
+    font-weight:1000;
+
+    color:#fff;
 }
 
 .board-number.called{
- background:
-  linear-gradient(145deg,#13bd7e,#20e59b);
- color:#03140e;
- border-color:#7affca;
- box-shadow:
-  0 0 8px #20e59b,
-  0 0 16px rgba(32,229,155,.45);
+    background:
+        linear-gradient(
+            145deg,
+            #6531c7,
+            #351276
+        );
+
+    border-color:#a66eff;
+
+    color:#fff;
+
+    box-shadow:
+        0 0 5px rgba(124,60,255,.35);
 }
 
 .board-number.last-called{
- background:
-  radial-gradient(circle at 35% 25%,#fff5ad,#ffd34d);
- color:#171000;
- transform:scale(1.08);
- border-color:#fff2a0;
- box-shadow:var(--glow-yellow);
+    background:
+        linear-gradient(
+            145deg,
+            #35e59a,
+            #0b7750
+        );
+
+    border-color:#65ffc0;
+
+    color:#fff;
+
+    box-shadow:
+        0 0 9px rgba(53,229,154,.65);
+
+    transform:scale(1.08);
+
+    z-index:2;
 }
 
-/* LIVE CONTROLS */
+/* =========================
+   LIVE CONTROLS
+========================= */
 
 .live-controls{
- display:grid;
- grid-template-columns:1fr 1fr 1fr;
- gap:9px;
- margin-top:11px;
+    display:grid;
+
+    grid-template-columns:
+        1.4fr 1fr 1fr;
+
+    gap:5px;
+
+    margin-top:6px;
 }
 
-.call-display{
- background:
-  radial-gradient(circle at 50% 20%,#422873,#16102d);
- border:1px solid var(--purple2);
- border-radius:15px;
- text-align:center;
- padding:9px;
- box-shadow:
-  0 0 14px rgba(124,60,255,.3);
+.live-control{
+    min-height:34px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    gap:4px;
+
+    border-radius:8px;
+
+    background:#171029;
+
+    border:1px solid #382858;
+
+    color:#fff;
+
+    font-size:8px;
+    font-weight:1000;
 }
 
-.call-display small{
- color:var(--muted);
+.live-control strong{
+    color:var(--purple3);
 }
 
-.called-number{
- font-size:35px;
- font-weight:900;
- color:var(--yellow);
- margin-top:3px;
- text-shadow:
-  0 0 7px #ffd34d,
-  0 0 20px rgba(255,211,77,.75);
+.switch{
+    width:24px;
+    height:13px;
+
+    border-radius:20px;
+
+    background:#382e50;
+
+    position:relative;
 }
 
-.control-btn{
- padding:10px;
- font-weight:bold;
+.switch::after{
+    content:"";
+
+    position:absolute;
+
+    top:2px;
+    left:2px;
+
+    width:9px;
+    height:9px;
+
+    border-radius:50%;
+
+    background:#999;
+
+    transition:.2s;
 }
 
-.control-btn.on{
- border-color:var(--green);
- color:var(--green);
- box-shadow:
-  0 0 9px rgba(32,229,155,.3);
+.switch.on{
+    background:var(--purple);
 }
 
-.call-btn{
- width:100%;
- margin:11px 0 0;
+.switch.on::after{
+    left:13px;
+    background:#fff;
 }
 
-/* PLAYER CARD */
+/* =========================
+   CALL BUTTON
+========================= */
 
-.player-card-title{
- text-align:center;
- color:var(--muted);
- margin-bottom:9px;
+.call-button{
+    width:100%;
+    height:38px;
+
+    margin-top:6px;
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #35c989,
+            #13714e
+        );
+
+    border:1px solid #68ffc1;
+
+    color:#fff;
+
+    font-size:11px;
+    font-weight:1000;
+
+    box-shadow:
+        0 0 12px rgba(53,229,154,.3);
+}
+
+.call-button:disabled{
+    opacity:.4;
+    box-shadow:none;
+}
+
+/* =========================
+   YOUR CARD
+========================= */
+
+.your-card-section{
+    margin-top:6px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #1a1235,
+            #090611
+        );
+
+    border:1px solid rgba(124,60,255,.45);
+
+    border-radius:14px;
+
+    padding:7px;
+
+    box-shadow:
+        0 0 15px rgba(124,60,255,.17);
+}
+
+.your-card-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-bottom:5px;
+
+    font-size:10px;
+    font-weight:1000;
+}
+
+.your-card-title span:last-child{
+    color:var(--muted);
+    font-size:8px;
 }
 
 .playing-cards{
- display:grid;
- grid-template-columns:repeat(2,minmax(0,1fr));
- gap:10px;
+    display:flex;
+    gap:6px;
+
+    overflow-x:auto;
+
+    scrollbar-width:none;
 }
 
-.watch-message{
- margin-top:12px;
- text-align:center;
- background:
-  linear-gradient(145deg,#21183c,#0e0a1d);
- border:1px solid var(--border);
- border-radius:15px;
- padding:13px;
- color:var(--muted);
- line-height:1.7;
+.playing-cards::-webkit-scrollbar{
+    display:none;
 }
 
-/* LISTS */
-
-.history-item,
-.score-item,
-.wallet-item{
- padding:12px;
- background:
-  linear-gradient(145deg,#241a42,#110c22);
- border:1px solid rgba(124,60,255,.28);
- border-radius:11px;
- margin-bottom:8px;
+.playing-cards .bingo-card{
+    flex:0 0 110px;
 }
 
-.profile-row,
-.wallet-balance{
- display:flex;
- justify-content:space-between;
- gap:15px;
- padding:12px 0;
- border-bottom:1px solid var(--border);
- word-break:break-word;
+/* =========================
+   LAST CALLED
+========================= */
+
+.last-called-box{
+    position:relative;
 }
 
-.empty{
- text-align:center;
- color:var(--muted);
- padding:20px 10px;
+.last-ball{
+    color:var(--green)!important;
+    font-size:10px!important;
 }
 
-/* BOTTOM NAV */
+/* =========================
+   BOTTOM NAV
+========================= */
 
 .bottom-nav{
- position:fixed;
- left:0;
- right:0;
- bottom:0;
- z-index:100;
- background:rgba(8,5,17,.95);
- backdrop-filter:blur(18px);
- border-top:1px solid rgba(124,60,255,.45);
- display:grid;
- grid-template-columns:repeat(5,1fr);
- max-width:1250px;
- margin:auto;
- box-shadow:
-  0 -8px 30px rgba(0,0,0,.5);
+    position:fixed;
+
+    left:50%;
+
+    bottom:0;
+
+    transform:translateX(-50%);
+
+    width:100%;
+    max-width:430px;
+
+    height:61px;
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(5,1fr);
+
+    gap:3px;
+
+    padding:
+        6px
+        5px
+        calc(6px + env(safe-area-inset-bottom));
+
+    background:
+        rgba(10,7,20,.96);
+
+    backdrop-filter:blur(12px);
+
+    border-top:1px solid rgba(124,60,255,.35);
+
+    z-index:50;
 }
 
 .nav-btn{
- background:none;
- border:0;
- color:var(--muted);
- padding:8px 2px 9px;
- cursor:pointer;
- font-size:10px;
-}
+    background:transparent;
 
-.nav-btn.active{
- color:#d0aaff;
- text-shadow:
-  0 0 8px var(--purple2);
+    color:var(--muted);
+
+    border-radius:8px;
+
+    font-size:8px;
+    font-weight:900;
 }
 
 .nav-icon{
- display:block;
- font-size:19px;
- margin-bottom:2px;
+    display:block;
+
+    font-size:17px;
+
+    margin-bottom:2px;
 }
 
-/* MODALS */
+.nav-btn.active{
+    color:#fff;
 
-.modal,
-.winner-overlay{
- display:none;
- position:fixed;
- inset:0;
- background:
-  radial-gradient(
-   circle at center,
-   rgba(91,38,163,.25),
-   rgba(0,0,0,.94)
-  );
- backdrop-filter:blur(9px);
- z-index:200;
- padding:18px;
- overflow:auto;
+    background:
+        rgba(124,60,255,.17);
+
+    text-shadow:
+        0 0 7px var(--purple);
 }
 
-.modal.show,
-.winner-overlay.show{
- display:flex;
- align-items:center;
- justify-content:center;
+/* =========================
+   MODALS
+========================= */
+
+.modal{
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:100;
+
+    align-items:center;
+    justify-content:center;
+
+    padding:15px;
+
+    background:
+        rgba(0,0,0,.72);
+
+    backdrop-filter:blur(7px);
 }
 
-.modal-box,
-.winner-box{
- width:min(600px,100%);
- background:
-  linear-gradient(145deg,#1e153a,#0b0716);
- border:1px solid var(--purple2);
- border-radius:20px;
- padding:20px;
- box-shadow:
-  0 0 20px rgba(124,60,255,.45),
-  0 0 55px rgba(124,60,255,.18);
+.modal.show{
+    display:flex;
+}
+
+.modal-box{
+    width:100%;
+    max-width:380px;
+
+    max-height:85vh;
+
+    overflow:auto;
+
+    background:
+        linear-gradient(
+            145deg,
+            #21163e,
+            #0d0919
+        );
+
+    border:1px solid rgba(165,107,255,.55);
+
+    border-radius:18px;
+
+    padding:17px;
+
+    box-shadow:
+        0 0 30px rgba(124,60,255,.35);
 }
 
 .modal-title{
- text-align:center;
- color:#fff;
- font-size:25px;
- font-weight:900;
- text-shadow:
-  0 0 7px #fff,
-  0 0 15px var(--purple),
-  0 0 30px var(--purple);
- margin-bottom:15px;
+    text-align:center;
+
+    color:#fff;
+
+    font-size:20px;
+    font-weight:1000;
+
+    margin-bottom:12px;
+
+    text-shadow:
+        0 0 6px var(--purple),
+        0 0 14px var(--purple);
 }
 
-.rule{
- padding:10px 0;
- border-bottom:1px solid #28223e;
- line-height:1.7;
- color:#ddd8ec;
+.rule-text{
+    color:#ddd7ef;
+
+    font-size:12px;
+
+    line-height:1.8;
+}
+
+.rule-text strong{
+    color:var(--purple3);
 }
 
 .close-btn{
- width:100%;
- margin-top:15px;
- padding:12px;
- border:1px solid #bb91ff;
- border-radius:12px;
- background:
-  linear-gradient(90deg,#6426d5,#9d4fff);
- color:#fff;
- font-weight:bold;
- cursor:pointer;
+    width:100%;
+
+    height:38px;
+
+    margin-top:14px;
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #7c3cff,
+            #4b1ba9
+        );
+
+    color:#fff;
+
+    font-weight:1000;
 }
 
-/* WINNER */
+/* =========================
+   WINNER
+========================= */
+
+.winner-overlay{
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:200;
+
+    align-items:center;
+    justify-content:center;
+
+    background:
+        rgba(0,0,0,.78);
+
+    backdrop-filter:blur(8px);
+
+    padding:20px;
+}
+
+.winner-overlay.show{
+    display:flex;
+}
 
 .winner-box{
- text-align:center;
- border:2px solid var(--yellow);
- box-shadow:
-  0 0 18px rgba(255,211,77,.85),
-  0 0 55px rgba(255,211,77,.3);
+    width:100%;
+    max-width:350px;
+
+    padding:20px;
+
+    text-align:center;
+
+    border-radius:20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #29184e,
+            #0d0819
+        );
+
+    border:1px solid #bd91ff;
+
+    box-shadow:
+        0 0 40px rgba(124,60,255,.55);
 }
 
 .winner-title{
- font-size:34px;
- color:var(--yellow);
- font-weight:900;
- text-shadow:
-  0 0 8px #ffd34d,
-  0 0 20px rgba(255,211,77,.8);
+    font-size:28px;
+    font-weight:1000;
+
+    color:var(--yellow);
+
+    text-shadow:
+        0 0 7px #ffba22,
+        0 0 20px rgba(255,190,50,.6);
 }
 
 .winner-name{
- font-size:22px;
- font-weight:bold;
- margin:8px;
-}
+    margin-top:10px;
 
-.winner-info{
- color:var(--muted);
- line-height:1.7;
+    font-size:16px;
+    font-weight:1000;
 }
 
 .winner-prize{
- font-size:26px;
- color:var(--green);
- font-weight:900;
- margin:11px;
- text-shadow:
-  0 0 10px rgba(32,229,155,.8);
+    margin-top:7px;
+
+    color:var(--green);
+
+    font-size:22px;
+    font-weight:1000;
 }
 
-.winner-card-wrap{
- max-width:220px;
- margin:auto;
+/* =========================
+   HISTORY / SCORE / WALLET / PROFILE
+========================= */
+
+.content-panel{
+    background:
+        linear-gradient(
+            145deg,
+            #1a1235,
+            #0b0714
+        );
+
+    border:1px solid #39275b;
+
+    border-radius:15px;
+
+    padding:12px;
+
+    margin-bottom:8px;
 }
 
-.reset-count{
- color:var(--muted);
- margin-top:10px;
+.content-title{
+    font-size:14px;
+    font-weight:1000;
+
+    margin-bottom:10px;
 }
 
-/* TOAST */
+.empty-state{
+    text-align:center;
+
+    color:var(--muted);
+
+    padding:30px 10px;
+
+    font-size:11px;
+}
+
+.profile-row,
+.wallet-row,
+.score-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:10px 0;
+
+    border-bottom:1px solid #29203f;
+
+    font-size:11px;
+}
+
+.profile-row:last-child,
+.wallet-row:last-child,
+.score-row:last-child{
+    border-bottom:0;
+}
+
+.value-green{
+    color:var(--green);
+    font-weight:1000;
+}
+
+.value-purple{
+    color:var(--purple3);
+    font-weight:1000;
+}
+
+/* =========================
+   DEPOSIT / WITHDRAW
+========================= */
+
+.form-group{
+    margin-bottom:9px;
+}
+
+.form-label{
+    display:block;
+
+    margin-bottom:4px;
+
+    color:var(--muted);
+
+    font-size:9px;
+}
+
+.form-input{
+    width:100%;
+
+    height:38px;
+
+    padding:0 10px;
+
+    border-radius:8px;
+
+    background:#100b1f;
+
+    border:1px solid #3b2a5c;
+
+    color:#fff;
+
+    outline:none;
+
+    font-size:11px;
+}
+
+.form-input:focus{
+    border-color:var(--purple2);
+
+    box-shadow:
+        0 0 8px rgba(124,60,255,.2);
+}
+
+.action-btn{
+    width:100%;
+
+    height:38px;
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #7c3cff,
+            #4b1aa8
+        );
+
+    color:#fff;
+
+    font-weight:1000;
+
+    font-size:11px;
+}
+
+.action-btn.green{
+    background:
+        linear-gradient(
+            145deg,
+            #31c889,
+            #126e4c
+        );
+}
+
+/* =========================
+   TOAST
+========================= */
 
 .toast{
- position:fixed;
- left:50%;
- bottom:88px;
- transform:translateX(-50%) translateY(20px);
- z-index:500;
- min-width:220px;
- max-width:90%;
- padding:12px 16px;
- border-radius:12px;
- background:
-  linear-gradient(145deg,#28194d,#10091f);
- border:1px solid var(--purple2);
- color:#fff;
- text-align:center;
- box-shadow:var(--glow-purple);
- opacity:0;
- pointer-events:none;
- transition:.25s ease;
+    position:fixed;
+
+    left:50%;
+
+    bottom:75px;
+
+    transform:
+        translateX(-50%)
+        translateY(20px);
+
+    width:max-content;
+
+    max-width:90%;
+
+    padding:9px 13px;
+
+    border-radius:9px;
+
+    background:
+        rgba(29,20,49,.97);
+
+    border:1px solid #68439a;
+
+    color:#fff;
+
+    font-size:10px;
+    font-weight:900;
+
+    opacity:0;
+
+    pointer-events:none;
+
+    transition:.25s;
+
+    z-index:300;
+
+    box-shadow:
+        0 0 15px rgba(124,60,255,.3);
 }
 
 .toast.show{
- opacity:1;
- transform:translateX(-50%) translateY(0);
+    opacity:1;
+
+    transform:
+        translateX(-50%)
+        translateY(0);
 }
 
-/* MOBILE */
+/* =========================
+   LOADING
+========================= */
 
-@media(max-width:700px){
+.loading{
+    position:fixed;
 
- .page{
-  padding:10px;
- }
+    inset:0;
 
- .top-info,
- .game-stats{
-  grid-template-columns:repeat(3,1fr);
- }
+    z-index:500;
 
- .card-number-board{
-  grid-template-columns:repeat(8,1fr);
- }
+    display:none;
 
- .selector-panel{
-  height:38vh;
- }
+    align-items:center;
+    justify-content:center;
 
- .board-number{
-  font-size:12px;
- }
+    background:
+        rgba(5,3,12,.82);
 
- .big-board-header div{
-  font-size:16px;
- }
-
+    backdrop-filter:blur(5px);
 }
 
-@media(max-width:430px){
-
- .header{
-  height:58px;
- }
-
- .logo{
-  font-size:20px;
- }
-
- .rules-btn{
-  font-size:12px;
-  padding:7px 11px;
- }
-
- .welcome-grid{
-  margin-top:15px;
- }
-
- .welcome-box{
-  padding:19px 5px;
- }
-
- .card-number-board{
-  grid-template-columns:repeat(6,1fr);
- }
-
- .card-number{
-  min-height:36px;
- }
-
- .cards-preview,
- .playing-cards{
-  grid-template-columns:1fr;
- }
-
- .top-info,
- .game-stats{
-  grid-template-columns:repeat(2,1fr);
- }
-
- .live-controls{
-  grid-template-columns:1fr 1fr;
- }
-
- .call-display{
-  grid-column:1/-1;
- }
-
- .called-number{
-  font-size:31px;
- }
-
- .board-number{
-  font-size:11px;
- }
-
- .big-board-header div{
-  padding:6px;
- }
-
- .welcome-box h2{
-  font-size:18px;
- }
-
- .welcome-box p{
-  font-size:11px;
- }
-
+.loading.show{
+    display:flex;
 }
 
-@media(max-width:350px){
-
- .page{
-  padding:7px;
- }
-
- .card-number-board{
-  grid-template-columns:repeat(5,1fr);
- }
-
- .card-number{
-  font-size:10px;
- }
-
- .selection-title{
-  font-size:17px;
- }
-
- .stake-btn{
-  font-size:19px;
- }
-
+.loading-box{
+    text-align:center;
 }
+
+.spinner{
+    width:38px;
+    height:38px;
+
+    border-radius:50%;
+
+    border:4px solid #352650;
+
+    border-top-color:var(--purple2);
+
+    animation:spin .8s linear infinite;
+
+    margin:auto;
+}
+
+.loading-text{
+    margin-top:9px;
+
+    color:var(--muted);
+
+    font-size:10px;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+/* =========================
+   MOBILE EXTRA COMPACT
+========================= */
+
+@media(max-width:360px){
+
+    .app-header{
+        height:39px;
+    }
+
+    .logo{
+        font-size:19px;
+    }
+
+    .header-btn{
+        height:28px;
+        min-width:41px;
+        font-size:9px;
+    }
+
+    .page{
+        padding:6px;
+    }
+
+    .top-info{
+        gap:3px;
+    }
+
+    .info-box{
+        padding:5px 1px;
+    }
+
+    .info-label{
+        font-size:6px;
+    }
+
+    .info-value{
+        font-size:9px;
+    }
+
+    .selector-panel{
+        height:205px;
+    }
+
+    .card-number-board{
+        height:169px;
+    }
+
+    .card-number{
+        height:24px;
+        font-size:8px;
+    }
+
+    .game-board-panel{
+        height:250px;
+    }
+
+    .big-board{
+        height:209px;
+    }
+
+    .board-number{
+        font-size:8px;
+    }
+
+    .playing-cards .bingo-card,
+    #cardsPreview .bingo-card{
+        flex-basis:98px;
+    }
+
+    .live-controls{
+        gap:3px;
+    }
+
+    .live-control{
+        font-size:7px;
+    }
+}
+
 </style>
 </head>
 
@@ -1195,214 +1719,3045 @@ button:focus-visible{
 
 <div class="app">
 
-<!-- HOME -->
+<!-- ==================================================
+     PAGE 1
+================================================== -->
 
-<div id="page1" class="page active">
+<section id="page1" class="page active">
 
- <div class="header">
-  <div class="logo">Frick Bingo</div>
+    <header class="app-header">
 
-  <button
-   class="rules-btn"
-   type="button"
-   onclick="openRules()">
-   Rules
-  </button>
- </div>
+        <div class="logo">
+            Frick Bingo
+        </div>
 
- <div class="welcome-grid">
+        <button
+            class="header-btn"
+            onclick="openRules()">
+            Rule
+        </button>
 
-  <div class="welcome-box">
-   <h2>Welcome</h2>
-   <p>ወደ ጨዋታው እንኳን ደህና መጡ</p>
-  </div>
+    </header>
 
-  <div class="welcome-box">
-   <h2>Frick Bingo</h2>
-   <p>Play • Win • Enjoy</p>
-  </div>
+    <div class="hero">
 
- </div>
+        <div class="hero-title glow">
+            BINGO
+        </div>
 
- <h3 class="section-title">
-  Choose Your Stake
- </h3>
+        <div class="hero-subtitle">
+            የእድል እና የችሎታ ጨዋታ
+        </div>
 
- <div class="stake-grid">
+    </div>
 
-  <button
-   class="stake-btn"
-   type="button"
-   onclick="chooseStake(10,this)">
-   10 ETB
-  </button>
+    <div class="stake-panel">
 
-  <button
-   class="stake-btn"
-   type="button"
-   onclick="chooseStake(20,this)">
-   20 ETB
-  </button>
+        <div class="section-title">
+            የጨዋታ ዋጋ ይምረጡ
+        </div>
 
- </div>
+        <div class="stakes">
 
- <div
-  class="simple-panel"
-  style="max-width:500px;margin:18px auto;text-align:center">
+            <button
+                class="stake-btn active"
+                data-stake="10"
+                onclick="chooseStake(10)">
+                10 ETB
+            </button>
 
-  <div style="color:var(--muted)">
-   Main Balance
-  </div>
+            <button
+                class="stake-btn"
+                data-stake="20"
+                onclick="chooseStake(20)">
+                20 ETB
+            </button>
 
-  <strong
-   id="homeBalance"
-   style="display:inline-block;font-size:24px;color:var(--green);margin-top:4px">
-   0.00 ETB
-  </strong>
+        </div>
 
- </div>
+        <div class="main-play-card">
 
- <button
-  class="play-main"
-  type="button"
-  onclick="goToCardSelection()">
-  PLAY
- </button>
+            <div class="balance-box">
+
+                <div class="balance-label">
+                    Main Wallet
+                </div>
+
+                <div
+                    class="balance-value"
+                    id="mainBalanceHome">
+                    0 ETB
+                </div>
+
+            </div>
+
+            <div class="balance-box">
+
+                <div class="balance-label">
+                    Play Wallet
+                </div>
+
+                <div
+                    class="balance-value"
+                    id="playBalanceHome">
+                    0 ETB
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <button
+        class="ready-button"
+        style="margin-top:9px"
+        onclick="openCardSelection()">
+        PLAY BINGO
+    </button>
+
+</section>
+
+
+<!-- ==================================================
+     PAGE 2 CARD SELECTION
+================================================== -->
+
+<section id="page2" class="page">
+
+    <header class="app-header">
+
+        <button
+            class="header-btn"
+            onclick="showPage('page1')">
+            ← Back
+        </button>
+
+        <div
+            style="
+                font-size:13px;
+                font-weight:1000;
+                text-align:center;
+            ">
+            Choose Your Bingo Card
+        </div>
+
+        <button
+            class="header-btn"
+            onclick="renderCardSelection()">
+            ↻
+        </button>
+
+    </header>
+
+
+    <div class="top-info">
+
+        <div class="info-box">
+            <div class="info-label">MAIN</div>
+            <div
+                class="info-value"
+                id="mainBalance2">
+                0
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-label">PLAY</div>
+            <div
+                class="info-value"
+                id="playBalance2">
+                0
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-label">STAKE</div>
+            <div
+                class="info-value"
+                id="stakeDisplay2">
+                10
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-label">CARDS</div>
+            <div
+                class="info-value"
+                id="cardCount2">
+                0/2
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-label">PLAYERS</div>
+            <div
+                class="info-value"
+                id="playerCount2">
+                1
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="cost-panel">
+
+        <span>
+            Card cost
+        </span>
+
+        <strong id="cardCost">
+            10 ETB
+        </strong>
+
+    </div>
+
+
+    <div
+        id="selectionTimer"
+        class="timer">
+        Waiting for players...
+    </div>
+
+
+    <div class="selector-panel">
+
+        <div class="selector-title">
+
+            <span>
+                Choose card number
+            </span>
+
+            <span>
+                1 - 200
+            </span>
+
+        </div>
+
+        <div
+            id="cardNumberBoard"
+            class="card-number-board">
+        </div>
+
+    </div>
+
+
+    <div class="selected-section">
+
+        <div class="selected-title">
+
+            <span>
+                Selected Cards
+            </span>
+
+            <span id="selectedCountText">
+                0 / 2
+            </span>
+
+        </div>
+
+        <div id="selectedCards">
+            <div class="selected-empty">
+                No card selected
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="preview-title">
+        Your 5×5 Cards
+    </div>
+
+    <div id="cardsPreview"></div>
+
+
+    <button
+        id="readyButton"
+        class="ready-button"
+        onclick="readyForGame()"
+        disabled>
+        READY
+    </button>
+
+    <div
+        id="watchMessage"
+        class="watch-message">
+        Watching the game...
+    </div>
+
+</section>
+
+
+<!-- ==================================================
+     PAGE 3 LIVE GAME
+================================================== -->
+
+<section id="page3" class="page game-page">
+
+    <header class="app-header">
+
+        <button
+            class="header-btn"
+            onclick="leaveGame()">
+            ← Back
+        </button>
+
+        <div
+            style="
+                font-size:14px;
+                font-weight:1000;
+                color:#fff;
+            ">
+            LIVE BINGO
+        </div>
+
+        <button
+            class="header-btn"
+            onclick="openRules()">
+            Rule
+        </button>
+
+    </header>
+
+
+    <div class="game-stats">
+
+        <div class="game-stat">
+
+            <div class="game-stat-label">
+                STAKE
+            </div>
+
+            <div
+                class="game-stat-value"
+                id="gameStake">
+                10
+            </div>
+
+        </div>
+
+        <div class="game-stat">
+
+            <div class="game-stat-label">
+                PLAYERS
+            </div>
+
+            <div
+                class="game-stat-value"
+                id="gamePlayers">
+                1
+            </div>
+
+        </div>
+
+        <div class="game-stat">
+
+            <div class="game-stat-label">
+                POT
+            </div>
+
+            <div
+                class="game-stat-value"
+                id="gamePot">
+                0
+            </div>
+
+        </div>
+
+        <div class="game-stat">
+
+            <div class="game-stat-label">
+                BALL
+            </div>
+
+            <div
+                class="game-stat-value"
+                id="gameBall">
+                -
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="game-board-panel">
+
+        <div class="panel-title">
+
+            <span>
+                BINGO BOARD
+            </span>
+
+            <span id="gameStatus">
+                LIVE
+            </span>
+
+        </div>
+
+        <div class="big-board-header">
+
+            <div>B</div>
+            <div>I</div>
+            <div>N</div>
+            <div>G</div>
+            <div>O</div>
+
+        </div>
+
+        <div
+            id="bigBingoBoard"
+            class="big-board">
+        </div>
+
+    </div>
+
+
+    <div class="live-controls">
+
+        <div class="live-control last-called-box">
+
+            <span>
+                Last:
+            </span>
+
+            <strong
+                id="lastCalled"
+                class="last-ball">
+                -
+            </strong>
+
+        </div>
+
+        <button
+            class="live-control"
+            onclick="toggleAutomatic()">
+
+            <span>
+                Auto
+            </span>
+
+            <span
+                id="autoSwitch"
+                class="switch on">
+            </span>
+
+        </button>
+
+        <button
+            class="live-control"
+            onclick="toggleVoice()">
+
+            <span>
+                Voice
+            </span>
+
+            <span
+                id="voiceSwitch"
+                class="switch on">
+            </span>
+
+        </button>
+
+    </div>
+
+
+    <button
+        id="callBtn"
+        class="call-button"
+        onclick="callNextNumber()">
+        CALL NEXT BALL
+    </button>
+
+
+    <div class="your-card-section">
+
+        <div class="your-card-title">
+
+            <span>
+                YOUR 5×5 BINGO CARD
+            </span>
+
+            <span>
+                Auto Mark
+            </span>
+
+        </div>
+
+        <div
+            id="playingCards"
+            class="playing-cards">
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==================================================
+     HISTORY
+================================================== -->
+
+<section id="historyPage" class="page">
+
+    <header class="app-header">
+
+        <div class="logo">
+            History
+        </div>
+
+    </header>
+
+    <div class="content-panel">
+
+        <div class="content-title">
+            Game History
+        </div>
+
+        <div
+            id="historyList"
+            class="empty-state">
+            No games yet.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==================================================
+     SCORE
+================================================== -->
+
+<section id="scorePage" class="page">
+
+    <header class="app-header">
+
+        <div class="logo">
+            Score
+        </div>
+
+    </header>
+
+    <div class="content-panel">
+
+        <div class="content-title">
+            My Score
+        </div>
+
+        <div class="score-row">
+
+            <span>
+                Games
+            </span>
+
+            <strong
+                id="scoreGames"
+                class="value-purple">
+                0
+            </strong>
+
+        </div>
+
+        <div class="score-row">
+
+            <span>
+                Wins
+            </span>
+
+            <strong
+                id="scoreWins"
+                class="value-green">
+                0
+            </strong>
+
+        </div>
+
+        <div class="score-row">
+
+            <span>
+                Win Rate
+            </span>
+
+            <strong
+                id="scoreRate"
+                class="value-purple">
+                0%
+            </strong>
+
+        </div>
+
+        <div class="score-row">
+
+            <span>
+                Total Won
+            </span>
+
+            <strong
+                id="scoreWon"
+                class="value-green">
+                0 ETB
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==================================================
+     WALLET
+================================================== -->
+
+<section id="walletPage" class="page">
+
+    <header class="app-header">
+
+        <div class="logo">
+            Wallet
+        </div>
+
+    </header>
+
+    <div class="content-panel">
+
+        <div class="content-title">
+            My Wallet
+        </div>
+
+        <div class="wallet-row">
+
+            <span>
+                Main Wallet
+            </span>
+
+            <strong
+                id="walletMain"
+                class="value-purple">
+                0 ETB
+            </strong>
+
+        </div>
+
+        <div class="wallet-row">
+
+            <span>
+                Play Wallet
+            </span>
+
+            <strong
+                id="walletPlay"
+                class="value-green">
+                0 ETB
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="content-panel">
+
+        <div class="content-title">
+            Deposit
+        </div>
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Amount
+            </label>
+
+            <input
+                id="depositAmount"
+                class="form-input"
+                type="number"
+                min="50"
+                max="1000"
+                placeholder="50 - 1000 ETB">
+
+        </div>
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Telebirr transaction reference
+            </label>
+
+            <input
+                id="depositReference"
+                class="form-input"
+                type="text"
+                placeholder="Enter transaction reference">
+
+        </div>
+
+        <button
+            class="action-btn"
+            onclick="submitDeposit()">
+            SUBMIT DEPOSIT
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- ==================================================
+     PROFILE
+================================================== -->
+
+<section id="profilePage" class="page">
+
+    <header class="app-header">
+
+        <div class="logo">
+            Profile
+        </div>
+
+    </header>
+
+    <div class="content-panel">
+
+        <div class="content-title">
+            My Profile
+        </div>
+
+        <div class="profile-row">
+
+            <span>
+                Name
+            </span>
+
+            <strong id="profileName">
+                -
+            </strong>
+
+        </div>
+
+        <div class="profile-row">
+
+            <span>
+                Username
+            </span>
+
+            <strong id="profileUsername">
+                -
+            </strong>
+
+        </div>
+
+        <div class="profile-row">
+
+            <span>
+                Telegram ID
+            </span>
+
+            <strong id="profileTelegram">
+                -
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==================================================
+     BOTTOM NAV
+================================================== -->
+
+<nav class="bottom-nav">
+
+    <button
+        class="nav-btn active"
+        data-page="page1"
+        onclick="navigateNav('page1',this)">
+
+        <span class="nav-icon">⌂</span>
+        Home
+
+    </button>
+
+    <button
+        class="nav-btn"
+        data-page="historyPage"
+        onclick="navigateNav('historyPage',this)">
+
+        <span class="nav-icon">◷</span>
+        History
+
+    </button>
+
+    <button
+        class="nav-btn"
+        data-page="scorePage"
+        onclick="navigateNav('scorePage',this)">
+
+        <span class="nav-icon">★</span>
+        Score
+
+    </button>
+
+    <button
+        class="nav-btn"
+        data-page="walletPage"
+        onclick="navigateNav('walletPage',this)">
+
+        <span class="nav-icon">◈</span>
+        Wallet
+
+    </button>
+
+    <button
+        class="nav-btn"
+        data-page="profilePage"
+        onclick="navigateNav('profilePage',this)">
+
+        <span class="nav-icon">●</span>
+        Profile
+
+    </button>
+
+</nav>
 
 </div>
 
 
-<!-- CARD SELECTION -->
+<!-- ==================================================
+     RULE MODAL
+================================================== -->
 
-<div id="page2" class="page">
+<div
+    id="rulesModal"
+    class="modal"
+    onclick="closeRulesOutside(event)">
 
- <div class="page2-header">
+    <div class="modal-box">
 
-  <button
-   class="back-btn"
-   type="button"
-   onclick="backToHome()">
-   ↩️
-  </button>
+        <div class="modal-title">
+            የቢንጎ ህግ
+        </div>
 
-  <div class="selection-title">
-   Choose Your Bingo Card
-  </div>
+        <div class="rule-text">
 
-  <button
-   class="refresh-btn"
-   type="button"
-   onclick="refreshSelection()">
-   🔄
-  </button>
+            <strong>
+                የቢንጎ ጨዋታን ለመጫወት የሚከተሉትን ህጎች ይከተሉ።
+            </strong>
 
- </div>
+            <br><br>
 
- <div class="top-info">
+            <strong>1.</strong>
+            የሚፈልጉትን የጨዋታ ዋጋ ይምረጡ፤
+            ከዚያ Play የሚለውን ይጫኑ።
 
-  <div class="info-box">
-   <span>Main</span>
-   <strong id="mainBalance2">0.00</strong>
-  </div>
+            <br>
 
-  <div class="info-box">
-   <span>Play</span>
-   <strong id="playBalance2">0.00</strong>
-  </div>
+            <strong>2.</strong>
+            የሚፈልጉትን የቢንጎ ካርድ ቁጥር ይምረጡ።
 
-  <div class="info-box">
-   <span>Stake</span>
-   <strong id="stakeDisplay2">0</strong>
-  </div>
+            <br>
 
-  <div class="info-box">
-   <span>Cards</span>
-   <strong id="selectedCount2">0 / 2</strong>
-  </div>
+            <strong>3.</strong>
+            እያንዳንዱ ተጫዋች
+            ከፍተኛ 2 ካርዶችን መምረጥ ይችላል።
 
-  <div class="info-box">
-   <span>Players</span>
-   <strong id="playerCount2">1</strong>
-  </div>
+            <br>
 
- </div>
+            <strong>4.</strong>
+            ጨዋታው ሲጀምር የሚጠሩትን ቁጥሮች
+            በካርድዎ ላይ ያመልክቱ።
 
- <div class="cost-panel">
+            <br>
 
-  <span>Total Cost</span>
+            <strong>5.</strong>
+            በመጀመሪያ ቢንጎ ያጠናቀቀ ተጫዋች
+            አሸናፊ ይሆናል።
 
-  <strong id="totalCost2">
-   0.00 ETB
-  </strong>
+            <br>
 
- </div>
+            <strong>6.</strong>
+            የአሸናፊው ሽልማት ከጨዋታው
+            ገንዘብ 85% ይሆናል።
 
- <div class="timer">
+        </div>
 
-  Starts in
+        <button
+            class="close-btn"
+            onclick="closeRules()">
+            CLOSE
+        </button>
 
-  <span id="selectionTimer">30</span>
-
- </div>
-
- <div class="selector-panel">
-
-  <div class="selector-hint">
-   200 cards • select up to 2 cards
-  </div>
-
-  <div
-   class="card-number-board"
-   id="cardNumberBoard">
-  </div>
-
- </div>
-
- <div class="selected-title">
-  Selected cards — tap again to remove
- </div>
-
- <div
-  class="selected-cards"
-  id="selectedCards">
- </div>
-
- <div
-  class="cards-preview"
-  id="cardsPreview">
- </div>
-
- <button
-  id="readyButton"
-  class="ready-btn"
-  type="button"
-  onclick="readyForGame()">
-  START GAME
- </button>
-
- <div
-  id="watchMessage"
-  class="watch-message"
-  style="display:none">
- </div>
+    </div>
 
 </div>
 
 
-<!-- LIVE GAME -->
+<!-- ==================================================
+     WINNER
+================================================== -->
 
-<div id="page3" class="page game-page">
+<div
+    id="winnerOverlay"
+    class="winner-overlay">
 
- <div class="page2-header">
+    <div class="winner-box">
 
-  <button
-   class="back-btn"
-   type="button"
-   onclick="handleBackDuringGame()">
-   ↩️
-  </button>
+        <div class="winner-title">
+            🎉 BINGO! 🎉
+        </div>
 
-  <div class="selection-title">
+        <div
+            id="winnerName"
+            class="winner-name">
+            Winner
+        </div>
+
+        <div
+            id="winnerPrize"
+            class="winner-prize">
+            0 ETB
+        </div>
+
+        <button
+            class="close-btn"
+            onclick="closeWinner()">
+            CONTINUE
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     TOAST
+================================================== -->
+
+<div
+    id="toast"
+    class="toast">
+</div>
+
+
+<!-- ==================================================
+     LOADING
+================================================== -->
+
+<div
+    id="loading"
+    class="loading">
+
+    <div class="loading-box">
+
+        <div class="spinner"></div>
+
+        <div class="loading-text">
+            Please wait...
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ==================================================
+   TELEGRAM
+================================================== */
+
+const tg =
+    window.Telegram &&
+    window.Telegram.WebApp
+        ? window.Telegram.WebApp
+        : null;
+
+if(tg){
+
+    tg.ready();
+
+    tg.expand();
+
+    try{
+        tg.setHeaderColor("#080612");
+        tg.setBackgroundColor("#080612");
+    }catch(e){}
+
+}
+
+
+/* ==================================================
+   CONFIG
+================================================== */
+
+const SERVER_URL = "";
+
+const MAX_CARDS = 2;
+
+const STAKES = [10,20];
+
+const WIN_RATE = 0.85;
+
+
+/* ==================================================
+   STATE
+================================================== */
+
+let currentUser = null;
+
+let selectedStake = 10;
+
+let selectedCards = [];
+
+let currentGameId = null;
+
+let calledNumbers = [];
+
+let lastCalledNumber = null;
+
+let automaticMode = true;
+
+let voiceMode = true;
+
+let gameRunning = false;
+
+let gameTimer = null;
+
+let gameInterval = null;
+
+let fakePlayers = 1;
+
+
+/* ==================================================
+   API
+================================================== */
+
+async function apiFetch(
+    url,
+    options={}
+){
+
+    const headers = {
+        "Content-Type":"application/json",
+        ...(options.headers || {})
+    };
+
+    if(tg && tg.initData){
+
+        headers["X-Telegram-Init-Data"] =
+            tg.initData;
+
+    }
+
+    const response =
+        await fetch(
+            SERVER_URL + url,
+            {
+                ...options,
+                headers
+            }
+        );
+
+    let data = null;
+
+    try{
+        data = await response.json();
+    }catch(e){
+        data = {};
+    }
+
+    if(!response.ok){
+
+        throw new Error(
+            data.error ||
+            data.message ||
+            `Request failed: ${response.status}`
+        );
+
+    }
+
+    return data;
+
+}
+
+
+/* ==================================================
+   LOADING
+================================================== */
+
+function showLoading(){
+
+    document
+        .getElementById("loading")
+        .classList.add("show");
+
+}
+
+function hideLoading(){
+
+    document
+        .getElementById("loading")
+        .classList.remove("show");
+
+}
+
+
+/* ==================================================
+   TOAST
+================================================== */
+
+let toastTimer = null;
+
+function showToast(message){
+
+    const toast =
+        document.getElementById("toast");
+
+    toast.textContent = message;
+
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer =
+        setTimeout(
+            ()=>{
+                toast.classList.remove("show");
+            },
+            2600
+        );
+
+}
+
+
+/* ==================================================
+   PAGE NAVIGATION
+================================================== */
+
+function showPage(pageId){
+
+    document
+        .querySelectorAll(".page")
+        .forEach(page=>{
+            page.classList.remove("active");
+        });
+
+    const page =
+        document.getElementById(pageId);
+
+    if(page){
+        page.classList.add("active");
+    }
+
+    document
+        .querySelectorAll(".nav-btn")
+        .forEach(btn=>{
+            btn.classList.toggle(
+                "active",
+                btn.dataset.page === pageId
+            );
+        });
+
+    window.scrollTo(0,0);
+
+}
+
+function navigateNav(pageId,button){
+
+    showPage(pageId);
+
+}
+
+
+/* ==================================================
+   LOAD USER
+================================================== */
+
+async function loadUser(){
+
+    try{
+
+        const data =
+            await apiFetch("/api/me");
+
+        if(data.user){
+
+            currentUser = data.user;
+
+        }else if(data){
+
+            currentUser = data;
+
+        }
+
+        updateAllDisplays();
+
+    }catch(error){
+
+        console.log(
+            "User loading:",
+            error.message
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   BALANCE HELPERS
+================================================== */
+
+function getMainBalance(){
+
+    if(!currentUser) return 0;
+
+    return Number(
+        currentUser.mainBalance ??
+        currentUser.main_balance ??
+        currentUser.balance ??
+        0
+    );
+
+}
+
+function getPlayBalance(){
+
+    if(!currentUser) return 0;
+
+    return Number(
+        currentUser.playBalance ??
+        currentUser.play_balance ??
+        0
+    );
+
+}
+
+function money(value){
+
+    return Number(value || 0)
+        .toFixed(2)
+        .replace(/\.00$/,"");
+
+}
+
+
+/* ==================================================
+   DISPLAY UPDATE
+================================================== */
+
+function updateAllDisplays(){
+
+    const main =
+        getMainBalance();
+
+    const play =
+        getPlayBalance();
+
+
+    const idsMain = [
+
+        "mainBalanceHome",
+        "mainBalance2",
+        "walletMain"
+
+    ];
+
+    idsMain.forEach(id=>{
+
+        const el =
+            document.getElementById(id);
+
+        if(!el) return;
+
+        el.textContent =
+            money(main) +
+            (id === "mainBalance2"
+                ? ""
+                : " ETB");
+
+    });
+
+
+    const idsPlay = [
+
+        "playBalanceHome",
+        "playBalance2",
+        "walletPlay"
+
+    ];
+
+    idsPlay.forEach(id=>{
+
+        const el =
+            document.getElementById(id);
+
+        if(!el) return;
+
+        el.textContent =
+            money(play) +
+            (id === "playBalance2"
+                ? ""
+                : " ETB");
+
+    });
+
+
+    const stake =
+        document.getElementById("stakeDisplay2");
+
+    if(stake){
+
+        stake.textContent =
+            selectedStake;
+
+    }
+
+
+    const cardCount =
+        document.getElementById("cardCount2");
+
+    if(cardCount){
+
+        cardCount.textContent =
+            `${selectedCards.length}/${MAX_CARDS}`;
+
+    }
+
+
+    const selectedCountText =
+        document.getElementById(
+            "selectedCountText"
+        );
+
+    if(selectedCountText){
+
+        selectedCountText.textContent =
+            `${selectedCards.length}/${MAX_CARDS}`;
+
+    }
+
+
+    const cost =
+        document.getElementById("cardCost");
+
+    if(cost){
+
+        cost.textContent =
+            selectedStake +
+            " ETB";
+
+    }
+
+
+    if(currentUser){
+
+        const profileName =
+            document.getElementById(
+                "profileName"
+            );
+
+        const profileUsername =
+            document.getElementById(
+                "profileUsername"
+            );
+
+        const profileTelegram =
+            document.getElementById(
+                "profileTelegram"
+            );
+
+
+        if(profileName){
+
+            profileName.textContent =
+                currentUser.firstName ||
+                currentUser.first_name ||
+                "-";
+
+        }
+
+
+        if(profileUsername){
+
+            profileUsername.textContent =
+                currentUser.username
+                    ? "@" + currentUser.username
+                    : "-";
+
+        }
+
+
+        if(profileTelegram){
+
+            profileTelegram.textContent =
+                currentUser.telegramId ||
+                currentUser.telegram_id ||
+                "-";
+
+        }
+
+    }
+
+}
+
+
+/* ==================================================
+   STAKE
+================================================== */
+
+function chooseStake(stake){
+
+    stake = Number(stake);
+
+    if(!STAKES.includes(stake)){
+        return;
+    }
+
+    selectedStake = stake;
+
+    document
+        .querySelectorAll(".stake-btn")
+        .forEach(button=>{
+
+            button.classList.toggle(
+                "active",
+                Number(
+                    button.dataset.stake
+                ) === stake
+            );
+
+        });
+
+
+    updateAllDisplays();
+
+}
+
+
+/* ==================================================
+   OPEN CARD SELECTION
+================================================== */
+
+function openCardSelection(){
+
+    selectedCards = [];
+
+    updateSelectedCards();
+
+    renderCardSelection();
+
+    showPage("page2");
+
+}
+
+
+/* ==================================================
+   CARD SELECTION BOARD
+================================================== */
+
+function renderCardSelection(){
+
+    const board =
+        document.getElementById(
+            "cardNumberBoard"
+        );
+
+    if(!board) return;
+
+    board.innerHTML = "";
+
+    for(let number=1;number<=200;number++){
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+
+        button.className =
+            "card-number";
+
+        button.textContent =
+            number;
+
+        button.dataset.number =
+            number;
+
+        if(
+            selectedCards.includes(number)
+        ){
+
+            button.classList.add(
+                "selected"
+            );
+
+        }
+
+        button.onclick =
+            ()=>{
+                selectCard(number);
+            };
+
+        board.appendChild(button);
+
+    }
+
+}
+
+
+/* ==================================================
+   SELECT CARD
+================================================== */
+
+function selectCard(number){
+
+    number = Number(number);
+
+    if(
+        selectedCards.includes(number)
+    ){
+
+        removeCard(number);
+
+        return;
+
+    }
+
+
+    if(
+        selectedCards.length >= MAX_CARDS
+    ){
+
+        showToast(
+            "You can select maximum 2 cards."
+        );
+
+        return;
+
+    }
+
+
+    selectedCards.push(number);
+
+    updateSelectedCards();
+
+}
+
+
+/* ==================================================
+   REMOVE CARD
+================================================== */
+
+function removeCard(number){
+
+    selectedCards =
+        selectedCards.filter(
+            n => Number(n) !== Number(number)
+        );
+
+    updateSelectedCards();
+
+}
+
+
+/* ==================================================
+   UPDATE SELECTED CARDS
+================================================== */
+
+function updateSelectedCards(){
+
+    const container =
+        document.getElementById(
+            "selectedCards"
+        );
+
+    const preview =
+        document.getElementById(
+            "cardsPreview"
+        );
+
+    if(!container || !preview){
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+    preview.innerHTML = "";
+
+
+    if(selectedCards.length === 0){
+
+        const empty =
+            document.createElement("div");
+
+        empty.className =
+            "selected-empty";
+
+        empty.textContent =
+            "No card selected";
+
+        container.appendChild(empty);
+
+    }else{
+
+        selectedCards.forEach(number=>{
+
+            const chip =
+                document.createElement("button");
+
+            chip.type = "button";
+
+            chip.className =
+                "selected-chip";
+
+            chip.textContent =
+                `Card ${number} ✕`;
+
+            chip.onclick =
+                ()=>{
+                    removeCard(number);
+                };
+
+            container.appendChild(chip);
+
+        });
+
+    }
+
+
+    selectedCards.forEach(number=>{
+
+        preview.appendChild(
+            createCardElement(number)
+        );
+
+    });
+
+
+    document
+        .querySelectorAll(".card-number")
+        .forEach(button=>{
+
+            const number =
+                Number(button.dataset.number);
+
+            button.classList.toggle(
+                "selected",
+                selectedCards.includes(number)
+            );
+
+        });
+
+
+    const ready =
+        document.getElementById(
+            "readyButton"
+        );
+
+    if(ready){
+
+        ready.disabled =
+            selectedCards.length === 0;
+
+    }
+
+
+    updateAllDisplays();
+
+}
+
+
+/* ==================================================
+   CREATE BINGO CARD
+================================================== */
+
+function seededRandom(seed){
+
+    let x = Math.sin(seed++) * 10000;
+
+    return x - Math.floor(x);
+
+}
+
+
+function generateBingoNumbers(cardNumber){
+
+    const result = [];
+
+    const ranges = [
+
+        [1,15],
+        [16,30],
+        [31,45],
+        [46,60],
+        [61,75]
+
+    ];
+
+
+    for(
+        let column=0;
+        column<5;
+        column++
+    ){
+
+        const [min,max] =
+            ranges[column];
+
+        const numbers = [];
+
+        for(
+            let n=min;
+            n<=max;
+            n++
+        ){
+
+            numbers.push(n);
+
+        }
+
+
+        let seed =
+            Number(cardNumber) *
+            100 +
+            column *
+            31;
+
+
+        for(
+            let i=numbers.length-1;
+            i>0;
+            i--
+        ){
+
+            const r =
+                Math.floor(
+                    seededRandom(
+                        seed + i
+                    ) *
+                    (i+1)
+                );
+
+            [
+                numbers[i],
+                numbers[r]
+            ] =
+            [
+                numbers[r],
+                numbers[i]
+            ];
+
+        }
+
+
+        result.push(
+            numbers.slice(0,5)
+        );
+
+    }
+
+
+    const grid = [];
+
+    for(let row=0;row<5;row++){
+
+        for(let column=0;column<5;column++){
+
+            if(row === 2 && column === 2){
+
+                grid.push("FREE");
+
+            }else{
+
+                grid.push(
+                    result[column][row]
+                );
+
+            }
+
+        }
+
+    }
+
+    return grid;
+
+}
+
+
+/* ==================================================
+   CREATE CARD ELEMENT
+================================================== */
+
+function createCardElement(cardNumber){
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        "bingo-card";
+
+    wrapper.dataset.cardNumber =
+        cardNumber;
+
+
+    const header =
+        document.createElement("div");
+
+    header.className =
+        "bingo-header";
+
+
+    ["B","I","N","G","O"]
+        .forEach(letter=>{
+
+            const div =
+                document.createElement("div");
+
+            div.textContent =
+                letter;
+
+            header.appendChild(div);
+
+        });
+
+
+    wrapper.appendChild(header);
+
+
+    const grid =
+        document.createElement("div");
+
+    grid.className =
+        "bingo-grid";
+
+
+    const numbers =
+        generateBingoNumbers(
+            cardNumber
+        );
+
+
+    numbers.forEach(value=>{
+
+        const cell =
+            document.createElement("div");
+
+        cell.className =
+            "bingo-cell";
+
+        cell.dataset.number =
+            value;
+
+        cell.textContent =
+            value === "FREE"
+                ? "★"
+                : value;
+
+        if(value === "FREE"){
+
+            cell.classList.add(
+                "free"
+            );
+
+        }
+
+        grid.appendChild(cell);
+
+    });
+
+
+    wrapper.appendChild(grid);
+
+    return wrapper;
+
+}
+
+
+/* ==================================================
+   READY FOR GAME
+================================================== */
+
+async function readyForGame(){
+
+    if(selectedCards.length === 0){
+
+        showToast(
+            "Please select at least one card."
+        );
+
+        return;
+
+    }
+
+
+    if(selectedCards.length > MAX_CARDS){
+
+        showToast(
+            "Maximum 2 cards."
+        );
+
+        return;
+
+    }
+
+
+    const playBalance =
+        getPlayBalance();
+
+
+    if(
+        playBalance < selectedStake
+    ){
+
+        showToast(
+            "Insufficient play wallet balance."
+        );
+
+        return;
+
+    }
+
+
+    showLoading();
+
+
+    try{
+
+        const data =
+            await apiFetch(
+                "/api/game/start",
+                {
+                    method:"POST",
+
+                    body:JSON.stringify({
+
+                        stake:selectedStake,
+
+                        cards:selectedCards.length
+
+                    })
+
+                }
+            );
+
+
+        currentGameId =
+            data.gameId ||
+            data.game_id ||
+            data.id ||
+            data.game?.id ||
+            null;
+
+
+        if(
+            !currentGameId
+        ){
+
+            console.log(
+                "Game response:",
+                data
+            );
+
+        }
+
+
+        fakePlayers =
+            Number(
+                data.players ||
+                data.playerCount ||
+                data.player_count ||
+                1
+            );
+
+
+        updateGameStats();
+
+        beginActualGame();
+
+
+    }catch(error){
+
+        showToast(
+            error.message ||
+            "Unable to start game."
+        );
+
+    }finally{
+
+        hideLoading();
+
+    }
+
+}
+
+
+/* ==================================================
+   BEGIN GAME
+================================================== */
+
+function beginActualGame(){
+
+    calledNumbers = [];
+
+    lastCalledNumber = null;
+
+    gameRunning = true;
+
+    renderBigBoard();
+
+    renderPlayingPage();
+
+    updateGameStats();
+
+    showPage("page3");
+
+
+    if(gameInterval){
+
+        clearInterval(
+            gameInterval
+        );
+
+    }
+
+
+    if(automaticMode){
+
+        gameInterval =
+            setInterval(
+                ()=>{
+                    if(gameRunning){
+                        callNextNumber();
+                    }
+                },
+                3000
+            );
+
+    }
+
+}
+
+
+/* ==================================================
+   GAME STATS
+================================================== */
+
+function updateGameStats(){
+
+    const players =
+        document.getElementById(
+            "gamePlayers"
+        );
+
+    const stake =
+        document.getElementById(
+            "gameStake"
+        );
+
+    const pot =
+        document.getElementById(
+            "gamePot"
+        );
+
+    const players2 =
+        document.getElementById(
+            "playerCount2"
+        );
+
+
+    if(players){
+
+        players.textContent =
+            fakePlayers;
+
+    }
+
+
+    if(stake){
+
+        stake.textContent =
+            selectedStake +
+            " ETB";
+
+    }
+
+
+    if(pot){
+
+        pot.textContent =
+            money(
+                selectedStake *
+                fakePlayers
+            ) +
+            " ETB";
+
+    }
+
+
+    if(players2){
+
+        players2.textContent =
+            fakePlayers;
+
+    }
+
+}
+
+
+/* ==================================================
+   BIG BOARD
+================================================== */
+
+function renderBigBoard(){
+
+    const board =
+        document.getElementById(
+            "bigBingoBoard"
+        );
+
+    if(!board) return;
+
+    board.innerHTML = "";
+
+
+    for(
+        let number=1;
+        number<=75;
+        number++
+    ){
+
+        const cell =
+            document.createElement("div");
+
+        cell.className =
+            "board-number";
+
+        cell.dataset.number =
+            number;
+
+        cell.textContent =
+            number;
+
+
+        if(
+            calledNumbers.includes(number)
+        ){
+
+            cell.classList.add(
+                "called"
+            );
+
+        }
+
+
+        if(
+            Number(lastCalledNumber) ===
+            number
+        ){
+
+            cell.classList.add(
+                "last-called"
+            );
+
+        }
+
+
+        board.appendChild(cell);
+
+    }
+
+}
+
+
+/* ==================================================
+   CALL NEXT NUMBER
+================================================== */
+
+async function callNextNumber(){
+
+    if(!gameRunning){
+
+        return;
+
+    }
+
+
+    if(calledNumbers.length >= 75){
+
+        finishGame();
+
+        return;
+
+    }
+
+
+    let available = [];
+
+    for(
+        let number=1;
+        number<=75;
+        number++
+    ){
+
+        if(
+            !calledNumbers.includes(number)
+        ){
+
+            available.push(number);
+
+        }
+
+    }
+
+
+    if(available.length === 0){
+
+        finishGame();
+
+        return;
+
+    }
+
+
+    const index =
+        Math.floor(
+            Math.random() *
+            available.length
+        );
+
+
+    const number =
+        available[index];
+
+
+    calledNumbers.push(number);
+
+    lastCalledNumber =
+        number;
+
+
+    renderBigBoard();
+
+    markPlayerCards();
+
+    updateLastCalled(number);
+
+    updateGameStats();
+
+    speakNumber(number);
+
+
+    /* Demo winner check */
+
+    if(
+        checkAnyBingo()
+    ){
+
+        await finishGame(true);
+
+    }
+
+}
+
+
+/* ==================================================
+   LAST CALLED DISPLAY
+================================================== */
+
+function updateLastCalled(number){
+
+    const last =
+        document.getElementById(
+            "lastCalled"
+        );
+
+    const ball =
+        document.getElementById(
+            "gameBall"
+        );
+
+
+    if(last){
+
+        last.textContent =
+            number;
+
+    }
+
+
+    if(ball){
+
+        ball.textContent =
+            number;
+
+    }
+
+}
+
+
+/* ==================================================
+   MARK PLAYER CARDS
+================================================== */
+
+function renderPlayingPage(){
+
+    const container =
+        document.getElementById(
+            "playingCards"
+        );
+
+    if(!container) return;
+
+    container.innerHTML = "";
+
+
+    selectedCards.forEach(cardNumber=>{
+
+        const card =
+            createCardElement(
+                cardNumber
+            );
+
+        container.appendChild(card);
+
+    });
+
+
+    markPlayerCards();
+
+}
+
+
+/* ==================================================
+   MARK CALLED NUMBERS
+================================================== */
+
+function markPlayerCards(){
+
+    document
+        .querySelectorAll(
+            "#playingCards .bingo-cell"
+        )
+        .forEach(cell=>{
+
+            const value =
+                cell.dataset.number;
+
+            if(
+                value === "FREE"
+            ){
+
+                return;
+
+            }
+
+
+            if(
+                calledNumbers.includes(
+                    Number(value)
+                )
+            ){
+
+                cell.classList.add(
+                    "marked"
+                );
+
+            }
+
+        });
+
+}
+
+
+/* ==================================================
+   BINGO CHECK
+================================================== */
+
+function checkAnyBingo(){
+
+    const cards =
+        document.querySelectorAll(
+            "#playingCards .bingo-card"
+        );
+
+
+    for(const card of cards){
+
+        const cells =
+            Array.from(
+                card.querySelectorAll(
+                    ".bingo-cell"
+                )
+            );
+
+
+        const values =
+            cells.map(
+                cell=>
+                    cell.dataset.number ===
+                    "FREE"
+                        ? true
+                        : calledNumbers.includes(
+                            Number(
+                                cell.dataset.number
+                            )
+                        )
+            );
+
+
+        /* Rows */
+
+        for(
+            let row=0;
+            row<5;
+            row++
+        ){
+
+            let complete = true;
+
+            for(
+                let col=0;
+                col<5;
+                col++
+            ){
+
+                if(
+                    !values[
+                        row*5+col
+                    ]
+                ){
+
+                    complete = false;
+
+                    break;
+
+                }
+
+            }
+
+
+            if(complete){
+
+                return true;
+
+            }
+
+        }
+
+
+        /* Columns */
+
+        for(
+            let col=0;
+            col<5;
+            col++
+        ){
+
+            let complete = true;
+
+            for(
+                let row=0;
+                row<5;
+                row++
+            ){
+
+                if(
+                    !values[
+                        row*5+col
+                    ]
+                ){
+
+                    complete = false;
+
+                    break;
+
+                }
+
+            }
+
+
+            if(complete){
+
+                return true;
+
+            }
+
+        }
+
+
+        /* Diagonal */
+
+        let diagonal1 = true;
+
+        let diagonal2 = true;
+
+
+        for(
+            let i=0;
+            i<5;
+            i++
+        ){
+
+            if(
+                !values[i*5+i]
+            ){
+
+                diagonal1 = false;
+
+            }
+
+
+            if(
+                !values[
+                    i*5+(4-i)
+                ]
+            ){
+
+                diagonal2 = false;
+
+            }
+
+        }
+
+
+        if(
+            diagonal1 ||
+            diagonal2
+        ){
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+/* ==================================================
+   FINISH GAME
+================================================== */
+
+async function finishGame(playerWon=false){
+
+    if(!gameRunning){
+
+        return;
+
+    }
+
+    gameRunning = false;
+
+
+    if(gameInterval){
+
+        clearInterval(
+            gameInterval
+        );
+
+        gameInterval = null;
+
+    }
+
+
+    let result = null;
+
+
+    try{
+
+        if(currentGameId){
+
+            result =
+                await apiFetch(
+                    "/api/game/finish",
+                    {
+                        method:"POST",
+
+                        body:JSON.stringify({
+
+                            gameId:
+                                currentGameId,
+
+                            won:
+                                Boolean(
+                                    playerWon
+                                )
+
+                        })
+
+                    }
+                );
+
+        }
+
+    }catch(error){
+
+        console.log(
+            "Finish game:",
+            error.message
+        );
+
+    }
+
+
+    if(playerWon){
+
+        const prize =
+            Number(
+                result?.prize ||
+                result?.winAmount ||
+                (
+                    selectedStake *
+                    fakePlayers *
+                    WIN_RATE
+                )
+            );
+
+
+        showWinner(
+            "You",
+            prize
+        );
+
+    }else{
+
+        showToast(
+            "Game finished."
+        );
+
+    }
+
+
+    await loadUser();
+
+}
+
+
+/* ==================================================
+   WINNER
+================================================== */
+
+function showWinner(
+    name,
+    prize
+){
+
+    document
+        .getElementById(
+            "winnerName"
+        )
+        .textContent =
+            name;
+
+    document
+        .getElementById(
+            "winnerPrize"
+        )
+        .textContent =
+            money(prize) +
+            " ETB";
+
+
+    document
+        .getElementById(
+            "winnerOverlay"
+        )
+        .classList.add("show");
+
+}
+
+
+function closeWinner(){
+
+    document
+        .getElementById(
+            "winnerOverlay"
+        )
+        .classList.remove("show");
+
+    showPage("page1");
+
+}
+
+
+/* ==================================================
+   LEAVE GAME
+================================================== */
+
+function leaveGame(){
+
+    if(gameInterval){
+
+        clearInterval(
+            gameInterval
+        );
+
+        gameInterval = null;
+
+    }
+
+    gameRunning = false;
+
+    showPage("page1");
+
+}
+
+
+/* ==================================================
+   AUTOMATIC
+================================================== */
+
+function toggleAutomatic(){
+
+    automaticMode =
+        !automaticMode;
+
+
+    const sw =
+        document.getElementById(
+            "autoSwitch"
+        );
+
+    if(sw){
+
+        sw.classList.toggle(
+            "on",
+            automaticMode
+        );
+
+    }
+
+
+    if(
+        automaticMode &&
+        gameRunning
+    ){
+
+        if(gameInterval){
+
+            clearInterval(
+                gameInterval
+            );
+
+        }
+
+
+        gameInterval =
+            setInterval(
+                ()=>{
+                    if(gameRunning){
+                        callNextNumber();
+                    }
+                },
+                3000
+            );
+
+    }else{
+
+        if(gameInterval){
+
+            clearInterval(
+                gameInterval
+            );
+
+            gameInterval = null;
+
+        }
+
+    }
+
+}
+
+
+/* ==================================================
+   VOICE
+================================================== */
+
+function toggleVoice(){
+
+    voiceMode =
+        !voiceMode;
+
+
+    const sw =
+        document.getElementById(
+            "voiceSwitch"
+        );
+
+    if(sw){
+
+        sw.classList.toggle(
+            "on",
+            voiceMode
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   VOICE CALL
+================================================== */
+
+function speakNumber(number){
+
+    if(!voiceMode){
+
+        return;
+
+    }
+
+
+    if(
+        !("speechSynthesis" in window)
+    ){
+
+        return;
+
+    }
+
+
+    try{
+
+        window.speechSynthesis.cancel();
+
+
+        const letter =
+            number <= 15
+                ? "B"
+                : number <= 30
+                    ? "I"
+                    : number <= 45
+                        ? "N"
+                        : number <= 60
+                            ? "G"
+                            : "O";
+
+
+        const text =
+            `${letter} ${number}`;
+
+
+        const utterance =
+            new SpeechSynthesisUtterance(
+                text
+            );
+
+
+        utterance.rate = .8;
+
+        utterance.pitch = 1;
+
+        utterance.volume = 1;
+
+
+        window.speechSynthesis.speak(
+            utterance
+        );
+
+    }catch(error){
+
+        console.log(
+            "Voice:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   RULES
+================================================== */
+
+function openRules(){
+
+    document
+        .getElementById(
+            "rulesModal"
+        )
+        .classList.add("show");
+
+}
+
+
+function closeRules(){
+
+    document
+        .getElementById(
+            "rulesModal"
+        )
+        .classList.remove("show");
+
+}
+
+
+function closeRulesOutside(event){
+
+    if(
+        event.target.id ===
+        "rulesModal"
+    ){
+
+        closeRules();
+
+    }
+
+}
+
+
+/* ==================================================
+   DEPOSIT
+================================================== */
+
+async function submitDeposit(){
+
+    const amount =
+        Number(
+            document
+                .getElementById(
+                    "depositAmount"
+                )
+                .value
+        );
+
+
+    const reference =
+        document
+            .getElementById(
+                "depositReference"
+            )
+            .value
+            .trim();
+
+
+    if(
+        !amount ||
+        amount < 50 ||
+        amount > 1000
+    ){
+
+        showToast(
+            "Deposit must be 50 - 1000 ETB."
+        );
+
+        return;
+
+    }
+
+
+    if(!reference){
+
+        showToast(
+            "Enter transaction reference."
+        );
+
+        return;
+
+    }
+
+
+    showLoading();
+
+
+    try{
+
+        await apiFetch(
+            "/api/deposit",
+            {
+                method:"POST",
+
+                body:JSON.stringify({
+
+                    amount,
+
+                    reference
+
+                })
+
+            }
+        );
+
+
+        showToast(
+            "Deposit submitted successfully."
+        );
+
+
+        document
+            .getElementById(
+                "depositAmount"
+            )
+            .value = "";
+
+        document
+            .getElementById(
+                "depositReference"
+            )
+            .value = "";
+
+
+    }catch(error){
+
+        showToast(
+            error.message ||
+            "Deposit failed."
+        );
+
+    }finally{
+
+        hideLoading();
+
+    }
+
+}
+
+
+/* ==================================================
+   INIT
+================================================== */
+
+async function init(){
+
+    chooseStake(10);
+
+    renderCardSelection();
+
+    renderBigBoard();
+
+    updateSelectedCards();
+
+    updateAllDisplays();
+
+    await loadUser();
+
+}
+
+
+/* ==================================================
+   START
+================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    init
+);
+
+</script>
+
+</body>
+</html>  <div class="selection-title">
    Frick Bingo • LIVE
   </div>
 
