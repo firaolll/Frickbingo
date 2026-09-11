@@ -38,9 +38,7 @@ const WIN_RATE = 0.85;
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-    express.static(path.join(__dirname, "public"))
-);
+app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================================================
    DATABASE
@@ -95,19 +93,23 @@ db.exec(`
         user_id INTEGER NOT NULL,
         stake REAL NOT NULL,
         cards INTEGER NOT NULL,
+
         result TEXT DEFAULT 'STARTED',
         prize REAL NOT NULL DEFAULT 0,
+
         card_number INTEGER,
+
         status TEXT NOT NULL DEFAULT 'STARTED',
+
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         finished_at DATETIME,
+
         FOREIGN KEY (user_id) REFERENCES users(id)
     );
 `);
 
 /* =========================================================
-   DATABASE MIGRATION
-   Adds missing columns to old databases safely.
+   SAFE MIGRATION
 ========================================================= */
 
 function columnExists(tableName, columnName) {
@@ -120,19 +122,25 @@ function columnExists(tableName, columnName) {
     );
 }
 
-function addColumnIfMissing(tableName, columnName, definition) {
+function addColumnIfMissing(
+    tableName,
+    columnName,
+    definition
+) {
     if (!columnExists(tableName, columnName)) {
         try {
             db.prepare(
-                `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`
+                `ALTER TABLE ${tableName}
+                 ADD COLUMN ${columnName} ${definition}`
             ).run();
 
             console.log(
-                `✅ Added missing column ${tableName}.${columnName}`
+                `✅ Added ${tableName}.${columnName}`
             );
+
         } catch (error) {
             console.error(
-                `❌ Could not add ${tableName}.${columnName}:`,
+                `❌ Migration error ${tableName}.${columnName}:`,
                 error.message
             );
         }
@@ -140,12 +148,27 @@ function addColumnIfMissing(tableName, columnName, definition) {
 }
 
 /*
-   Old versions of your withdrawals table may not have
-   telegram_id or account_details.
+    These columns record exactly where the stake
+    came from.
 
-   They are added as nullable for compatibility with old data.
-   New withdrawal requests always provide both values.
+    Example:
+
+    stake = 20
+    play_spent = 12
+    main_spent = 8
 */
+
+addColumnIfMissing(
+    "games",
+    "play_spent",
+    "REAL NOT NULL DEFAULT 0"
+);
+
+addColumnIfMissing(
+    "games",
+    "main_spent",
+    "REAL NOT NULL DEFAULT 0"
+);
 
 addColumnIfMissing(
     "withdrawals",
@@ -160,11 +183,11 @@ addColumnIfMissing(
 );
 
 /* =========================================================
-   HELPER FUNCTIONS
+   HELPERS
 ========================================================= */
 
 function num(value) {
-    const n = Number(value || 0);
+    const n = Number(value);
 
     if (!Number.isFinite(n)) {
         return 0;
@@ -181,38 +204,48 @@ function money(value) {
 
 function getUser(telegramId) {
     return db
-        .prepare(
-            "SELECT * FROM users WHERE telegram_id = ?"
-        )
+        .prepare(`
+            SELECT *
+            FROM users
+            WHERE telegram_id = ?
+        `)
         .get(String(telegramId));
 }
 
 function getUserById(userId) {
     return db
-        .prepare(
-            "SELECT * FROM users WHERE id = ?"
-        )
+        .prepare(`
+            SELECT *
+            FROM users
+            WHERE id = ?
+        `)
         .get(Number(userId));
 }
 
 function getOrCreateUser(from) {
+
     if (!from || from.id == null) {
-        throw new Error("Telegram user ID missing.");
+        throw new Error(
+            "Telegram user ID missing."
+        );
     }
 
     const telegramId = String(from.id);
 
-    const username = from.username
-        ? String(from.username)
-        : "";
+    const username =
+        from.username
+            ? String(from.username)
+            : "";
 
-    const firstName = from.first_name
-        ? String(from.first_name)
-        : "";
+    const firstName =
+        from.first_name
+            ? String(from.first_name)
+            : "";
 
     let user = getUser(telegramId);
 
     if (!user) {
+
         db.prepare(`
             INSERT INTO users (
                 telegram_id,
@@ -227,7 +260,9 @@ function getOrCreateUser(from) {
             username,
             firstName
         );
+
     } else {
+
         db.prepare(`
             UPDATE users
             SET
@@ -249,16 +284,18 @@ function getOrCreateUser(from) {
 ========================================================= */
 
 function validateInitData(initData) {
+
     if (!initData || !BOT_TOKEN) {
         return null;
     }
 
     try {
-        const params = new URLSearchParams(
-            initData
-        );
 
-        const receivedHash = params.get("hash");
+        const params =
+            new URLSearchParams(initData);
+
+        const receivedHash =
+            params.get("hash");
 
         if (!receivedHash) {
             return null;
@@ -266,40 +303,45 @@ function validateInitData(initData) {
 
         params.delete("hash");
 
-        const dataCheckString = [...params.entries()]
-            .sort(([a], [b]) =>
-                a.localeCompare(b)
-            )
-            .map(([key, value]) =>
-                `${key}=${value}`
-            )
-            .join("\n");
+        const dataCheckString =
+            [...params.entries()]
+                .sort(([a], [b]) =>
+                    a.localeCompare(b)
+                )
+                .map(([key, value]) =>
+                    `${key}=${value}`
+                )
+                .join("\n");
 
-        const secretKey = crypto
-            .createHmac(
-                "sha256",
-                "WebAppData"
-            )
-            .update(BOT_TOKEN)
-            .digest();
+        const secretKey =
+            crypto
+                .createHmac(
+                    "sha256",
+                    "WebAppData"
+                )
+                .update(BOT_TOKEN)
+                .digest();
 
-        const calculatedHash = crypto
-            .createHmac(
-                "sha256",
-                secretKey
-            )
-            .update(dataCheckString)
-            .digest("hex");
+        const calculatedHash =
+            crypto
+                .createHmac(
+                    "sha256",
+                    secretKey
+                )
+                .update(dataCheckString)
+                .digest("hex");
 
-        const a = Buffer.from(
-            calculatedHash,
-            "hex"
-        );
+        const a =
+            Buffer.from(
+                calculatedHash,
+                "hex"
+            );
 
-        const b = Buffer.from(
-            receivedHash,
-            "hex"
-        );
+        const b =
+            Buffer.from(
+                receivedHash,
+                "hex"
+            );
 
         if (
             a.length !== b.length ||
@@ -308,7 +350,8 @@ function validateInitData(initData) {
             return null;
         }
 
-        const userData = params.get("user");
+        const userData =
+            params.get("user");
 
         if (!userData) {
             return null;
@@ -317,6 +360,7 @@ function validateInitData(initData) {
         return JSON.parse(userData);
 
     } catch (error) {
+
         console.error(
             "Telegram auth error:",
             error.message
@@ -327,13 +371,17 @@ function validateInitData(initData) {
 }
 
 /* =========================================================
-   AUTH MIDDLEWARE
+   AUTH
 ========================================================= */
 
 function auth(req, res, next) {
+
     try {
+
         const initData =
-            req.headers["x-telegram-init-data"] || "";
+            req.headers[
+                "x-telegram-init-data"
+            ] || "";
 
         const telegramUser =
             validateInitData(initData);
@@ -342,6 +390,7 @@ function auth(req, res, next) {
             !telegramUser ||
             telegramUser.id == null
         ) {
+
             return res.status(401).json({
                 ok: false,
                 error:
@@ -349,14 +398,18 @@ function auth(req, res, next) {
             });
         }
 
-        req.tgUser = telegramUser;
+        req.tgUser =
+            telegramUser;
 
         req.user =
-            getOrCreateUser(telegramUser);
+            getOrCreateUser(
+                telegramUser
+            );
 
         next();
 
     } catch (error) {
+
         console.error(
             "Auth error:",
             error
@@ -377,6 +430,7 @@ function auth(req, res, next) {
 app.get(
     "/api/health",
     (req, res) => {
+
         res.json({
             ok: true,
             status: "online",
@@ -393,6 +447,7 @@ app.get(
 app.get(
     "/",
     (req, res) => {
+
         res.sendFile(
             path.join(
                 __dirname,
@@ -413,7 +468,9 @@ app.get(
     (req, res) => {
 
         const user =
-            getOrCreateUser(req.tgUser);
+            getUserById(
+                req.user.id
+            );
 
         res.json({
             ok: true,
@@ -448,14 +505,24 @@ app.get(
     (req, res) => {
 
         const user =
-            getOrCreateUser(req.tgUser);
+            getUserById(
+                req.user.id
+            );
 
         res.json({
             ok: true,
+
             mainBalance:
                 num(user.balance),
+
             playBalance:
-                num(user.play_balance)
+                num(user.play_balance),
+
+            totalBalance:
+                num(
+                    Number(user.balance) +
+                    Number(user.play_balance)
+                )
         });
     }
 );
@@ -512,6 +579,8 @@ app.get(
                     prize,
                     card_number,
                     status,
+                    play_spent,
+                    main_spent,
                     created_at,
                     finished_at
                 FROM games
@@ -546,10 +615,14 @@ app.post(
             const cards =
                 Number(req.body?.cards);
 
-            if (!GAME_STAKES.includes(stake)) {
+            if (
+                !GAME_STAKES.includes(stake)
+            ) {
+
                 return res.status(400).json({
                     ok: false,
-                    error: "Invalid stake."
+                    error:
+                        "Invalid stake."
                 });
             }
 
@@ -558,6 +631,7 @@ app.post(
                 cards < 1 ||
                 cards > MAX_CARDS
             ) {
+
                 return res.status(400).json({
                     ok: false,
                     error:
@@ -565,25 +639,84 @@ app.post(
                 });
             }
 
-            const cost =
-                num(stake * cards);
+            /*
+                TOTAL COST
 
-            const gameId =
+                Example:
+                stake = 20
+                cards = 2
+
+                cost = 40
+            */
+
+            const cost =
+                num(
+                    stake * cards
+                );
+
+            const result =
                 db.transaction(() => {
 
                     const user =
-                        getOrCreateUser(
-                            req.tgUser
+                        getUserById(
+                            req.user.id
                         );
 
-                    if (
-                        Number(user.balance) <
-                        cost
-                    ) {
+                    if (!user) {
                         throw new Error(
-                            "Insufficient Main Balance."
+                            "User not found."
                         );
                     }
+
+                    const main =
+                        num(user.balance);
+
+                    const play =
+                        num(user.play_balance);
+
+                    const total =
+                        num(
+                            main + play
+                        );
+
+                    /*
+                        IMPORTANT:
+
+                        Play Wallet is used FIRST.
+
+                        If Play has 12
+                        and cost is 20:
+
+                        Play spends 12
+                        Main spends 8
+                    */
+
+                    if (total < cost) {
+
+                        throw new Error(
+                            `Insufficient balance. ` +
+                            `You need ${money(cost)} ETB. ` +
+                            `Main: ${money(main)} ETB, ` +
+                            `Play: ${money(play)} ETB.`
+                        );
+                    }
+
+                    const playSpent =
+                        num(
+                            Math.min(
+                                play,
+                                cost
+                            )
+                        );
+
+                    const mainSpent =
+                        num(
+                            cost - playSpent
+                        );
+
+                    /*
+                        ATOMIC BALANCE UPDATE
+                    */
 
                     const update =
                         db.prepare(`
@@ -591,25 +724,39 @@ app.post(
                             SET
                                 balance =
                                     balance - ?,
+
                                 play_balance =
-                                    play_balance + ?
+                                    play_balance - ?
+
                             WHERE
                                 id = ?
+
                                 AND balance >= ?
+
+                                AND play_balance >= ?
                         `).run(
-                            cost,
-                            cost,
+                            mainSpent,
+                            playSpent,
                             user.id,
-                            cost
+                            mainSpent,
+                            playSpent
                         );
 
                     if (
                         update.changes !== 1
                     ) {
+
                         throw new Error(
-                            "Could not reserve balance."
+                            "Balance changed. Please try again."
                         );
                     }
+
+                    /*
+                        Save where the stake came from.
+
+                        This is important for auditing
+                        and future refund/cancel logic.
+                    */
 
                     const game =
                         db.prepare(`
@@ -619,7 +766,9 @@ app.post(
                                 cards,
                                 result,
                                 prize,
-                                status
+                                status,
+                                play_spent,
+                                main_spent
                             )
                             VALUES (
                                 ?,
@@ -627,31 +776,63 @@ app.post(
                                 ?,
                                 'STARTED',
                                 0,
-                                'STARTED'
+                                'STARTED',
+                                ?,
+                                ?
                             )
                         `).run(
                             user.id,
                             stake,
-                            cards
+                            cards,
+                            playSpent,
+                            mainSpent
                         );
 
-                    return Number(
-                        game.lastInsertRowid
-                    );
+                    return {
+                        gameId:
+                            Number(
+                                game.lastInsertRowid
+                            ),
+
+                        cost,
+
+                        playSpent,
+
+                        mainSpent
+                    };
+
                 })();
 
             const fresh =
-                getUser(req.tgUser.id);
+                getUserById(
+                    req.user.id
+                );
 
             res.json({
+
                 ok: true,
-                gameId,
+
+                gameId:
+                    result.gameId,
+
+                cost:
+                    result.cost,
+
+                playSpent:
+                    result.playSpent,
+
+                mainSpent:
+                    result.mainSpent,
 
                 mainBalance:
-                    num(fresh.balance),
+                    num(
+                        fresh.balance
+                    ),
 
                 playBalance:
-                    num(fresh.play_balance)
+                    num(
+                        fresh.play_balance
+                    )
             });
 
         } catch (error) {
@@ -663,7 +844,8 @@ app.post(
 
             res.status(400).json({
                 ok: false,
-                error: error.message
+                error:
+                    error.message
             });
         }
     }
@@ -681,7 +863,9 @@ app.post(
         try {
 
             const gameId =
-                Number(req.body?.gameId);
+                Number(
+                    req.body?.gameId
+                );
 
             const result =
                 String(
@@ -699,6 +883,7 @@ app.post(
                 !Number.isInteger(gameId) ||
                 gameId < 1
             ) {
+
                 return res.status(400).json({
                     ok: false,
                     error:
@@ -707,8 +892,11 @@ app.post(
             }
 
             if (
-                !["WIN", "LOSE"].includes(result)
+                !["WIN", "LOSE"].includes(
+                    result
+                )
             ) {
+
                 return res.status(400).json({
                     ok: false,
                     error:
@@ -732,6 +920,7 @@ app.post(
                         );
 
                     if (!game) {
+
                         throw new Error(
                             "Game not found."
                         );
@@ -741,6 +930,7 @@ app.post(
                         game.status !==
                         "STARTED"
                     ) {
+
                         throw new Error(
                             "Game already finished."
                         );
@@ -752,6 +942,15 @@ app.post(
                             game.cards
                         );
 
+                    /*
+                        IMPORTANT:
+
+                        THE STAKE IS NOT DEDUCTED AGAIN.
+
+                        It was already deducted
+                        in /api/game/start.
+                    */
+
                     const prize =
                         result === "WIN"
                             ? num(
@@ -760,43 +959,39 @@ app.post(
                             )
                             : 0;
 
-                    const user =
-                        getUserById(
-                            req.user.id
-                        );
+                    /*
+                        WIN PRIZE ALWAYS GOES
+                        TO MAIN WALLET.
+                    */
 
-                    if (
-                        Number(
-                            user.play_balance
-                        ) < cost
-                    ) {
-                        throw new Error(
-                            "Insufficient Play Balance."
-                        );
-                    }
+                    if (prize > 0) {
 
-                    const balanceUpdate =
-                        db.prepare(`
-                            UPDATE users
-                            SET
-                                play_balance =
-                                    play_balance - ?,
-                                balance =
+                        const balanceUpdate =
+                            db.prepare(`
+                                UPDATE users
+                                SET balance =
                                     balance + ?
-                            WHERE id = ?
-                        `).run(
-                            cost,
-                            prize,
-                            user.id
-                        );
+                                WHERE id = ?
+                            `).run(
+                                prize,
+                                req.user.id
+                            );
 
-                    if (
-                        balanceUpdate.changes !== 1
-                    ) {
-                        throw new Error(
-                            "Balance update failed."
-                        );
+                        if (
+                            balanceUpdate.changes !== 1
+                        ) {
+
+                            throw new Error(
+                                "Prize balance update failed."
+                            );
+                        }
                     }
+
+                    /*
+                        Finish game.
+
+                        No stake deduction here.
+                    */
 
                     const gameUpdate =
                         db.prepare(`
@@ -808,6 +1003,7 @@ app.post(
                                 status = 'FINISHED',
                                 finished_at =
                                     CURRENT_TIMESTAMP
+
                             WHERE
                                 id = ?
                                 AND user_id = ?
@@ -817,12 +1013,13 @@ app.post(
                             prize,
                             cardNumber,
                             gameId,
-                            user.id
+                            req.user.id
                         );
 
                     if (
                         gameUpdate.changes !== 1
                     ) {
+
                         throw new Error(
                             "Game was already finished."
                         );
@@ -830,8 +1027,17 @@ app.post(
 
                     return {
                         cost,
-                        prize
+                        prize,
+                        playSpent:
+                            num(
+                                game.play_spent
+                            ),
+                        mainSpent:
+                            num(
+                                game.main_spent
+                            )
                     };
+
                 })();
 
             const fresh =
@@ -840,6 +1046,7 @@ app.post(
                 );
 
             res.json({
+
                 ok: true,
 
                 cost:
@@ -848,11 +1055,21 @@ app.post(
                 prize:
                     output.prize,
 
+                playSpent:
+                    output.playSpent,
+
+                mainSpent:
+                    output.mainSpent,
+
                 mainBalance:
-                    num(fresh.balance),
+                    num(
+                        fresh.balance
+                    ),
 
                 playBalance:
-                    num(fresh.play_balance)
+                    num(
+                        fresh.play_balance
+                    )
             });
 
         } catch (error) {
@@ -864,7 +1081,8 @@ app.post(
 
             res.status(400).json({
                 ok: false,
-                error: error.message
+                error:
+                    error.message
             });
         }
     }
@@ -876,8 +1094,11 @@ app.post(
 
 let bot = null;
 
-const depositStates = new Map();
-const withdrawStates = new Map();
+const depositStates =
+    new Map();
+
+const withdrawStates =
+    new Map();
 
 /* =========================================================
    BOT KEYBOARD
@@ -888,11 +1109,15 @@ function keyboard() {
     const rows = [];
 
     if (WEB_APP_URL) {
+
         rows.push([
             {
-                text: "🎮 PLAY BINGO",
+                text:
+                    "🎮 PLAY BINGO",
+
                 web_app: {
-                    url: WEB_APP_URL
+                    url:
+                        WEB_APP_URL
                 }
             }
         ]);
@@ -901,54 +1126,72 @@ function keyboard() {
     rows.push(
         [
             {
-                text: "📝 Register",
-                callback_data: "register"
+                text:
+                    "📝 Register",
+
+                callback_data:
+                    "register"
             }
         ],
 
         [
             {
-                text: "💰 Balance",
-                callback_data: "balance"
+                text:
+                    "💰 Balance",
+
+                callback_data:
+                    "balance"
             }
         ],
 
         [
             {
-                text: "💳 Deposit",
-                callback_data: "deposit"
+                text:
+                    "💳 Deposit",
+
+                callback_data:
+                    "deposit"
             },
+
             {
-                text: "💸 Withdraw",
-                callback_data: "withdraw"
+                text:
+                    "💸 Withdraw",
+
+                callback_data:
+                    "withdraw"
             }
         ],
 
         [
             {
-                text: "🎮 Games",
-                callback_data: "games"
+                text:
+                    "🎮 Games",
+
+                callback_data:
+                    "games"
             }
         ]
     );
 
     return {
-        inline_keyboard: rows
+        inline_keyboard:
+            rows
     };
 }
 
 /* =========================================================
-   START TELEGRAM BOT
+   START BOT
 ========================================================= */
 
 if (BOT_TOKEN) {
 
-    bot = new TelegramBot(
-        BOT_TOKEN,
-        {
-            polling: true
-        }
-    );
+    bot =
+        new TelegramBot(
+            BOT_TOKEN,
+            {
+                polling: true
+            }
+        );
 
     console.log(
         "🤖 Telegram bot polling started"
@@ -964,10 +1207,13 @@ if (BOT_TOKEN) {
 
             try {
 
-                getOrCreateUser(msg.from);
+                getOrCreateUser(
+                    msg.from
+                );
 
                 await bot.sendMessage(
                     msg.chat.id,
+
                     `🎉 Welcome to Frick Bingo!
 
 🎱 Play Bingo
@@ -975,6 +1221,7 @@ if (BOT_TOKEN) {
 💳 Deposit
 💸 Withdraw
 🏆 Game`,
+
                     {
                         reply_markup:
                             keyboard()
@@ -1008,12 +1255,18 @@ if (BOT_TOKEN) {
 
                 await bot.sendMessage(
                     msg.chat.id,
+
                     `✅ Registration successful!
 
 👤 ${user.first_name || ""}
+
 🆔 ${user.telegram_id}
-💰 Main Balance:
-${money(user.balance)} ETB`
+
+💵 Main Balance:
+${money(user.balance)} ETB
+
+🎮 Play Balance:
+${money(user.play_balance)} ETB`
                 );
 
             } catch (error) {
@@ -1043,13 +1296,20 @@ ${money(user.balance)} ETB`
 
                 await bot.sendMessage(
                     msg.chat.id,
-                    `💰 Balance
 
-💵 Main Balance:
+                    `💰 BALANCE
+
+💵 Main Wallet:
 ${money(user.balance)} ETB
 
-🎮 Play Balance:
-${money(user.play_balance)} ETB`
+🎮 Play Wallet:
+${money(user.play_balance)} ETB
+
+💰 Total:
+${money(
+    Number(user.balance) +
+    Number(user.play_balance)
+)} ETB`
                 );
 
             } catch (error) {
@@ -1079,12 +1339,14 @@ ${money(user.play_balance)} ETB`
                 depositStates.set(
                     String(msg.from.id),
                     {
-                        step: "amount"
+                        step:
+                            "amount"
                     }
                 );
 
                 await bot.sendMessage(
                     msg.chat.id,
+
                     `💳 DEPOSIT
 
 Send your deposit amount in ETB.
@@ -1130,23 +1392,33 @@ Please send only the amount first.`
 
                     return bot.sendMessage(
                         msg.chat.id,
+
                         `❌ Minimum withdrawal is ${MIN_WITHDRAW} ETB.
 
-💰 Your balance:
-${money(user.balance)} ETB`
+💵 Main Wallet:
+${money(user.balance)} ETB
+
+🎮 Play Wallet:
+${money(user.play_balance)} ETB
+
+⚠️ Only Main Wallet can be withdrawn.`
                     );
                 }
 
                 withdrawStates.set(
                     String(msg.from.id),
                     {
-                        step: "amount"
+                        step:
+                            "amount"
                     }
                 );
 
                 await bot.sendMessage(
                     msg.chat.id,
+
                     `💸 WITHDRAW
+
+Withdrawal is taken from your Main Wallet only.
 
 Send withdrawal amount in ETB.
 
@@ -1183,6 +1455,7 @@ ${MIN_WITHDRAW} ETB`
             await bot.sendMessage(
                 msg.chat.id,
                 "🎮 Open Frick Bingo:",
+
                 {
                     reply_markup: {
                         inline_keyboard: [
@@ -1190,6 +1463,7 @@ ${MIN_WITHDRAW} ETB`
                                 {
                                     text:
                                         "🎮 PLAY BINGO",
+
                                     web_app: {
                                         url:
                                             WEB_APP_URL
@@ -1226,7 +1500,9 @@ ${MIN_WITHDRAW} ETB`
                             stake,
                             cards,
                             prize,
-                            status
+                            status,
+                            play_spent,
+                            main_spent
                         FROM games
                         WHERE user_id = ?
                         ORDER BY id DESC
@@ -1244,13 +1520,20 @@ ${MIN_WITHDRAW} ETB`
                 let text =
                     "🎮 Recent Games\n\n";
 
-                for (const game of games) {
+                for (
+                    const game of games
+                ) {
 
                     text +=
                         `#${game.id} • ` +
                         `${game.result || game.status} • ` +
-                        `Stake: ${money(game.stake)} ETB • ` +
-                        `Prize: ${money(game.prize)} ETB\n`;
+                        `Stake: ${money(
+                            game.stake *
+                            game.cards
+                        )} ETB • ` +
+                        `Prize: ${money(
+                            game.prize
+                        )} ETB\n`;
                 }
 
                 await bot.sendMessage(
@@ -1278,6 +1561,7 @@ ${MIN_WITHDRAW} ETB`
 
             await bot.sendMessage(
                 msg.chat.id,
+
                 `📚 Frick Bingo Help
 
 /start
@@ -1293,7 +1577,7 @@ ${MIN_WITHDRAW} ETB`
     );
 
     /* =====================================================
-       USER STATE MESSAGE HANDLER
+       USER MESSAGE STATE HANDLER
     ===================================================== */
 
     bot.on(
@@ -1321,7 +1605,9 @@ ${MIN_WITHDRAW} ETB`
 
                 if (deposit) {
 
-                    /* Amount */
+                    /* -------------------------------------
+                       DEPOSIT AMOUNT
+                    ------------------------------------- */
 
                     if (
                         deposit.step ===
@@ -1343,6 +1629,7 @@ ${MIN_WITHDRAW} ETB`
 
                             return bot.sendMessage(
                                 msg.chat.id,
+
                                 `❌ Minimum deposit is ${MIN_DEPOSIT} ETB.`
                             );
                         }
@@ -1360,6 +1647,7 @@ ${MIN_WITHDRAW} ETB`
 
                         return bot.sendMessage(
                             msg.chat.id,
+
                             `💰 Amount:
 ${money(amount)} ETB
 
@@ -1367,138 +1655,180 @@ Now send your payment transaction/reference number.`
                         );
                     }
 
-                    /* Reference */
+                    /* -------------------------------------
+                       DEPOSIT REFERENCE
+                    ------------------------------------- */
 
-                   /* Reference */
+                    if (
+                        deposit.step ===
+                        "reference"
+                    ) {
 
-if (
-    deposit.step ===
-    "reference"
-) {
+                        const reference =
+                            String(
+                                msg.text || ""
+                            ).trim();
 
-    const reference =
-        String(
-            msg.text || ""
-        ).trim();
+                        if (!reference) {
 
-    if (!reference) {
+                            return bot.sendMessage(
+                                msg.chat.id,
+                                "❌ Reference is required."
+                            );
+                        }
 
-        return bot.sendMessage(
-            msg.chat.id,
-            "❌ Reference is required."
-        );
-    }
+                        const user =
+                            getUser(tid);
 
-    const user =
-        getUser(tid);
+                        if (!user) {
 
-    if (!user) {
+                            return bot.sendMessage(
+                                msg.chat.id,
 
-        return bot.sendMessage(
-            msg.chat.id,
-            "❌ User not found. Please send /start."
-        );
-    }
+                                "❌ User not found. Please send /start."
+                            );
+                        }
 
-    const amount =
-        num(
-            deposit.amount
-        );
+                        const amount =
+                            num(
+                                deposit.amount
+                            );
 
-    if (
-        !Number.isFinite(amount) ||
-        amount < MIN_DEPOSIT
-    ) {
+                        if (
+                            amount <
+                            MIN_DEPOSIT
+                        ) {
 
-        depositStates.delete(tid);
+                            depositStates.delete(
+                                tid
+                            );
 
-        return bot.sendMessage(
-            msg.chat.id,
-            "❌ Invalid deposit amount. Please start again with /deposit."
-        );
-    }
+                            return bot.sendMessage(
+                                msg.chat.id,
 
-    /*
-       Save deposit using users.id.
-       The deposits table contains user_id,
-       not telegram_id.
-    */
+                                "❌ Invalid deposit amount."
+                            );
+                        }
 
-    const result =
-        db.prepare(`
-            INSERT INTO deposits (
-                user_id,
-                amount,
-                reference,
-                status
-            )
-            VALUES (
-                ?,
-                ?,
-                ?,
-                'pending'
-            )
-        `).run(
-            user.id,
-            amount,
-            reference
-        );
+                        /*
+                            Prevent duplicate reference.
+                        */
 
-    const depositId =
-        Number(
-            result.lastInsertRowid
-        );
+                        const existing =
+                            db.prepare(`
+                                SELECT id
+                                FROM deposits
+                                WHERE reference = ?
+                                LIMIT 1
+                            `).get(
+                                reference
+                            );
 
-    depositStates.delete(tid);
+                        if (existing) {
 
-    await bot.sendMessage(
-        msg.chat.id,
-        `✅ Deposit submitted!
+                            depositStates.delete(
+                                tid
+                            );
+
+                            return bot.sendMessage(
+                                msg.chat.id,
+
+                                `❌ This payment reference has already been submitted.
+
+Deposit #${existing.id}`
+                            );
+                        }
+
+                        const result =
+                            db.prepare(`
+                                INSERT INTO deposits (
+                                    user_id,
+                                    amount,
+                                    reference,
+                                    status
+                                )
+                                VALUES (
+                                    ?,
+                                    ?,
+                                    ?,
+                                    'pending'
+                                )
+                            `).run(
+                                user.id,
+                                amount,
+                                reference
+                            );
+
+                        const depositId =
+                            Number(
+                                result.lastInsertRowid
+                            );
+
+                        depositStates.delete(
+                            tid
+                        );
+
+                        await bot.sendMessage(
+                            msg.chat.id,
+
+                            `✅ Deposit submitted!
 
 🆔 #${depositId}
 💰 ${money(amount)} ETB
 🧾 ${reference}
 ⏳ PENDING
 
-Your Main Balance will update after admin approval.`
-    );
+After admin approval:
 
-    /* Admin notification */
+🎮 Play Wallet:
++${money(amount)} ETB
 
-    if (ADMIN_CHAT_ID) {
+💵 Main Wallet:
+No change`
+                        );
 
-        await bot.sendMessage(
-            ADMIN_CHAT_ID,
-            `💳 NEW DEPOSIT
+                        /* Admin notification */
+
+                        if (ADMIN_CHAT_ID) {
+
+                            await bot.sendMessage(
+                                ADMIN_CHAT_ID,
+
+                                `💳 NEW DEPOSIT
 
 🆔 #${depositId}
 👤 User: ${tid}
 💰 Amount: ${money(amount)} ETB
 🧾 Reference: ${reference}`,
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: "✅ Approve",
-                                callback_data:
-                                    `approve_dep:${depositId}`
-                            },
-                            {
-                                text: "❌ Reject",
-                                callback_data:
-                                    `reject_dep:${depositId}`
-                            }
-                        ]
-                    ]
-                }
-            }
-        );
-    }
 
-    return;
-}
+                                {
+                                    reply_markup: {
+                                        inline_keyboard: [
+                                            [
+                                                {
+                                                    text:
+                                                        "✅ Approve",
 
+                                                    callback_data:
+                                                        `approve_dep:${depositId}`
+                                                },
+
+                                                {
+                                                    text:
+                                                        "❌ Reject",
+
+                                                    callback_data:
+                                                        `reject_dep:${depositId}`
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                }
+                            );
+                        }
+
+                        return;
+                    }
                 }
 
                 /* =========================================
@@ -1510,7 +1840,9 @@ Your Main Balance will update after admin approval.`
 
                 if (withdrawal) {
 
-                    /* Amount */
+                    /* -------------------------------------
+                       WITHDRAW AMOUNT
+                    ------------------------------------- */
 
                     if (
                         withdrawal.step ===
@@ -1526,15 +1858,13 @@ Your Main Balance will update after admin approval.`
                             getUser(tid);
 
                         if (
-                            !Number.isFinite(
-                                amount
-                            ) ||
                             amount <
                             MIN_WITHDRAW
                         ) {
 
                             return bot.sendMessage(
                                 msg.chat.id,
+
                                 `❌ Minimum withdrawal is ${MIN_WITHDRAW} ETB.`
                             );
                         }
@@ -1547,7 +1877,13 @@ Your Main Balance will update after admin approval.`
 
                             return bot.sendMessage(
                                 msg.chat.id,
-                                "❌ Insufficient Main Balance."
+
+                                `❌ Insufficient Main Wallet.
+
+💵 Main Wallet:
+${money(
+    user?.balance || 0
+)} ETB`
                             );
                         }
 
@@ -1564,6 +1900,7 @@ Your Main Balance will update after admin approval.`
 
                         return bot.sendMessage(
                             msg.chat.id,
+
                             `💰 Amount:
 ${money(amount)} ETB
 
@@ -1571,7 +1908,9 @@ ${money(amount)} ETB
                         );
                     }
 
-                    /* Account details */
+                    /* -------------------------------------
+                       ACCOUNT DETAILS
+                    ------------------------------------- */
 
                     if (
                         withdrawal.step ===
@@ -1587,6 +1926,7 @@ ${money(amount)} ETB
 
                             return bot.sendMessage(
                                 msg.chat.id,
+
                                 "❌ Account details are required."
                             );
                         }
@@ -1602,6 +1942,7 @@ ${money(amount)} ETB
 
                             return bot.sendMessage(
                                 msg.chat.id,
+
                                 "❌ User not found."
                             );
                         }
@@ -1612,9 +1953,6 @@ ${money(amount)} ETB
                             );
 
                         if (
-                            !Number.isFinite(
-                                amount
-                            ) ||
                             amount <
                             MIN_WITHDRAW
                         ) {
@@ -1625,26 +1963,31 @@ ${money(amount)} ETB
 
                             return bot.sendMessage(
                                 msg.chat.id,
+
                                 "❌ Invalid withdrawal amount."
                             );
                         }
 
+                        /*
+                            Withdrawal is reserved
+                            from MAIN wallet only.
+
+                            If INSERT fails,
+                            transaction rolls back.
+                        */
+
                         const withdrawalId =
                             db.transaction(() => {
-
-                                /*
-                                   Deduct balance first.
-                                   If INSERT fails, the entire
-                                   transaction rolls back.
-                                */
 
                                 const update =
                                     db.prepare(`
                                         UPDATE users
                                         SET balance =
                                             balance - ?
+
                                         WHERE
                                             id = ?
+
                                             AND balance >= ?
                                     `).run(
                                         amount,
@@ -1655,8 +1998,9 @@ ${money(amount)} ETB
                                 if (
                                     update.changes !== 1
                                 ) {
+
                                     throw new Error(
-                                        "Insufficient balance."
+                                        "Insufficient Main Wallet."
                                     );
                                 }
 
@@ -1698,29 +2042,36 @@ ${money(amount)} ETB
 
                         await bot.sendMessage(
                             msg.chat.id,
+
                             `✅ Withdrawal submitted!
 
 🆔 #${withdrawalId}
 💸 ${money(amount)} ETB
 ⏳ PENDING
 
-💰 Remaining Balance:
-${money(fresh.balance)} ETB`
+💵 Remaining Main Wallet:
+${money(fresh.balance)} ETB
+
+🎮 Play Wallet:
+${money(fresh.play_balance)} ETB`
                         );
 
-                        /* Admin notification */
+                        /* Admin */
 
                         if (ADMIN_CHAT_ID) {
 
                             await bot.sendMessage(
                                 ADMIN_CHAT_ID,
+
                                 `💸 NEW WITHDRAWAL
 
 🆔 #${withdrawalId}
 👤 User: ${tid}
 💰 Amount: ${money(amount)} ETB
+
 🏦 Account:
 ${details}`,
+
                                 {
                                     reply_markup: {
                                         inline_keyboard: [
@@ -1728,12 +2079,15 @@ ${details}`,
                                                 {
                                                     text:
                                                         "✅ Approve",
+
                                                     callback_data:
                                                         `approve_wd:${withdrawalId}`
                                                 },
+
                                                 {
                                                     text:
                                                         "❌ Reject",
+
                                                     callback_data:
                                                         `reject_wd:${withdrawalId}`
                                                 }
@@ -1759,6 +2113,7 @@ ${details}`,
 
                     await bot.sendMessage(
                         msg.chat.id,
+
                         `❌ Operation failed.
 
 ${error.message}`
@@ -1806,14 +2161,18 @@ ${error.message}`
 
                     return bot.sendMessage(
                         chatId,
+
                         `✅ Registered!
 
 👤 ${user.first_name || ""}
 
 🆔 ${user.telegram_id}
 
-💰 Main Balance:
-${money(user.balance)} ETB`
+💵 Main Wallet:
+${money(user.balance)} ETB
+
+🎮 Play Wallet:
+${money(user.play_balance)} ETB`
                     );
                 }
 
@@ -1836,13 +2195,20 @@ ${money(user.balance)} ETB`
 
                     return bot.sendMessage(
                         chatId,
-                        `💰 Balance
+
+                        `💰 BALANCE
 
 💵 Main:
 ${money(user.balance)} ETB
 
 🎮 Play:
-${money(user.play_balance)} ETB`
+${money(user.play_balance)} ETB
+
+💰 Total:
+${money(
+    Number(user.balance) +
+    Number(user.play_balance)
+)} ETB`
                     );
                 }
 
@@ -1863,7 +2229,8 @@ ${money(user.play_balance)} ETB`
                             query.from.id
                         ),
                         {
-                            step: "amount"
+                            step:
+                                "amount"
                         }
                     );
 
@@ -1873,6 +2240,7 @@ ${money(user.play_balance)} ETB`
 
                     return bot.sendMessage(
                         chatId,
+
                         `💳 DEPOSIT
 
 Send amount in ETB.
@@ -1881,7 +2249,9 @@ Minimum:
 ${MIN_DEPOSIT} ETB
 
 Payment address:
-${PAYMENT_ADDRESS || "Not configured"}`
+${PAYMENT_ADDRESS || "Not configured"}
+
+⚠️ Approved deposits go to PLAY WALLET.`
                     );
                 }
 
@@ -1905,9 +2275,11 @@ ${PAYMENT_ADDRESS || "Not configured"}`
 
                         return bot.answerCallbackQuery(
                             query.id,
+
                             {
                                 text:
-                                    `Minimum withdrawal is ${MIN_WITHDRAW} ETB.`,
+                                    `Main Wallet must have at least ${MIN_WITHDRAW} ETB.`,
+
                                 show_alert:
                                     true
                             }
@@ -1919,7 +2291,8 @@ ${PAYMENT_ADDRESS || "Not configured"}`
                             query.from.id
                         ),
                         {
-                            step: "amount"
+                            step:
+                                "amount"
                         }
                     );
 
@@ -1929,7 +2302,10 @@ ${PAYMENT_ADDRESS || "Not configured"}`
 
                     return bot.sendMessage(
                         chatId,
+
                         `💸 WITHDRAW
+
+Only your MAIN WALLET can be withdrawn.
 
 Send withdrawal amount.
 
@@ -1939,7 +2315,7 @@ ${MIN_WITHDRAW} ETB`
                 }
 
                 /* =========================================
-                   GAMES BUTTON
+                   GAMES
                 ========================================= */
 
                 if (
@@ -1988,8 +2364,13 @@ ${MIN_WITHDRAW} ETB`
                         text +=
                             `#${game.id} • ` +
                             `${game.result || game.status} • ` +
-                            `Stake: ${money(game.stake)} ETB • ` +
-                            `Prize: ${money(game.prize)} ETB\n`;
+                            `Stake: ${money(
+                                game.stake *
+                                game.cards
+                            )} ETB • ` +
+                            `Prize: ${money(
+                                game.prize
+                            )} ETB\n`;
                     }
 
                     return bot.sendMessage(
@@ -2007,207 +2388,13 @@ ${MIN_WITHDRAW} ETB`
                     String(chatId) ===
                     String(ADMIN_CHAT_ID);
 
-              /* =========================================
-   APPROVE DEPOSIT
-========================================= */
-
-if (
-    action.startsWith(
-        "approve_dep:"
-    )
-) {
-
-    if (!isAdmin) {
-
-        return bot.answerCallbackQuery(
-            query.id,
-            {
-                text: "Not authorized.",
-                show_alert: true
-            }
-        );
-    }
-
-    const id =
-        Number(
-            action.split(":")[1]
-        );
-
-    if (
-        !Number.isInteger(id) ||
-        id < 1
-    ) {
-
-        return bot.answerCallbackQuery(
-            query.id,
-            {
-                text: "Invalid deposit ID.",
-                show_alert: true
-            }
-        );
-    }
-
-    const result =
-        db.transaction(() => {
-
-            /*
-               Find deposit and its user.
-            */
-
-            const deposit =
-                db.prepare(`
-                    SELECT
-                        d.*,
-                        u.telegram_id
-                    FROM deposits d
-                    JOIN users u
-                        ON u.id = d.user_id
-                    WHERE d.id = ?
-                `).get(id);
-
-            if (!deposit) {
-
-                throw new Error(
-                    "Deposit not found."
-                );
-            }
-
-            if (
-                deposit.status !==
-                "pending"
-            ) {
-
-                throw new Error(
-                    `Deposit #${id} is already ${deposit.status}.`
-                );
-            }
-
-            const amount =
-                num(
-                    deposit.amount
-                );
-
-            if (
-                !Number.isFinite(amount) ||
-                amount <= 0
-            ) {
-
-                throw new Error(
-                    "Invalid deposit amount."
-                );
-            }
-
-            /*
-               Mark deposit approved.
-            */
-
-            const update =
-                db.prepare(`
-                    UPDATE deposits
-                    SET
-                        status = 'approved',
-                        approved_at =
-                            CURRENT_TIMESTAMP
-                    WHERE
-                        id = ?
-                        AND status = 'pending'
-                `).run(id);
-
-            if (
-                update.changes !== 1
-            ) {
-
-                throw new Error(
-                    "Deposit was already processed."
-                );
-            }
-
-            /*
-               Add money to the user's main balance.
-               Use deposits.user_id -> users.id.
-            */
-
-            const balance =
-                db.prepare(`
-                    UPDATE users
-                    SET balance = balance + ?
-                    WHERE id = ?
-                `).run(
-                    amount,
-                    deposit.user_id
-                );
-
-            if (
-                balance.changes !== 1
-            ) {
-
-                throw new Error(
-                    "User balance update failed."
-                );
-            }
-
-            return {
-                telegramId:
-                    String(
-                        deposit.telegram_id
-                    ),
-
-                amount
-            };
-
-        })();
-
-    const fresh =
-        getUser(
-            result.telegramId
-        );
-
-    await bot.answerCallbackQuery(
-        query.id,
-        {
-            text:
-                "Deposit approved ✅"
-        }
-    );
-
-    await bot.sendMessage(
-        chatId,
-        `✅ DEPOSIT APPROVED
-
-🆔 #${id}
-👤 ${result.telegramId}
-💰 +${money(result.amount)} ETB
-
-💵 New Main Balance:
-${money(fresh.balance)} ETB`
-    );
-
-    try {
-
-        await bot.sendMessage(
-            result.telegramId,
-            `🎉 Deposit Approved!
-
-💰 +${money(result.amount)} ETB
-
-💵 Main Balance:
-${money(fresh.balance)} ETB`
-        );
-
-    } catch (_) {}
-
-    return;
-}
-
-
                 /* =========================================
-                   REJECT WITHDRAWAL
-                   RETURN MONEY
+                   APPROVE DEPOSIT
                 ========================================= */
 
                 if (
                     action.startsWith(
-                        "reject_wd:"
+                        "approve_dep:"
                     )
                 ) {
 
@@ -2215,9 +2402,352 @@ ${money(fresh.balance)} ETB`
 
                         return bot.answerCallbackQuery(
                             query.id,
+
                             {
                                 text:
                                     "Not authorized.",
+
+                                show_alert:
+                                    true
+                            }
+                        );
+                    }
+
+                    const id =
+                        Number(
+                            action.split(":")[1]
+                        );
+
+                    if (
+                        !Number.isInteger(id) ||
+                        id < 1
+                    ) {
+
+                        return bot.answerCallbackQuery(
+                            query.id,
+
+                            {
+                                text:
+                                    "Invalid deposit ID.",
+
+                                show_alert:
+                                    true
+                            }
+                        );
+                    }
+
+                    const result =
+                        db.transaction(() => {
+
+                            const deposit =
+                                db.prepare(`
+                                    SELECT
+                                        d.*,
+                                        u.telegram_id
+                                    FROM deposits d
+                                    JOIN users u
+                                        ON u.id =
+                                           d.user_id
+                                    WHERE d.id = ?
+                                `).get(id);
+
+                            if (!deposit) {
+
+                                throw new Error(
+                                    "Deposit not found."
+                                );
+                            }
+
+                            if (
+                                deposit.status !==
+                                "pending"
+                            ) {
+
+                                throw new Error(
+                                    `Deposit #${id} is already ${deposit.status}.`
+                                );
+                            }
+
+                            const amount =
+                                num(
+                                    deposit.amount
+                                );
+
+                            if (
+                                amount <
+                                MIN_DEPOSIT
+                            ) {
+
+                                throw new Error(
+                                    "Invalid deposit amount."
+                                );
+                            }
+
+                            /*
+                                Mark approved FIRST
+                                inside same transaction.
+                            */
+
+                            const update =
+                                db.prepare(`
+                                    UPDATE deposits
+                                    SET
+                                        status =
+                                            'approved',
+
+                                        approved_at =
+                                            CURRENT_TIMESTAMP
+
+                                    WHERE
+                                        id = ?
+
+                                        AND status =
+                                            'pending'
+                                `).run(id);
+
+                            if (
+                                update.changes !== 1
+                            ) {
+
+                                throw new Error(
+                                    "Deposit was already processed."
+                                );
+                            }
+
+                            /*
+                                IMPORTANT:
+
+                                DEPOSIT GOES TO
+                                PLAY WALLET ONLY.
+                            */
+
+                            const balance =
+                                db.prepare(`
+                                    UPDATE users
+                                    SET play_balance =
+                                        play_balance + ?
+
+                                    WHERE id = ?
+                                `).run(
+                                    amount,
+                                    deposit.user_id
+                                );
+
+                            if (
+                                balance.changes !== 1
+                            ) {
+
+                                throw new Error(
+                                    "Play Wallet update failed."
+                                );
+                            }
+
+                            return {
+                                telegramId:
+                                    String(
+                                        deposit.telegram_id
+                                    ),
+
+                                amount
+                            };
+
+                        })();
+
+                    const fresh =
+                        getUser(
+                            result.telegramId
+                        );
+
+                    await bot.answerCallbackQuery(
+                        query.id,
+
+                        {
+                            text:
+                                "Deposit approved ✅"
+                        }
+                    );
+
+                    await bot.sendMessage(
+                        chatId,
+
+                        `✅ DEPOSIT APPROVED
+
+🆔 #${id}
+👤 ${result.telegramId}
+💰 +${money(result.amount)} ETB
+
+🎮 New Play Wallet:
+${money(fresh.play_balance)} ETB
+
+💵 Main Wallet:
+${money(fresh.balance)} ETB`
+                    );
+
+                    try {
+
+                        await bot.sendMessage(
+                            result.telegramId,
+
+                            `🎉 Deposit Approved!
+
+💰 +${money(result.amount)} ETB
+
+🎮 Play Wallet:
+${money(fresh.play_balance)} ETB
+
+💵 Main Wallet:
+${money(fresh.balance)} ETB
+
+⚠️ Deposit money is added to Play Wallet.`
+                        );
+
+                    } catch (_) {}
+
+                    return;
+                }
+
+                /* =========================================
+                   REJECT DEPOSIT
+                ========================================= */
+
+                if (
+                    action.startsWith(
+                        "reject_dep:"
+                    )
+                ) {
+
+                    if (!isAdmin) {
+
+                        return bot.answerCallbackQuery(
+                            query.id,
+
+                            {
+                                text:
+                                    "Not authorized.",
+
+                                show_alert:
+                                    true
+                            }
+                        );
+                    }
+
+                    const id =
+                        Number(
+                            action.split(":")[1]
+                        );
+
+                    const result =
+                        db.transaction(() => {
+
+                            const deposit =
+                                db.prepare(`
+                                    SELECT
+                                        d.*,
+                                        u.telegram_id
+                                    FROM deposits d
+                                    JOIN users u
+                                        ON u.id =
+                                           d.user_id
+                                    WHERE d.id = ?
+                                `).get(id);
+
+                            if (!deposit) {
+
+                                throw new Error(
+                                    "Deposit not found."
+                                );
+                            }
+
+                            if (
+                                deposit.status !==
+                                "pending"
+                            ) {
+
+                                throw new Error(
+                                    "Deposit already processed."
+                                );
+                            }
+
+                            const update =
+                                db.prepare(`
+                                    UPDATE deposits
+                                    SET status =
+                                        'rejected'
+
+                                    WHERE
+                                        id = ?
+
+                                        AND status =
+                                            'pending'
+                                `).run(id);
+
+                            if (
+                                update.changes !== 1
+                            ) {
+
+                                throw new Error(
+                                    "Deposit already processed."
+                                );
+                            }
+
+                            return deposit;
+
+                        })();
+
+                    await bot.answerCallbackQuery(
+                        query.id,
+
+                        {
+                            text:
+                                "Deposit rejected ❌"
+                        }
+                    );
+
+                    await bot.sendMessage(
+                        chatId,
+
+                        `❌ DEPOSIT REJECTED
+
+🆔 #${id}
+💰 ${money(result.amount)} ETB`
+                    );
+
+                    try {
+
+                        await bot.sendMessage(
+                            result.telegram_id,
+
+                            `❌ Deposit Rejected
+
+🆔 #${id}
+
+💰 ${money(result.amount)} ETB was not added to your wallet.`
+                        );
+
+                    } catch (_) {}
+
+                    return;
+                }
+
+                /* =========================================
+                   APPROVE WITHDRAWAL
+                ========================================= */
+
+                if (
+                    action.startsWith(
+                        "approve_wd:"
+                    )
+                ) {
+
+                    if (!isAdmin) {
+
+                        return bot.answerCallbackQuery(
+                            query.id,
+
+                            {
+                                text:
+                                    "Not authorized.",
+
                                 show_alert:
                                     true
                             }
@@ -2245,6 +2775,7 @@ ${money(fresh.balance)} ETB`
                                 `).get(id);
 
                             if (!withdrawal) {
+
                                 throw new Error(
                                     "Withdrawal not found."
                                 );
@@ -2254,18 +2785,32 @@ ${money(fresh.balance)} ETB`
                                 withdrawal.status !==
                                 "pending"
                             ) {
+
                                 throw new Error(
-                                    "Withdrawal already processed."
+                                    `Withdrawal #${id} is already ${withdrawal.status}.`
                                 );
                             }
+
+                            /*
+                                Money was already deducted
+                                when the withdrawal was requested.
+
+                                Approval DOES NOT deduct again.
+                            */
 
                             const update =
                                 db.prepare(`
                                     UPDATE withdrawals
-                                    SET status =
-                                        'rejected'
+                                    SET
+                                        status =
+                                            'approved',
+
+                                        approved_at =
+                                            CURRENT_TIMESTAMP
+
                                     WHERE
                                         id = ?
+
                                         AND status =
                                             'pending'
                                 `).run(id);
@@ -2273,35 +2818,9 @@ ${money(fresh.balance)} ETB`
                             if (
                                 update.changes !== 1
                             ) {
+
                                 throw new Error(
                                     "Withdrawal already processed."
-                                );
-                            }
-
-                            /*
-                               Money was deducted when the
-                               withdrawal was requested.
-                               If admin rejects it, return it.
-                            */
-
-                            const refund =
-                                db.prepare(`
-                                    UPDATE users
-                                    SET balance =
-                                        balance + ?
-                                    WHERE id = ?
-                                `).run(
-                                    num(
-                                        withdrawal.amount
-                                    ),
-                                    withdrawal.user_id
-                                );
-
-                            if (
-                                refund.changes !== 1
-                            ) {
-                                throw new Error(
-                                    "Could not return withdrawal balance."
                                 );
                             }
 
@@ -2316,32 +2835,40 @@ ${money(fresh.balance)} ETB`
 
                     await bot.answerCallbackQuery(
                         query.id,
+
                         {
                             text:
-                                "Withdrawal rejected ❌"
+                                "Withdrawal approved ✅"
                         }
                     );
 
                     await bot.sendMessage(
                         chatId,
-                        `❌ WITHDRAWAL REJECTED
+
+                        `✅ WITHDRAWAL APPROVED
 
 🆔 #${id}
+👤 ${result.telegram_id}
+💸 ${money(result.amount)} ETB
 
-💰 ${money(result.amount)} ETB returned to user.`
+💵 Remaining Main Wallet:
+${money(fresh.balance)} ETB`
                     );
 
                     try {
 
                         await bot.sendMessage(
                             result.telegram_id,
-                            `❌ Withdrawal Rejected
+
+                            `🎉 Withdrawal Approved!
 
 🆔 #${id}
 
-💰 ${money(result.amount)} ETB returned.
+💸 ${money(result.amount)} ETB
 
-💵 Main Balance:
+Your withdrawal has been approved.
+
+💵 Main Wallet:
 ${money(fresh.balance)} ETB`
                         );
 
@@ -2350,7 +2877,171 @@ ${money(fresh.balance)} ETB`
                     return;
                 }
 
-                /* Unknown callback */
+                /* =========================================
+                   REJECT WITHDRAWAL
+                ========================================= */
+
+                if (
+                    action.startsWith(
+                        "reject_wd:"
+                    )
+                ) {
+
+                    if (!isAdmin) {
+
+                        return bot.answerCallbackQuery(
+                            query.id,
+
+                            {
+                                text:
+                                    "Not authorized.",
+
+                                show_alert:
+                                    true
+                            }
+                        );
+                    }
+
+                    const id =
+                        Number(
+                            action.split(":")[1]
+                        );
+
+                    const result =
+                        db.transaction(() => {
+
+                            const withdrawal =
+                                db.prepare(`
+                                    SELECT
+                                        w.*,
+                                        u.telegram_id
+                                    FROM withdrawals w
+                                    JOIN users u
+                                        ON u.id =
+                                           w.user_id
+                                    WHERE w.id = ?
+                                `).get(id);
+
+                            if (!withdrawal) {
+
+                                throw new Error(
+                                    "Withdrawal not found."
+                                );
+                            }
+
+                            if (
+                                withdrawal.status !==
+                                "pending"
+                            ) {
+
+                                throw new Error(
+                                    "Withdrawal already processed."
+                                );
+                            }
+
+                            const update =
+                                db.prepare(`
+                                    UPDATE withdrawals
+                                    SET status =
+                                        'rejected'
+
+                                    WHERE
+                                        id = ?
+
+                                        AND status =
+                                            'pending'
+                                `).run(id);
+
+                            if (
+                                update.changes !== 1
+                            ) {
+
+                                throw new Error(
+                                    "Withdrawal already processed."
+                                );
+                            }
+
+                            /*
+                                Return the money to MAIN wallet.
+                            */
+
+                            const refund =
+                                db.prepare(`
+                                    UPDATE users
+                                    SET balance =
+                                        balance + ?
+
+                                    WHERE id = ?
+                                `).run(
+                                    num(
+                                        withdrawal.amount
+                                    ),
+                                    withdrawal.user_id
+                                );
+
+                            if (
+                                refund.changes !== 1
+                            ) {
+
+                                throw new Error(
+                                    "Could not refund withdrawal."
+                                );
+                            }
+
+                            return withdrawal;
+
+                        })();
+
+                    const fresh =
+                        getUser(
+                            result.telegram_id
+                        );
+
+                    await bot.answerCallbackQuery(
+                        query.id,
+
+                        {
+                            text:
+                                "Withdrawal rejected ❌"
+                        }
+                    );
+
+                    await bot.sendMessage(
+                        chatId,
+
+                        `❌ WITHDRAWAL REJECTED
+
+🆔 #${id}
+
+💰 ${money(result.amount)} ETB returned to Main Wallet.`
+                    );
+
+                    try {
+
+                        await bot.sendMessage(
+                            result.telegram_id,
+
+                            `❌ Withdrawal Rejected
+
+🆔 #${id}
+
+💰 ${money(result.amount)} ETB returned.
+
+💵 Main Wallet:
+${money(fresh.balance)} ETB
+
+🎮 Play Wallet:
+${money(fresh.play_balance)} ETB`
+                        );
+
+                    } catch (_) {}
+
+                    return;
+                }
+
+                /* =========================================
+                   UNKNOWN CALLBACK
+                ========================================= */
 
                 await bot.answerCallbackQuery(
                     query.id
@@ -2367,10 +3058,12 @@ ${money(fresh.balance)} ETB`
 
                     await bot.answerCallbackQuery(
                         query.id,
+
                         {
                             text:
                                 error.message ||
                                 "Operation failed.",
+
                             show_alert:
                                 true
                         }
@@ -2443,15 +3136,19 @@ app.listen(
         );
 
         console.log(
-            "💳 Deposit System: ENABLED"
+            "💳 Deposit → PLAY WALLET"
         );
 
         console.log(
-            "💸 Withdrawal System: ENABLED"
+            "🎮 Game → PLAY first, MAIN second"
         );
 
         console.log(
-            "🎮 Game APIs: ENABLED"
+            "🏆 Win → MAIN WALLET"
+        );
+
+        console.log(
+            "💸 Withdrawal → MAIN WALLET ONLY"
         );
 
         console.log(
