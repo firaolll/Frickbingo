@@ -2567,9 +2567,16 @@ let gameRunning = false;
   
 let gameTimer = null;  
   
-let gameInterval = null;  
-  
-let fakePlayers = 1;  
+let gameInterval = null;
+let selectionTimerInterval = null;
+let lobbyPollInterval = null;
+let winnerResetInterval = null;
+let playerReady = false;
+let actualGameStarted = false;
+let winnerShown = false;
+let profileData = {name:"Winner"};
+let fakePlayers = 1;
+let totalGameCards = 0;  
   
   
 /* ==================================================  
@@ -2894,6 +2901,18 @@ function updateAllDisplays(){
     }  
   
   
+    const main3 = document.getElementById("mainBalance3");
+    const play3 = document.getElementById("playBalance3");
+    const stake3 = document.getElementById("stakeDisplay3");
+    const derash3 = document.getElementById("derashDisplay");
+    if(main3) main3.textContent = money(main);
+    if(play3) play3.textContent = money(play);
+    if(stake3) stake3.textContent = money(selectedStake);
+    if(derash3){
+        const cardsForPrize = totalGameCards > 0 ? totalGameCards : Math.max(1, selectedCards.length) * Math.max(1, Number(fakePlayers || 1));
+        derash3.textContent = money(selectedStake * cardsForPrize * WIN_RATE);
+    }
+
     if(currentUser){  
   
         const profileName =  
@@ -3452,8 +3471,11 @@ async function readyForGame(){
     if(!selectedCards.length){showToast("Please select at least one card.");return;}
     if(selectedCards.length>MAX_CARDS){showToast("Maximum 2 cards.");return;}
 
-    const cost=selectedStake*selectedCards.length;
-    if(getMainBalance()<cost){showToast(`You need ${money(cost)} ETB in Main Wallet.`);return;}
+    const cost = selectedStake * selectedCards.length;
+    if(getMainBalance() + getPlayBalance() < cost){
+        showToast(`You need ${money(cost)} ETB in your wallet.`);
+        return;
+    }
 
     playerReady=true;
     const button=document.getElementById("readyButton");
@@ -3512,7 +3534,14 @@ async function finishSelectionPeriod(){
                     await createGameAfterLobby();
                 }
             }catch(_){
-                // If the endpoint is not available, remain in waiting mode.
+                if(attempts >= 5){
+                    clearInterval(lobbyPollInterval);
+                    lobbyPollInterval=null;
+                    fakePlayers=2;
+                    totalGameCards=Math.max(1, selectedCards.length) * fakePlayers;
+                    await createGameAfterLobby();
+                    return;
+                }
             }
 
             if(attempts>=300){
@@ -3541,11 +3570,16 @@ async function createGameAfterLobby(){
             if(data.playBalance!==undefined) currentUser.playBalance=Number(data.playBalance);
         }
         fakePlayers=Math.max(2,Number(data.players||data.playerCount||data.player_count||fakePlayers));
+        totalGameCards = Math.max(1, Number(data.totalCards ?? data.total_cards ?? data.cardsTotal ?? (selectedCards.length * fakePlayers)));
         updateAllDisplays();
         beginActualGame();
     }catch(error){
-        if(button){button.disabled=false;button.textContent="✓ ACCEPTED";}
-        showToast(error.message||"Unable to start game.");
+        currentGameId = null;
+        fakePlayers = Math.max(2, Number(fakePlayers || 2));
+        totalGameCards = Math.max(1, selectedCards.length) * fakePlayers;
+        if(button){button.disabled=true;button.textContent="✓ ACCEPTED";button.classList.add("ready");}
+        showToast("Game started in local mode.");
+        beginActualGame();
     }
 }
 
@@ -3568,68 +3602,26 @@ function beginActualGame(){
    GAME STATS  
 ================================================== */  
   
-function updateGameStats(){  
-  
-    const players =  
-        document.getElementById(  
-            "gamePlayers"  
-        );  
-  
-    const stake =  
-        document.getElementById(  
-            "gameStake"  
-        );  
-  
-    const pot =  
-        document.getElementById(  
-            "gamePot"  
-        );  
-  
-    const players2 =  
-        document.getElementById(  
-            "playerCount2"  
-        );  
-  
-  
-    if(players){  
-  
-        players.textContent =  
-            fakePlayers;  
-  
-    }  
-  
-  
-    if(stake){  
-  
-        stake.textContent =  
-            selectedStake +  
-            " ETB";  
-  
-    }  
-  
-  
-    if(pot){  
-  
-        pot.textContent =  
-            money(  
-                selectedStake *  
-                fakePlayers  
-            ) +  
-            " ETB";  
-  
-    }  
-  
-  
-    if(players2){  
-  
-        players2.textContent =  
-            fakePlayers;  
-  
-    }  
-  
-}  
-  
-  
+function updateGameStats(){
+    const players = document.getElementById("gamePlayers");
+    const stake = document.getElementById("gameStake");
+    const pot = document.getElementById("gamePot");
+    const players2 = document.getElementById("playerCount2");
+
+    if(players) players.textContent = fakePlayers;
+    if(stake) stake.textContent = selectedStake + " ETB";
+
+    const totalCards = totalGameCards > 0
+        ? totalGameCards
+        : Math.max(1, selectedCards.length) * Math.max(1, Number(fakePlayers || 1));
+    const prize = selectedStake * totalCards * WIN_RATE;
+    const derash = document.getElementById("derashDisplay");
+    if(pot) pot.textContent = money(prize) + " ETB";
+    if(derash) derash.textContent = money(prize);
+    if(players2) players2.textContent = fakePlayers;
+}
+
+
 /* ==================================================  
    BIG BOARD  
 ================================================== */  
@@ -4183,7 +4175,7 @@ function showWinner(name,prize,cardNumber,card){
     const cn=document.getElementById("winnerCardNumber");
     const wrap=document.getElementById("winnerCardWrap");
     const cd=document.getElementById("winnerCountdown");
-    if(n) n.textContent=name||profileData.name||"Winner";
+    if(n) n.textContent=name || currentUser?.firstName || currentUser?.first_name || "Winner";
     if(p) p.textContent=money(prize)+" ETB";
     if(cn) cn.textContent=cardNumber?("Card "+cardNumber):"Winning Card";
     if(wrap){
@@ -4212,7 +4204,7 @@ function closeWinner(){
     document.getElementById("winnerOverlay")?.classList.remove("show");
     clearInterval(winnerResetInterval);winnerResetInterval=null;
     winnerShown=false;actualGameStarted=false;gameRunning=false;currentGameId=null;
-    selectedCards=[];selectionSeconds=35;playerReady=false;
+    selectedCards=[];selectionSeconds=35;playerReady=false;totalGameCards=0;
     const timer=document.getElementById("selectionTimer");if(timer) timer.textContent="Waiting for card selection";
     const button=document.getElementById("readyButton");if(button){button.disabled=true;button.textContent="ACCEPT";button.classList.remove("ready");}
     const watch=document.getElementById("watchMessage");if(watch){watch.style.display="none";watch.textContent="";}
@@ -4236,8 +4228,11 @@ function leaveGame(){
   
     }  
   
-    gameRunning = false;  
-  
+    gameRunning = false;
+    actualGameStarted = false;
+    playerReady = false;
+    if(selectionTimerInterval){clearInterval(selectionTimerInterval);selectionTimerInterval=null;}
+    if(lobbyPollInterval){clearInterval(lobbyPollInterval);lobbyPollInterval=null;}
     showPage("page1");  
   
 }  
@@ -4565,7 +4560,7 @@ async function init(){
   
     renderCardSelection();  
   
-    renderBigBoard();  
+    class="renderBigBoard()";  
   
     updateSelectedCards();  
   
