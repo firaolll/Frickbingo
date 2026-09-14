@@ -2851,10 +2851,11 @@ if (bot) {
 
                 if (WEB_APP_URL) {
 
-                    keyboard.push([
-                        {
-                            text:
-                                "🎮 Open Frick Bingo",
+                    const keyboard = [
+    ["⭐ Start", "📝 Register"],
+    ["🎮 Play", "💰 Balance"],
+    ["➕ Deposit", "💸 Withdraw"],
+    ["📜 Game History"];
                             web_app: {
                                 url:
                                     WEB_APP_URL
