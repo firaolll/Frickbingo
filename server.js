@@ -2849,21 +2849,30 @@ if (bot) {
 
                 let keyboard = [];
 
-                if (WEB_APP_URL) {
-
-                    const keyboard = [
-    ["⭐ Start", "📝 Register"],
-    ["🎮 Play", "💰 Balance"],
-    ["➕ Deposit", "💸 Withdraw"],
-    ["📜 Game History"];
-                            web_app: {
-                                url:
-                                    WEB_APP_URL
-                            }
-                        }
-                    ]);
-
+if (WEB_APP_URL) {
+    keyboard = [
+        [
+            { text: "⭐ Start", callback_data: "start_menu" },
+            { text: "📝 Register", callback_data: "register" }
+        ],
+        [
+            {
+                text: "🎮 Play",
+                web_app: {
+                    url: WEB_APP_URL
                 }
+            },
+            { text: "💰 Balance", callback_data: "balance" }
+        ],
+        [
+            { text: "➕ Deposit", callback_data: "deposit" },
+            { text: "💸 Withdraw", callback_data: "withdraw" }
+        ],
+        [
+            { text: "📜 Game History", callback_data: "history" }
+        ]
+    ];
+}
 
                 await sendBotMessage(
                     chatId,
