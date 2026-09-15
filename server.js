@@ -24,6 +24,8 @@ const GAME_STAKES = [10, 20];
 const MAX_CARDS = 2;
 
 const WIN_RATE = 0.85;
+const MIN_PLAYERS = 2;
+const COUNTDOWN_SECONDS = 30;
 
 // ======================================================
 // EXPRESS
@@ -199,6 +201,29 @@ addColumnIfMissing(
     "account_details",
     "TEXT"
 );
+addColumnIfMissing(
+    "matches",
+    "countdown_started_at",
+    "DATETIME"
+);
+
+addColumnIfMissing(
+    "matches",
+    "countdown_seconds",
+    "INTEGER NOT NULL DEFAULT 30"
+);
+
+addColumnIfMissing(
+    "matches",
+    "called_balls",
+    "TEXT DEFAULT '[]'"
+);
+
+addColumnIfMissing(
+    "matches",
+    "current_ball",
+    "TEXT DEFAULT ''"
+);
 
 // ======================================================
 // HELPERS
@@ -238,7 +263,37 @@ function validCards(cards) {
         Number(cards) >= 1 &&
         Number(cards) <= MAX_CARDS
     );
+    
 }
+function findWaitingMatch(stake) {
+
+    return db.prepare(`
+        SELECT *
+        FROM matches
+        WHERE stake = ?
+        AND status = 'WAITING'
+        ORDER BY id ASC
+        LIMIT 1
+    `).get(stake);
+}
+function getMatchCountdown(match) {
+
+    if (!match.countdown_started_at) {
+        return COUNTDOWN_SECONDS;
+    }
+
+    const started =
+        new Date(match.countdown_started_at + "Z").getTime();
+
+    const elapsed =
+        Math.floor((Date.now() - started) / 1000);
+
+    return Math.max(
+        0,
+        COUNTDOWN_SECONDS - elapsed
+    );
+}
+
 
 // ======================================================
 // TELEGRAM INIT DATA
@@ -651,79 +706,70 @@ app.get(
 // ======================================================
 // CREATE MATCH
 // ======================================================
+app.post("/api/match/create", auth, (req, res) => {
+    try {
+        const stake = num(req.body.stake);
 
-app.post(
-    "/api/match/create",
-    auth,
-    (req, res) => {
-
-        try {
-
-            const stake =
-                num(req.body.stake);
-
-            if (!validStake(stake)) {
-
-                return res.status(400).json({
-                    success: false,
-                    error:
-                        "Invalid stake"
-                });
-
-            }
-
-            const result =
-                db.prepare(`
-                    INSERT INTO matches (
-                        stake,
-                        status
-                    )
-                    VALUES (?, 'WAITING')
-                `).run(
-                    stake
-                );
-
-            const matchId =
-                Number(
-                    result.lastInsertRowid
-                );
-
-            res.json({
-
-                success: true,
-
-                matchId,
-
-                // Same ID for every
-                // player in this match
-                gameId: matchId,
-
-                sharedGameId: matchId,
-
-                stake,
-
-                status: "WAITING",
-
-                playerCount: 0
-
-            });
-
-        } catch (error) {
-
-            console.error(
-                "CREATE MATCH ERROR:",
-                error
-            );
-
-            res.status(500).json({
+        if (!validStake(stake)) {
+            return res.status(400).json({
                 success: false,
-                error:
-                    "Could not create match"
+                error: "Invalid stake"
             });
         }
 
+        let match = findWaitingMatch(stake);
+
+        if (!match) {
+            const result = db.prepare(`
+                INSERT INTO matches (
+                    stake,
+                    status,
+                    countdown_seconds,
+                    called_balls,
+                    current_ball
+                )
+                VALUES (?, 'WAITING', ?, '[]', '')
+            `).run(
+                stake,
+                COUNTDOWN_SECONDS
+            );
+
+            match = db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE id = ?
+            `).get(
+                Number(result.lastInsertRowid)
+            );
+        }
+
+        const playerCount = db.prepare(`
+            SELECT COUNT(*) AS count
+            FROM games
+            WHERE match_id = ?
+        `).get(match.id).count;
+
+        return res.json({
+            success: true,
+            matchId: match.id,
+            gameId: match.id,
+            sharedGameId: match.id,
+            stake: match.stake,
+            status: match.status,
+            playerCount,
+            minPlayers: MIN_PLAYERS,
+            countdown: getMatchCountdown(match)
+        });
+
+    } catch (err) {
+        console.error("MATCH CREATE ERROR:", err);
+
+        return res.status(500).json({
+            success: false,
+            error: "Failed to create/join match"
+        });
     }
-);
+});
 
 // ======================================================
 // MATCH INFORMATION
@@ -863,46 +909,392 @@ app.get(
 // JOIN / START GAME
 // ======================================================
 
-app.post(
-    "/api/game/start",
-    auth,
-    (req, res) => {
+app.post("/api/game/start", auth, (req, res) => {
+    try {
+        const stake = num(req.body.stake);
+        const cards = Number(req.body.cards);
 
-        try {
+        // -----------------------------
+        // VALIDATION
+        // -----------------------------
 
-            const stake =
-                num(req.body.stake);
+        if (!validStake(stake)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid stake"
+            });
+        }
 
-            const cards =
-                Number(req.body.cards);
+        if (!validCards(cards)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid number of cards"
+            });
+        }
 
-            let matchId =
-                req.body.matchId
-                    ? integer(
-                        req.body.matchId
-                    )
-                    : null;
+        const userId = req.user.id;
 
-            if (!validStake(stake)) {
+        // -----------------------------
+        // FIND EXISTING WAITING MATCH
+        // -----------------------------
 
-                return res.status(400).json({
-                    success: false,
-                    error:
-                        "Invalid stake"
-                });
+        let match = findWaitingMatch(stake);
 
+        // If no waiting match exists,
+        // create a new shared match.
+        if (!match) {
+            const result = db.prepare(`
+                INSERT INTO matches (
+                    stake,
+                    status,
+                    prize_pool,
+                    winner_count,
+                    paid,
+                    countdown_seconds,
+                    called_balls,
+                    current_ball
+                )
+                VALUES (
+                    ?,
+                    'WAITING',
+                    0,
+                    0,
+                    0,
+                    ?,
+                    '[]',
+                    ''
+                )
+            `).run(
+                stake,
+                COUNTDOWN_SECONDS
+            );
+
+            const matchId =
+                Number(result.lastInsertRowid);
+
+            match = db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE id = ?
+            `).get(matchId);
+        }
+
+        const matchId = Number(match.id);
+
+        // -----------------------------
+        // CHECK MATCH STATUS
+        // -----------------------------
+
+        if (match.status === "FINISHED") {
+            return res.status(400).json({
+                success: false,
+                error: "This game has already finished"
+            });
+        }
+
+        // -----------------------------
+        // CHECK IF PLAYER ALREADY JOINED
+        // -----------------------------
+
+        const existingGame = db.prepare(`
+            SELECT *
+            FROM games
+            WHERE match_id = ?
+              AND user_id = ?
+            LIMIT 1
+        `).get(
+            matchId,
+            userId
+        );
+
+        if (existingGame) {
+            const players = db.prepare(`
+                SELECT COUNT(*) AS count
+                FROM games
+                WHERE match_id = ?
+            `).get(matchId);
+
+            return res.json({
+                success: true,
+
+                gameId: matchId,
+                sharedGameId: matchId,
+                matchId,
+
+                playerGameId: existingGame.id,
+
+                stake: existingGame.stake,
+                cards: existingGame.cards,
+
+                playerCount: players.count,
+                minPlayers: MIN_PLAYERS,
+
+                countdown:
+                    getMatchCountdown(match),
+
+                status: match.status,
+
+                alreadyJoined: true
+            });
+        }
+
+        // -----------------------------
+        // CALCULATE COST
+        // -----------------------------
+
+        const cost = num(stake * cards);
+
+        // -----------------------------
+        // GET CURRENT BALANCE
+        // -----------------------------
+
+        const user = db.prepare(`
+            SELECT
+                id,
+                balance,
+                play_balance
+            FROM users
+            WHERE id = ?
+        `).get(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: "User not found"
+            });
+        }
+
+        const totalBalance = num(
+            Number(user.balance) +
+            Number(user.play_balance)
+        );
+
+        if (totalBalance < cost) {
+            return res.status(400).json({
+                success: false,
+                error: "Insufficient balance",
+                required: cost,
+                balance: totalBalance
+            });
+        }
+
+        // -----------------------------
+        // SPEND PLAY WALLET FIRST
+        // THEN MAIN WALLET
+        // -----------------------------
+
+        const playSpent = Math.min(
+            Number(user.play_balance),
+            cost
+        );
+
+        const mainSpent = num(
+            cost - playSpent
+        );
+
+        // -----------------------------
+        // TRANSACTION
+        // -----------------------------
+
+        const transaction = db.transaction(() => {
+
+            // Deduct player's money
+            const updateBalance = db.prepare(`
+                UPDATE users
+                SET
+                    balance = balance - ?,
+                    play_balance = play_balance - ?
+                WHERE id = ?
+                  AND balance >= ?
+                  AND play_balance >= ?
+            `).run(
+                mainSpent,
+                playSpent,
+                userId,
+                mainSpent,
+                playSpent
+            );
+
+            if (updateBalance.changes !== 1) {
+                throw new Error(
+                    "Balance changed. Please try again."
+                );
             }
 
-            if (!validCards(cards)) {
+            // Add player to the SAME match
+            const gameResult = db.prepare(`
+                INSERT INTO games (
+                    match_id,
+                    user_id,
+                    stake,
+                    cards,
+                    result,
+                    prize,
+                    status,
+                    play_spent,
+                    main_spent
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    'STARTED',
+                    0,
+                    'STARTED',
+                    ?,
+                    ?
+                )
+            `).run(
+                matchId,
+                userId,
+                stake,
+                cards,
+                playSpent,
+                mainSpent
+            );
 
-                return res.status(400).json({
-                    success: false,
-                    error:
-                        "Cards must be 1 or 2"
-                });
+            // Count players AFTER joining
+            const playerCount = db.prepare(`
+                SELECT COUNT(*) AS count
+                FROM games
+                WHERE match_id = ?
+            `).get(matchId).count;
 
+            // Start the 30-second countdown
+            // when the FIRST player joins.
+            if (!match.countdown_started_at) {
+
+                db.prepare(`
+                    UPDATE matches
+                    SET
+                        countdown_started_at =
+                            CURRENT_TIMESTAMP,
+                        countdown_seconds = ?,
+                        prize_pool = ?
+                    WHERE id = ?
+                      AND status = 'WAITING'
+                `).run(
+                    COUNTDOWN_SECONDS,
+                    0,
+                    matchId
+                );
+
+            } else {
+
+                // Update prize pool
+                const totalCost = db.prepare(`
+                    SELECT
+                        COALESCE(
+                            SUM(stake * cards),
+                            0
+                        ) AS total
+                    FROM games
+                    WHERE match_id = ?
+                `).get(matchId).total;
+
+                db.prepare(`
+                    UPDATE matches
+                    SET prize_pool = ?
+                    WHERE id = ?
+                `).run(
+                    num(totalCost * WIN_RATE),
+                    matchId
+                );
             }
 
+            return {
+                gameId:
+                    Number(gameResult.lastInsertRowid),
+                playerCount
+            };
+        });
+
+        // -----------------------------
+        // GET UPDATED MATCH
+        // -----------------------------
+
+        const updatedMatch = db.prepare(`
+            SELECT *
+            FROM matches
+            WHERE id = ?
+        `).get(matchId);
+
+        const playerCount = db.prepare(`
+            SELECT COUNT(*) AS count
+            FROM games
+            WHERE match_id = ?
+        `).get(matchId).count;
+
+        const newBalance = db.prepare(`
+            SELECT
+                balance,
+                play_balance
+            FROM users
+            WHERE id = ?
+        `).get(userId);
+
+        // -----------------------------
+        // RESPONSE
+        // -----------------------------
+
+        return res.json({
+            success: true,
+
+            // SAME ID FOR ALL PLAYERS
+            gameId: matchId,
+            sharedGameId: matchId,
+            matchId,
+
+            // UNIQUE ID FOR THIS PLAYER'S ENTRY
+            playerGameId: transaction.gameId,
+
+            stake,
+            cards,
+
+            playerCount,
+            minPlayers: MIN_PLAYERS,
+
+            countdown:
+                getMatchCountdown(updatedMatch),
+
+            status:
+                updatedMatch.status,
+
+            ready:
+                playerCount >= MIN_PLAYERS,
+
+            started:
+                updatedMatch.status === "PLAYING",
+
+            balance:
+                num(newBalance.balance),
+
+            playBalance:
+                num(newBalance.play_balance),
+
+            totalBalance:
+                num(
+                    Number(newBalance.balance) +
+                    Number(newBalance.play_balance)
+                )
+        });
+
+    } catch (err) {
+
+        console.error(
+            "GAME START ERROR:",
+            err
+        );
+
+        return res.status(500).json({
+            success: false,
+            error:
+                err.message ||
+                "Failed to start/join game"
+        });
+    }
+});
             // ------------------------------------------------
             // CREATE COMPATIBILITY MATCH
             // ------------------------------------------------
