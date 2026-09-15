@@ -1704,12 +1704,12 @@ app.post("/api/game/start", auth, (req, res) => {
 
             });
 
-        } catch (error) {
+                    }catch (error) {
 
             console.error(
                 "GAME START ERROR:",
                 error
-            );
+             );
 
             res.status(500).json({
 
@@ -1721,9 +1721,7 @@ app.post("/api/game/start", auth, (req, res) => {
 
             });
         }
-
-    }
-);
+});
 
 // ======================================================
 // FINALIZE MATCH PAYOUT
