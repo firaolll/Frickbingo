@@ -1965,73 +1965,68 @@ return (
 // Adds money to PLAY WALLET.
 // ======================================================
 
-function approveDeposit(
-depositId
-) {
+function approveDeposit(depositId) {
 
-const transaction =  
-    db.transaction(() => {  
+    const transaction = db.transaction(() => {
 
-        const deposit =  
-            db.prepare(`  
-                SELECT *  
-                FROM deposits  
-                WHERE id = ?  
-            `).get(  
-                depositId  
-            );  
+        const deposit = db.prepare(`
+            SELECT *
+            FROM deposits
+            WHERE id = ?
+        `).get(depositId);
 
-        if (!deposit) {  
+        if (!deposit) {
+            throw new Error("Deposit not found");
+        }
 
-            throw new Error(  
-                "Deposit not found"  
-            );  
+        if (deposit.status !== "pending") {
+            throw new Error(
+                `Deposit is already ${deposit.status}`
+            );
+        }
 
-        }  
+        const amount = Number(deposit.amount);
 
-        if (  
-            deposit.status !==  
-            "pending"  
-        ) {  
+        if (!Number.isFinite(amount) || amount <= 0) {
+            throw new Error(
+                `Invalid deposit amount: ${deposit.amount}`
+            );
+        }
 
-            throw new Error(  
-                `Deposit is already ${deposit.status}`  
-            );  
+        // Approve deposit
+        db.prepare(`
+            UPDATE deposits
+            SET
+                status = 'approved',
+                approved_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `).run(depositId);
 
-        }  
 
-        db.prepare(`  
-            UPDATE deposits  
+        // Add money to Play Wallet
+        const result = db.prepare(`
+            UPDATE users
+            SET
+                play_balance = COALESCE(play_balance, 0) + ?
+            WHERE id = ?
+        `).run(
+            amount,
+            deposit.user_id
+        );
 
-            SET  
-                status = 'approved',  
-                approved_at =  
-                    CURRENT_TIMESTAMP  
 
-            WHERE id = ?  
-        `).run(  
-            depositId  
-        );  
+        if (result.changes !== 1) {
+            throw new Error(
+                "User wallet was not updated"
+            );
+        }
 
-        db.prepare(`  
-            UPDATE users  
+        return deposit;
+    });
 
-            SET  
-                play_balance =  
-                    play_balance + ?  
-
-            WHERE id = ?  
-        `).run(  
-            num(deposit.amount),  
-            deposit.user_id  
-        );  
-
-        return deposit;  
-    });  
-
-return transaction();
-
+    return transaction();
 }
+
 
 // ======================================================
 // ADMIN REJECT DEPOSIT
@@ -2507,7 +2502,8 @@ return transaction();
 // ======================================================
 
 let bot = null;
-
+const userState = {};
+const depositSessions = new Map();
 if (BOT_TOKEN) {
 
 bot =  
@@ -2995,43 +2991,203 @@ the prize is divided equally among them.
 );
 
 // ======================================================
-// /DEPOSIT
+// DEPOSIT
 // ======================================================
 
-bot.onText(  
-    /^\/deposit$/,  
-    async msg => {  
+bot.onText(
+    /^\/deposit$/,
+    async msg => {
 
-        await sendBotMessage(  
+        const chatId = msg.chat.id;
 
-            msg.chat.id,
+        userState[chatId] = {
+            step: "deposit_amount"
+        };
 
-`💳 Deposit
+        await sendBotMessage(
+            chatId,
+            `1. ከዚህ በታች በተቀመጠው የቴሌ ብር አካውንት ገቢ ያድርጉ።
+ከ10 ብር ጀምሮ የሚፈልጉትን መጠን ይላኩ።
 
-Minimum deposit:
-${MIN_DEPOSIT} ETB
+ስም = Mulualem
+ስልክ = 0940521110
 
-Payment Address:
-${PAYMENT_ADDRESS || "Not configured"}
-
-After payment, submit your:
-
-1. Amount
-
-
-2. Payment reference
+2. 💰 ገቢ የሚያደርጉትን መጠን ያስገቡ።`
+        );
+    }
+);
 
 
+// ======================================================
+// DEPOSIT MESSAGE HANDLER
+// ======================================================
 
-Your deposit will first be marked PENDING.
+bot.on(
+    "message",
+    async msg => {
 
-An administrator must approve it before the amount is added to your Play Wallet.
+        if (!msg.text) return;
 
-❌ Rejected deposits are NOT added to your wallet.`
+        const chatId = msg.chat.id;
+        const text = msg.text.trim();
 
-);  
+        if (text.startsWith("/")) return;
 
-    }  
+        const state = userState[chatId];
+
+        if (!state) return;
+
+
+        // ==================================================
+        // STEP 2 — AMOUNT
+        // ==================================================
+
+        if (state.step === "deposit_amount") {
+
+            const amount = Number(
+                text.replace(/,/g, "")
+            );
+
+            if (
+                !Number.isFinite(amount) ||
+                amount < 10
+            ) {
+
+                await sendBotMessage(
+                    chatId,
+                    "❌ እባክዎ ከ10 ብር ጀምሮ ትክክለኛ የገንዘብ መጠን ያስገቡ።"
+                );
+
+                return;
+            }
+
+            userState[chatId] = {
+                step: "deposit_sms",
+                amount: amount
+            };
+
+            await sendBotMessage(
+                chatId,
+                "3. 🧾 በቴሌ ብር የላኩበትን SMS እዚህ ፓስት ያድርጉ።"
+            );
+
+            return;
+        }
+
+
+        // ==================================================
+        // STEP 3 — TELEBIRR SMS
+        // ==================================================
+
+        if (state.step === "deposit_sms") {
+
+            const sms = text;
+
+            if (sms.length < 5) {
+
+                await sendBotMessage(
+                    chatId,
+                    "❌ እባክዎ ትክክለኛውን የቴሌ ብር SMS ይላኩ።"
+                );
+
+                return;
+            }
+
+            const user =
+                getUserByTelegramId(chatId);
+
+            if (!user) {
+
+                await sendBotMessage(
+                    chatId,
+                    "❌ ተጠቃሚው አልተመዘገበም።"
+                );
+
+                delete userState[chatId];
+
+                return;
+            }
+
+
+            // Save deposit as PENDING
+            const result = db.prepare(`
+                INSERT INTO deposits (
+                    user_id,
+                    amount,
+                    reference,
+                    status
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    'pending'
+                )
+            `).run(
+                user.id,
+                state.amount,
+                sms
+            );
+
+
+            const depositId =
+                Number(result.lastInsertRowid);
+
+
+            // Clear user's deposit state
+            delete userState[chatId];
+
+
+            // Tell user
+            await sendBotMessage(
+                chatId,
+                `✅ የገቢ ጥያቄዎ ተቀብሏል።
+
+💰 መጠን: ${state.amount} ETB
+📌 Status: PENDING
+
+⏳ አስተዳዳሪው ካጸደቀው በኋላ ገንዘቡ ወደ Play Wallet ይጨመራል።`
+            );
+
+
+            // Send deposit to admin
+            await sendBotMessage(
+                ADMIN_CHAT_ID,
+                `💰 NEW DEPOSIT
+
+👤 User: ${user.first_name || ""}
+🆔 Telegram ID: ${user.telegram_id}
+
+💵 Amount: ${state.amount} ETB
+
+🧾 Telebirr SMS:
+${sms}
+
+📌 Status: PENDING`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "✅ Approve",
+                                    callback_data:
+                                        `approve_deposit:${depositId}`
+                                },
+                                {
+                                    text: "❌ Reject",
+                                    callback_data:
+                                        `reject_deposit:${depositId}`
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+
+            return;
+        }
+
+    }
 );
 
 // ======================================================
@@ -3045,6 +3201,7 @@ bot.onText(
         await sendBotMessage(  
 
             msg.chat.id,
+            
 
 `💸 Withdrawal
 
