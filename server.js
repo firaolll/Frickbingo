@@ -15,7 +15,7 @@ const WEB_APP_URL = String(process.env.WEB_APP_URL || "").trim();
 const ADMIN_CHAT_ID = String(process.env.ADMIN_CHAT_ID || "").trim();
 const PAYMENT_ADDRESS = String(process.env.PAYMENT_ADDRESS || "").trim();
 const DATABASE_FILE =
-    String(process.env.DATABASE_FILE || "frickbingo.db").trim();
+String(process.env.DATABASE_FILE || "frickbingo.db").trim();
 
 const MIN_DEPOSIT = 10;
 const MIN_WITHDRAW = 50;
@@ -53,93 +53,97 @@ console.log("✅ Database connected");
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    telegram_id TEXT UNIQUE NOT NULL,
-    username TEXT DEFAULT '',
-    first_name TEXT DEFAULT '',
-    balance REAL NOT NULL DEFAULT 0,
-    play_balance REAL NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+telegram_id TEXT UNIQUE NOT NULL,
+username TEXT DEFAULT '',
+first_name TEXT DEFAULT '',
+balance REAL NOT NULL DEFAULT 0,
+play_balance REAL NOT NULL DEFAULT 0,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS deposits (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    amount REAL NOT NULL,
-    reference TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    approved_at DATETIME,
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+user_id INTEGER NOT NULL,
+amount REAL NOT NULL,
+reference TEXT NOT NULL,
+status TEXT NOT NULL DEFAULT 'pending',
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+approved_at DATETIME,
 
-    FOREIGN KEY(user_id)
-    REFERENCES users(id)
+FOREIGN KEY(user_id)  
+REFERENCES users(id)
+
 );
 
 CREATE TABLE IF NOT EXISTS withdrawals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    amount REAL NOT NULL,
-    account_details TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    approved_at DATETIME,
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+user_id INTEGER NOT NULL,
+amount REAL NOT NULL,
+account_details TEXT NOT NULL,
+status TEXT NOT NULL DEFAULT 'pending',
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+approved_at DATETIME,
 
-    FOREIGN KEY(user_id)
-    REFERENCES users(id)
+FOREIGN KEY(user_id)  
+REFERENCES users(id)
+
 );
 
 CREATE TABLE IF NOT EXISTS matches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    stake REAL NOT NULL,
+stake REAL NOT NULL,  
 
-    status TEXT NOT NULL DEFAULT 'WAITING',
+status TEXT NOT NULL DEFAULT 'WAITING',  
 
-    prize_pool REAL NOT NULL DEFAULT 0,
+prize_pool REAL NOT NULL DEFAULT 0,  
 
-    winner_count INTEGER NOT NULL DEFAULT 0,
+winner_count INTEGER NOT NULL DEFAULT 0,  
 
-    paid INTEGER NOT NULL DEFAULT 0,
+paid INTEGER NOT NULL DEFAULT 0,  
 
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,  
 
-    started_at DATETIME,
+started_at DATETIME,  
 
-    finished_at DATETIME
+finished_at DATETIME
+
 );
 
 CREATE TABLE IF NOT EXISTS games (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    match_id INTEGER,
+match_id INTEGER,  
 
-    user_id INTEGER NOT NULL,
+user_id INTEGER NOT NULL,  
 
-    stake REAL NOT NULL,
+stake REAL NOT NULL,  
 
-    cards INTEGER NOT NULL,
+cards INTEGER NOT NULL,  
 
-    result TEXT DEFAULT 'STARTED',
+result TEXT DEFAULT 'STARTED',  
 
-    prize REAL NOT NULL DEFAULT 0,
+prize REAL NOT NULL DEFAULT 0,  
 
-    card_number INTEGER,
+card_number INTEGER,  
 
-    status TEXT NOT NULL DEFAULT 'STARTED',
+status TEXT NOT NULL DEFAULT 'STARTED',  
 
-    play_spent REAL NOT NULL DEFAULT 0,
+play_spent REAL NOT NULL DEFAULT 0,  
 
-    main_spent REAL NOT NULL DEFAULT 0,
+main_spent REAL NOT NULL DEFAULT 0,  
 
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,  
 
-    finished_at DATETIME,
+finished_at DATETIME,  
 
-    FOREIGN KEY(user_id)
-    REFERENCES users(id),
+FOREIGN KEY(user_id)  
+REFERENCES users(id),  
 
-    FOREIGN KEY(match_id)
-    REFERENCES matches(id)
+FOREIGN KEY(match_id)  
+REFERENCES matches(id)
+
 );
 `);
 
@@ -148,24 +152,25 @@ CREATE TABLE IF NOT EXISTS games (
 // ======================================================
 
 function addColumnIfMissing(table, column, definition) {
-    const columns = db
-        .prepare(`PRAGMA table_info(${table})`)
-        .all();
+const columns = db
+.prepare(`PRAGMA table_info(${table})`)
+.all();
 
-    const exists = columns.some(
-        c => c.name === column
-    );
+const exists = columns.some(  
+    c => c.name === column  
+);  
 
-    if (!exists) {
-        db.exec(`
-            ALTER TABLE ${table}
-            ADD COLUMN ${column} ${definition}
-        `);
+if (!exists) {  
+    db.exec(`  
+        ALTER TABLE ${table}  
+        ADD COLUMN ${column} ${definition}  
+    `);  
 
-        console.log(
-            `✅ Added column ${table}.${column}`
-        );
-    }
+    console.log(  
+        `✅ Added column ${table}.${column}`  
+    );  
+}
+
 }
 
 // ======================================================
@@ -173,56 +178,56 @@ function addColumnIfMissing(table, column, definition) {
 // ======================================================
 
 addColumnIfMissing(
-    "games",
-    "match_id",
-    "INTEGER"
+"games",
+"match_id",
+"INTEGER"
 );
 
 addColumnIfMissing(
-    "games",
-    "play_spent",
-    "REAL NOT NULL DEFAULT 0"
+"games",
+"play_spent",
+"REAL NOT NULL DEFAULT 0"
 );
 
 addColumnIfMissing(
-    "games",
-    "main_spent",
-    "REAL NOT NULL DEFAULT 0"
+"games",
+"main_spent",
+"REAL NOT NULL DEFAULT 0"
 );
 
 addColumnIfMissing(
-    "withdrawals",
-    "telegram_id",
-    "TEXT"
+"withdrawals",
+"telegram_id",
+"TEXT"
 );
 
 addColumnIfMissing(
-    "withdrawals",
-    "account_details",
-    "TEXT"
+"withdrawals",
+"account_details",
+"TEXT"
 );
 addColumnIfMissing(
-    "matches",
-    "countdown_started_at",
-    "DATETIME"
-);
-
-addColumnIfMissing(
-    "matches",
-    "countdown_seconds",
-    "INTEGER NOT NULL DEFAULT 30"
+"matches",
+"countdown_started_at",
+"DATETIME"
 );
 
 addColumnIfMissing(
-    "matches",
-    "called_balls",
-    "TEXT DEFAULT '[]'"
+"matches",
+"countdown_seconds",
+"INTEGER NOT NULL DEFAULT 30"
 );
 
 addColumnIfMissing(
-    "matches",
-    "current_ball",
-    "TEXT DEFAULT ''"
+"matches",
+"called_balls",
+"TEXT DEFAULT '[]'"
+);
+
+addColumnIfMissing(
+"matches",
+"current_ball",
+"TEXT DEFAULT ''"
 );
 
 // ======================================================
@@ -230,70 +235,73 @@ addColumnIfMissing(
 // ======================================================
 
 function num(value) {
-    const n = Number(value);
+const n = Number(value);
 
-    if (!Number.isFinite(n)) {
-        return 0;
-    }
+if (!Number.isFinite(n)) {  
+    return 0;  
+}  
 
-    return Math.round(
-        n * 100
-    ) / 100;
+return Math.round(  
+    n * 100  
+) / 100;
+
 }
 
 function integer(value) {
-    const n = Number(value);
+const n = Number(value);
 
-    if (!Number.isInteger(n)) {
-        return null;
-    }
+if (!Number.isInteger(n)) {  
+    return null;  
+}  
 
-    return n;
+return n;
+
 }
 
 function validStake(stake) {
-    return GAME_STAKES.includes(
-        Number(stake)
-    );
+return GAME_STAKES.includes(
+Number(stake)
+);
 }
 
 function validCards(cards) {
-    return (
-        Number.isInteger(Number(cards)) &&
-        Number(cards) >= 1 &&
-        Number(cards) <= MAX_CARDS
-    );
-    
+return (
+Number.isInteger(Number(cards)) &&
+Number(cards) >= 1 &&
+Number(cards) <= MAX_CARDS
+);
+
 }
 function findWaitingMatch(stake) {
 
-    return db.prepare(`
-        SELECT *
-        FROM matches
-        WHERE stake = ?
-        AND status = 'WAITING'
-        ORDER BY id ASC
-        LIMIT 1
-    `).get(stake);
+return db.prepare(`  
+    SELECT *  
+    FROM matches  
+    WHERE stake = ?  
+    AND status = 'WAITING'  
+    ORDER BY id ASC  
+    LIMIT 1  
+`).get(stake);
+
 }
 function getMatchCountdown(match) {
 
-    if (!match.countdown_started_at) {
-        return COUNTDOWN_SECONDS;
-    }
+if (!match.countdown_started_at) {  
+    return COUNTDOWN_SECONDS;  
+}  
 
-    const started =
-        new Date(match.countdown_started_at + "Z").getTime();
+const started =  
+    new Date(match.countdown_started_at + "Z").getTime();  
 
-    const elapsed =
-        Math.floor((Date.now() - started) / 1000);
+const elapsed =  
+    Math.floor((Date.now() - started) / 1000);  
 
-    return Math.max(
-        0,
-        COUNTDOWN_SECONDS - elapsed
-    );
+return Math.max(  
+    0,  
+    COUNTDOWN_SECONDS - elapsed  
+);
+
 }
-
 
 // ======================================================
 // TELEGRAM INIT DATA
@@ -301,94 +309,95 @@ function getMatchCountdown(match) {
 
 function verifyTelegramInitData(initData) {
 
-    if (!BOT_TOKEN) {
-        throw new Error(
-            "BOT_TOKEN is not configured"
-        );
-    }
+if (!BOT_TOKEN) {  
+    throw new Error(  
+        "BOT_TOKEN is not configured"  
+    );  
+}  
 
-    if (!initData) {
-        throw new Error(
-            "Telegram authentication data missing"
-        );
-    }
+if (!initData) {  
+    throw new Error(  
+        "Telegram authentication data missing"  
+    );  
+}  
 
-    const params = new URLSearchParams(
-        initData
-    );
+const params = new URLSearchParams(  
+    initData  
+);  
 
-    const hash = params.get("hash");
+const hash = params.get("hash");  
 
-    if (!hash) {
-        throw new Error(
-            "Telegram hash missing"
-        );
-    }
+if (!hash) {  
+    throw new Error(  
+        "Telegram hash missing"  
+    );  
+}  
 
-    params.delete("hash");
+params.delete("hash");  
 
-    const dataCheckString =
-        [...params.entries()]
-            .sort(
-                ([a], [b]) =>
-                    a.localeCompare(b)
-            )
-            .map(
-                ([key, value]) =>
-                    `${key}=${value}`
-            )
-            .join("\n");
+const dataCheckString =  
+    [...params.entries()]  
+        .sort(  
+            ([a], [b]) =>  
+                a.localeCompare(b)  
+        )  
+        .map(  
+            ([key, value]) =>  
+                `${key}=${value}`  
+        )  
+        .join("\n");  
 
-    const secretKey =
-        crypto
-            .createHmac(
-                "sha256",
-                "WebAppData"
-            )
-            .update(BOT_TOKEN)
-            .digest();
+const secretKey =  
+    crypto  
+        .createHmac(  
+            "sha256",  
+            "WebAppData"  
+        )  
+        .update(BOT_TOKEN)  
+        .digest();  
 
-    const calculatedHash =
-        crypto
-            .createHmac(
-                "sha256",
-                secretKey
-            )
-            .update(dataCheckString)
-            .digest("hex");
+const calculatedHash =  
+    crypto  
+        .createHmac(  
+            "sha256",  
+            secretKey  
+        )  
+        .update(dataCheckString)  
+        .digest("hex");  
 
-    if (
-        calculatedHash.length !==
-        hash.length
-    ) {
-        throw new Error(
-            "Invalid Telegram authentication"
-        );
-    }
+if (  
+    calculatedHash.length !==  
+    hash.length  
+) {  
+    throw new Error(  
+        "Invalid Telegram authentication"  
+    );  
+}  
 
-    if (
-        !crypto.timingSafeEqual(
-            Buffer.from(calculatedHash),
-            Buffer.from(hash)
-        )
-    ) {
-        throw new Error(
-            "Invalid Telegram authentication"
-        );
-    }
+if (  
+    !crypto.timingSafeEqual(  
+        Buffer.from(calculatedHash),  
+        Buffer.from(hash)  
+    )  
+) {  
+    throw new Error(  
+        "Invalid Telegram authentication"  
+    );  
+}  
 
-    const userString =
-        params.get("user");
+const userString =  
+    params.get("user");  
 
-    if (!userString) {
-        throw new Error(
-            "Telegram user missing"
-        );
-    }
+if (!userString) {  
+    throw new Error(  
+        "Telegram user missing"  
+    );  
+}  
 
-    return JSON.parse(
-        userString
-    );
+return JSON.parse(  
+    userString  
+);
+
 }
 
 // ======================================================
@@ -397,14 +406,15 @@ function verifyTelegramInitData(initData) {
 
 function getTelegramUser(req) {
 
-    const initData =
-        req.headers[
-            "x-telegram-init-data"
-        ];
+const initData =  
+    req.headers[  
+        "x-telegram-init-data"  
+    ];  
 
-    return verifyTelegramInitData(
-        initData
-    );
+return verifyTelegramInitData(  
+    initData  
+);
+
 }
 
 // ======================================================
@@ -412,73 +422,74 @@ function getTelegramUser(req) {
 // ======================================================
 
 function getOrCreateUser(
-    telegramUser
+telegramUser
 ) {
 
-    const telegramId =
-        String(
-            telegramUser.id
-        );
+const telegramId =  
+    String(  
+        telegramUser.id  
+    );  
 
-    let user =
-        db.prepare(`
-            SELECT *
-            FROM users
-            WHERE telegram_id = ?
-        `).get(
-            telegramId
-        );
+let user =  
+    db.prepare(`  
+        SELECT *  
+        FROM users  
+        WHERE telegram_id = ?  
+    `).get(  
+        telegramId  
+    );  
 
-    if (!user) {
+if (!user) {  
 
-        db.prepare(`
-            INSERT INTO users (
-                telegram_id,
-                username,
-                first_name
-            )
-            VALUES (?, ?, ?)
-        `).run(
-            telegramId,
-            telegramUser.username || "",
-            telegramUser.first_name || ""
-        );
+    db.prepare(`  
+        INSERT INTO users (  
+            telegram_id,  
+            username,  
+            first_name  
+        )  
+        VALUES (?, ?, ?)  
+    `).run(  
+        telegramId,  
+        telegramUser.username || "",  
+        telegramUser.first_name || ""  
+    );  
 
-        user =
-            db.prepare(`
-                SELECT *
-                FROM users
-                WHERE telegram_id = ?
-            `).get(
-                telegramId
-            );
+    user =  
+        db.prepare(`  
+            SELECT *  
+            FROM users  
+            WHERE telegram_id = ?  
+        `).get(  
+            telegramId  
+        );  
 
-    } else {
+} else {  
 
-        db.prepare(`
-            UPDATE users
+    db.prepare(`  
+        UPDATE users  
 
-            SET username = ?,
-                first_name = ?
+        SET username = ?,  
+            first_name = ?  
 
-            WHERE id = ?
-        `).run(
-            telegramUser.username || "",
-            telegramUser.first_name || "",
-            user.id
-        );
+        WHERE id = ?  
+    `).run(  
+        telegramUser.username || "",  
+        telegramUser.first_name || "",  
+        user.id  
+    );  
 
-        user =
-            db.prepare(`
-                SELECT *
-                FROM users
-                WHERE id = ?
-            `).get(
-                user.id
-            );
-    }
+    user =  
+        db.prepare(`  
+            SELECT *  
+            FROM users  
+            WHERE id = ?  
+        `).get(  
+            user.id  
+        );  
+}  
 
-    return user;
+return user;
+
 }
 
 // ======================================================
@@ -487,38 +498,39 @@ function getOrCreateUser(
 
 function auth(req, res, next) {
 
-    try {
+try {  
 
-        const telegramUser =
-            getTelegramUser(req);
+    const telegramUser =  
+        getTelegramUser(req);  
 
-        const user =
-            getOrCreateUser(
-                telegramUser
-            );
+    const user =  
+        getOrCreateUser(  
+            telegramUser  
+        );  
 
-        req.telegramUser =
-            telegramUser;
+    req.telegramUser =  
+        telegramUser;  
 
-        req.user =
-            user;
+    req.user =  
+        user;  
 
-        next();
+    next();  
 
-    } catch (error) {
+} catch (error) {  
 
-        console.error(
-            "AUTH ERROR:",
-            error.message
-        );
+    console.error(  
+        "AUTH ERROR:",  
+        error.message  
+    );  
 
-        res.status(401).json({
-            success: false,
-            error:
-                error.message ||
-                "Unauthorized"
-        });
-    }
+    res.status(401).json({  
+        success: false,  
+        error:  
+            error.message ||  
+            "Unauthorized"  
+    });  
+}
+
 }
 
 // ======================================================
@@ -526,17 +538,18 @@ function auth(req, res, next) {
 // ======================================================
 
 app.get(
-    "/api/health",
-    (req, res) => {
+"/api/health",
+(req, res) => {
 
-        res.json({
-            success: true,
-            status: "OK",
-            database: "connected",
-            time: new Date().toISOString()
-        });
+res.json({  
+        success: true,  
+        status: "OK",  
+        database: "connected",  
+        time: new Date().toISOString()  
+    });  
 
-    }
+}
+
 );
 
 // ======================================================
@@ -544,32 +557,33 @@ app.get(
 // ======================================================
 
 app.get(
-    "/api/me",
-    auth,
-    (req, res) => {
+"/api/me",
+auth,
+(req, res) => {
 
-        const user =
-            db.prepare(`
-                SELECT
-                    id,
-                    telegram_id,
-                    username,
-                    first_name,
-                    balance,
-                    play_balance,
-                    created_at
-                FROM users
-                WHERE id = ?
-            `).get(
-                req.user.id
-            );
+const user =  
+        db.prepare(`  
+            SELECT  
+                id,  
+                telegram_id,  
+                username,  
+                first_name,  
+                balance,  
+                play_balance,  
+                created_at  
+            FROM users  
+            WHERE id = ?  
+        `).get(  
+            req.user.id  
+        );  
 
-        res.json({
-            success: true,
-            user
-        });
+    res.json({  
+        success: true,  
+        user  
+    });  
 
-    }
+}
+
 );
 
 // ======================================================
@@ -577,38 +591,39 @@ app.get(
 // ======================================================
 
 app.get(
-    "/api/balance",
-    auth,
-    (req, res) => {
+"/api/balance",
+auth,
+(req, res) => {
 
-        const user =
-            db.prepare(`
-                SELECT
-                    balance,
-                    play_balance
-                FROM users
-                WHERE id = ?
-            `).get(
-                req.user.id
-            );
+const user =  
+        db.prepare(`  
+            SELECT  
+                balance,  
+                play_balance  
+            FROM users  
+            WHERE id = ?  
+        `).get(  
+            req.user.id  
+        );  
 
-        res.json({
-            success: true,
+    res.json({  
+        success: true,  
 
-            mainBalance:
-                num(user.balance),
+        mainBalance:  
+            num(user.balance),  
 
-            playBalance:
-                num(user.play_balance),
+        playBalance:  
+            num(user.play_balance),  
 
-            balance:
-                num(user.balance),
+        balance:  
+            num(user.balance),  
 
-            play_balance:
-                num(user.play_balance)
-        });
+        play_balance:  
+            num(user.play_balance)  
+    });  
 
-    }
+}
+
 );
 
 // ======================================================
@@ -616,36 +631,37 @@ app.get(
 // ======================================================
 
 app.get(
-    "/api/history",
-    auth,
-    (req, res) => {
+"/api/history",
+auth,
+(req, res) => {
 
-        const rows =
-            db.prepare(`
-                SELECT
-                    g.id,
-                    g.match_id,
-                    g.stake,
-                    g.cards,
-                    g.result,
-                    g.prize,
-                    g.status,
-                    g.created_at,
-                    g.finished_at
-                FROM games g
-                WHERE g.user_id = ?
-                ORDER BY g.id DESC
-                LIMIT 100
-            `).all(
-                req.user.id
-            );
+const rows =  
+        db.prepare(`  
+            SELECT  
+                g.id,  
+                g.match_id,  
+                g.stake,  
+                g.cards,  
+                g.result,  
+                g.prize,  
+                g.status,  
+                g.created_at,  
+                g.finished_at  
+            FROM games g  
+            WHERE g.user_id = ?  
+            ORDER BY g.id DESC  
+            LIMIT 100  
+        `).all(  
+            req.user.id  
+        );  
 
-        res.json({
-            success: true,
-            history: rows
-        });
+    res.json({  
+        success: true,  
+        history: rows  
+    });  
 
-    }
+}
+
 );
 
 // ======================================================
@@ -653,122 +669,124 @@ app.get(
 // ======================================================
 
 app.get(
-    "/api/score",
-    (req, res) => {
+"/api/score",
+(req, res) => {
 
-        const rows =
-            db.prepare(`
-                SELECT
-                    u.id,
-                    u.telegram_id,
-                    u.username,
-                    u.first_name,
+const rows =  
+        db.prepare(`  
+            SELECT  
+                u.id,  
+                u.telegram_id,  
+                u.username,  
+                u.first_name,  
 
-                    COUNT(
-                        CASE
-                            WHEN g.result = 'WIN'
-                            THEN 1
-                        END
-                    ) AS wins,
+                COUNT(  
+                    CASE  
+                        WHEN g.result = 'WIN'  
+                        THEN 1  
+                    END  
+                ) AS wins,  
 
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN g.result = 'WIN'
-                                THEN g.prize
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS total_prize
+                COALESCE(  
+                    SUM(  
+                        CASE  
+                            WHEN g.result = 'WIN'  
+                            THEN g.prize  
+                            ELSE 0  
+                        END  
+                    ),  
+                    0  
+                ) AS total_prize  
 
-                FROM users u
+            FROM users u  
 
-                LEFT JOIN games g
-                    ON g.user_id = u.id
+            LEFT JOIN games g  
+                ON g.user_id = u.id  
 
-                GROUP BY u.id
+            GROUP BY u.id  
 
-                ORDER BY wins DESC,
-                         total_prize DESC
+            ORDER BY wins DESC,  
+                     total_prize DESC  
 
-                LIMIT 10
-            `).all();
+            LIMIT 10  
+        `).all();  
 
-        res.json({
-            success: true,
-            players: rows
-        });
+    res.json({  
+        success: true,  
+        players: rows  
+    });  
 
-    }
+}
+
 );
 
 // ======================================================
 // CREATE MATCH
 // ======================================================
 app.post("/api/match/create", auth, (req, res) => {
-    try {
-        const stake = num(req.body.stake);
+try {
+const stake = num(req.body.stake);
 
-        if (!validStake(stake)) {
-            return res.status(400).json({
-                success: false,
-                error: "Invalid stake"
-            });
-        }
+if (!validStake(stake)) {  
+        return res.status(400).json({  
+            success: false,  
+            error: "Invalid stake"  
+        });  
+    }  
 
-        let match = findWaitingMatch(stake);
+    let match = findWaitingMatch(stake);  
 
-        if (!match) {
-            const result = db.prepare(`
-                INSERT INTO matches (
-                    stake,
-                    status,
-                    countdown_seconds,
-                    called_balls,
-                    current_ball
-                )
-                VALUES (?, 'WAITING', ?, '[]', '')
-            `).run(
-                stake,
-                COUNTDOWN_SECONDS
-            );
+    if (!match) {  
+        const result = db.prepare(`  
+            INSERT INTO matches (  
+                stake,  
+                status,  
+                countdown_seconds,  
+                called_balls,  
+                current_ball  
+            )  
+            VALUES (?, 'WAITING', ?, '[]', '')  
+        `).run(  
+            stake,  
+            COUNTDOWN_SECONDS  
+        );  
 
-            match = db.prepare(`
-                SELECT *
-                FROM matches
-                WHERE id = ?
-            `).get(
-                Number(result.lastInsertRowid)
-            );
-        }
+        match = db.prepare(`  
+            SELECT *  
+            FROM matches  
+            WHERE id = ?  
+        `).get(  
+            Number(result.lastInsertRowid)  
+        );  
+    }  
 
-        const playerCount = db.prepare(`
-            SELECT COUNT(*) AS count
-            FROM games
-            WHERE match_id = ?
-        `).get(match.id).count;
+    const playerCount = db.prepare(`  
+        SELECT COUNT(*) AS count  
+        FROM games  
+        WHERE match_id = ?  
+    `).get(match.id).count;  
 
-        return res.json({
-            success: true,
-            matchId: match.id,
-            gameId: match.id,
-            sharedGameId: match.id,
-            stake: match.stake,
-            status: match.status,
-            playerCount,
-            minPlayers: MIN_PLAYERS,
-            countdown: getMatchCountdown(match)
-        });
+    return res.json({  
+        success: true,  
+        matchId: match.id,  
+        gameId: match.id,  
+        sharedGameId: match.id,  
+        stake: match.stake,  
+        status: match.status,  
+        playerCount,  
+        minPlayers: MIN_PLAYERS,  
+        countdown: getMatchCountdown(match)  
+    });  
 
-    } catch (err) {
-        console.error("MATCH CREATE ERROR:", err);
+} catch (err) {  
+    console.error("MATCH CREATE ERROR:", err);  
 
-        return res.status(500).json({
-            success: false,
-            error: "Failed to create/join match"
-        });
-    }
+    return res.status(500).json({  
+        success: false,  
+        error: "Failed to create/join match"  
+    });  
+}
+
 });
 
 // ======================================================
@@ -776,1311 +794,658 @@ app.post("/api/match/create", auth, (req, res) => {
 // ======================================================
 
 app.get(
-    "/api/match/:matchId",
-    auth,
-    (req, res) => {
+"/api/match/:matchId",
+auth,
+(req, res) => {
 
-        try {
+try {  
 
-            const matchId =
-                integer(
-                    req.params.matchId
-                );
+        const matchId =  
+            integer(  
+                req.params.matchId  
+            );  
 
-            if (!matchId) {
+        if (!matchId) {  
 
-                return res.status(400).json({
-                    success: false,
-                    error:
-                        "Invalid match ID"
-                });
+            return res.status(400).json({  
+                success: false,  
+                error:  
+                    "Invalid match ID"  
+            });  
 
-            }
+        }  
 
-            const match =
-                db.prepare(`
-                    SELECT *
-                    FROM matches
-                    WHERE id = ?
-                `).get(
-                    matchId
-                );
+        const match =  
+            db.prepare(`  
+                SELECT *  
+                FROM matches  
+                WHERE id = ?  
+            `).get(  
+                matchId  
+            );  
 
-            if (!match) {
+        if (!match) {  
 
-                return res.status(404).json({
-                    success: false,
-                    error:
-                        "Match not found"
-                });
+            return res.status(404).json({  
+                success: false,  
+                error:  
+                    "Match not found"  
+            });  
 
-            }
+        }  
 
-            const players =
-                db.prepare(`
-                    SELECT
-                        g.id,
-                        g.user_id,
-                        g.stake,
-                        g.cards,
-                        g.status,
-                        g.result,
-                        g.prize
-                    FROM games g
-                    WHERE g.match_id = ?
-                    ORDER BY g.id ASC
-                `).all(
-                    matchId
-                );
+        const players =  
+            db.prepare(`  
+                SELECT  
+                    g.id,  
+                    g.user_id,  
+                    g.stake,  
+                    g.cards,  
+                    g.status,  
+                    g.result,  
+                    g.prize  
+                FROM games g  
+                WHERE g.match_id = ?  
+                ORDER BY g.id ASC  
+            `).all(  
+                matchId  
+            );  
 
-            const myGame =
-                players.find(
-                    p =>
-                        p.user_id ===
-                        req.user.id
-                ) || null;
+        const myGame =  
+            players.find(  
+                p =>  
+                    p.user_id ===  
+                    req.user.id  
+            ) || null;  
 
-            res.json({
+        res.json({  
 
-                success: true,
+            success: true,  
 
-                match: {
+            match: {  
 
-                    id: match.id,
+                id: match.id,  
 
-                    // Shared Game ID
-                    gameId: match.id,
+                // Shared Game ID  
+                gameId: match.id,  
 
-                    sharedGameId: match.id,
+                sharedGameId: match.id,  
 
-                    stake:
-                        num(match.stake),
+                stake:  
+                    num(match.stake),  
 
-                    status:
-                        match.status,
+                status:  
+                    match.status,  
 
-                    prizePool:
-                        num(match.prize_pool),
+                prizePool:  
+                    num(match.prize_pool),  
 
-                    winnerCount:
-                        match.winner_count,
+                winnerCount:  
+                    match.winner_count,  
 
-                    paid:
-                        Boolean(match.paid),
+                paid:  
+                    Boolean(match.paid),  
 
-                    playerCount:
-                        players.length,
+                playerCount:  
+                    players.length,  
 
-                    createdAt:
-                        match.created_at,
+                createdAt:  
+                    match.created_at,  
 
-                    startedAt:
-                        match.started_at,
+                startedAt:  
+                    match.started_at,  
 
-                    finishedAt:
-                        match.finished_at
+                finishedAt:  
+                    match.finished_at  
 
-                },
+            },  
 
-                players,
+            players,  
 
-                myGame
+            myGame  
 
-            });
+        });  
 
-        } catch (error) {
+    } catch (error) {  
 
-            console.error(
-                "MATCH INFO ERROR:",
-                error
-            );
+        console.error(  
+            "MATCH INFO ERROR:",  
+            error  
+        );  
 
-            res.status(500).json({
-                success: false,
-                error:
-                    "Could not load match"
-            });
-        }
+        res.status(500).json({  
+            success: false,  
+            error:  
+                "Could not load match"  
+        });  
+    }  
 
-    }
-);
+});
 
 // ======================================================
 // JOIN / START GAME
 // ======================================================
 
-app.post("/api/game/start", auth, (req, res) => {
-    try {
-        const stake = num(req.body.stake);
-        const cards = Number(req.body.cards);
-
-        // -----------------------------
-        // VALIDATION
-        // -----------------------------
-
-        if (!validStake(stake)) {
-            return res.status(400).json({
-                success: false,
-                error: "Invalid stake"
-            });
-        }
-
-        if (!validCards(cards)) {
-            return res.status(400).json({
-                success: false,
-                error: "Invalid number of cards"
-            });
-        }
-
-        const userId = req.user.id;
-
-        // -----------------------------
-        // FIND EXISTING WAITING MATCH
-        // -----------------------------
-
-        let match = findWaitingMatch(stake);
-
-        // If no waiting match exists,
-        // create a new shared match.
-        if (!match) {
-            const result = db.prepare(`
-                INSERT INTO matches (
-                    stake,
-                    status,
-                    prize_pool,
-                    winner_count,
-                    paid,
-                    countdown_seconds,
-                    called_balls,
-                    current_ball
-                )
-                VALUES (
-                    ?,
-                    'WAITING',
-                    0,
-                    0,
-                    0,
-                    ?,
-                    '[]',
-                    ''
-                )
-            `).run(
-                stake,
-                COUNTDOWN_SECONDS
-            );
-
-            const matchId =
-                Number(result.lastInsertRowid);
-
-            match = db.prepare(`
-                SELECT *
-                FROM matches
-                WHERE id = ?
-            `).get(matchId);
-        }
-
-        const matchId = Number(match.id);
-
-        // -----------------------------
-        // CHECK MATCH STATUS
-        // -----------------------------
-
-        if (match.status === "FINISHED") {
-            return res.status(400).json({
-                success: false,
-                error: "This game has already finished"
-            });
-        }
-
-        // -----------------------------
-        // CHECK IF PLAYER ALREADY JOINED
-        // -----------------------------
-
-        const existingGame = db.prepare(`
-            SELECT *
-            FROM games
-            WHERE match_id = ?
-              AND user_id = ?
-            LIMIT 1
-        `).get(
-            matchId,
-            userId
-        );
-
-        if (existingGame) {
-            const players = db.prepare(`
-                SELECT COUNT(*) AS count
-                FROM games
-                WHERE match_id = ?
-            `).get(matchId);
-
-            return res.json({
-                success: true,
-
-                gameId: matchId,
-                sharedGameId: matchId,
-                matchId,
-
-                playerGameId: existingGame.id,
-
-                stake: existingGame.stake,
-                cards: existingGame.cards,
-
-                playerCount: players.count,
-                minPlayers: MIN_PLAYERS,
-
-                countdown:
-                    getMatchCountdown(match),
-
-                status: match.status,
-
-                alreadyJoined: true
-            });
-        }
-
-        // -----------------------------
-        // CALCULATE COST
-        // -----------------------------
-
-        const cost = num(stake * cards);
-
-        // -----------------------------
-        // GET CURRENT BALANCE
-        // -----------------------------
-
-        const user = db.prepare(`
-            SELECT
-                id,
-                balance,
-                play_balance
-            FROM users
-            WHERE id = ?
-        `).get(userId);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: "User not found"
-            });
-        }
-
-        const totalBalance = num(
-            Number(user.balance) +
-            Number(user.play_balance)
-        );
-
-        if (totalBalance < cost) {
-            return res.status(400).json({
-                success: false,
-                error: "Insufficient balance",
-                required: cost,
-                balance: totalBalance
-            });
-        }
-
-        // -----------------------------
-        // SPEND PLAY WALLET FIRST
-        // THEN MAIN WALLET
-        // -----------------------------
-
-        const playSpent = Math.min(
-            Number(user.play_balance),
-            cost
-        );
-
-        const mainSpent = num(
-            cost - playSpent
-        );
-
-        // -----------------------------
-        // TRANSACTION
-        // -----------------------------
-
-        const transaction = db.transaction(() => {
-
-            // Deduct player's money
-            const updateBalance = db.prepare(`
-                UPDATE users
-                SET
-                    balance = balance - ?,
-                    play_balance = play_balance - ?
-                WHERE id = ?
-                  AND balance >= ?
-                  AND play_balance >= ?
-            `).run(
-                mainSpent,
-                playSpent,
-                userId,
-                mainSpent,
-                playSpent
-            );
-
-            if (updateBalance.changes !== 1) {
-                throw new Error(
-                    "Balance changed. Please try again."
-                );
-            }
-
-            // Add player to the SAME match
-            const gameResult = db.prepare(`
-                INSERT INTO games (
-                    match_id,
-                    user_id,
-                    stake,
-                    cards,
-                    result,
-                    prize,
-                    status,
-                    play_spent,
-                    main_spent
-                )
-                VALUES (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    'STARTED',
-                    0,
-                    'STARTED',
-                    ?,
-                    ?
-                )
-            `).run(
-                matchId,
-                userId,
-                stake,
-                cards,
-                playSpent,
-                mainSpent
-            );
-
-            // Count players AFTER joining
-            const playerCount = db.prepare(`
-                SELECT COUNT(*) AS count
-                FROM games
-                WHERE match_id = ?
-            `).get(matchId).count;
-
-            // Start the 30-second countdown
-            // when the FIRST player joins.
-            if (!match.countdown_started_at) {
-
-                db.prepare(`
-                    UPDATE matches
-                    SET
-                        countdown_started_at =
-                            CURRENT_TIMESTAMP,
-                        countdown_seconds = ?,
-                        prize_pool = ?
-                    WHERE id = ?
-                      AND status = 'WAITING'
-                `).run(
-                    COUNTDOWN_SECONDS,
-                    0,
-                    matchId
-                );
-
-            } else {
-
-                // Update prize pool
-                const totalCost = db.prepare(`
-                    SELECT
-                        COALESCE(
-                            SUM(stake * cards),
-                            0
-                        ) AS total
-                    FROM games
-                    WHERE match_id = ?
-                `).get(matchId).total;
-
-                db.prepare(`
-                    UPDATE matches
-                    SET prize_pool = ?
-                    WHERE id = ?
-                `).run(
-                    num(totalCost * WIN_RATE),
-                    matchId
-                );
-            }
-
-            return {
-                gameId:
-                    Number(gameResult.lastInsertRowid),
-                playerCount
-            };
-        });
-
-        // -----------------------------
-        // GET UPDATED MATCH
-        // -----------------------------
-
-        const updatedMatch = db.prepare(`
-            SELECT *
-            FROM matches
-            WHERE id = ?
-        `).get(matchId);
-
-        const playerCount = db.prepare(`
-            SELECT COUNT(*) AS count
-            FROM games
-            WHERE match_id = ?
-        `).get(matchId).count;
-
-        const newBalance = db.prepare(`
-            SELECT
-                balance,
-                play_balance
-            FROM users
-            WHERE id = ?
-        `).get(userId);
-
-        // -----------------------------
-        // RESPONSE
-        // -----------------------------
-
-        return res.json({
-            success: true,
-
-            // SAME ID FOR ALL PLAYERS
-            gameId: matchId,
-            sharedGameId: matchId,
-            matchId,
-
-            // UNIQUE ID FOR THIS PLAYER'S ENTRY
-            playerGameId: transaction.gameId,
-
-            stake,
-            cards,
-
-            playerCount,
-            minPlayers: MIN_PLAYERS,
-
-            countdown:
-                getMatchCountdown(updatedMatch),
-
-            status:
-                updatedMatch.status,
-
-            ready:
-                playerCount >= MIN_PLAYERS,
-
-            started:
-                updatedMatch.status === "PLAYING",
-
-            balance:
-                num(newBalance.balance),
-
-            playBalance:
-                num(newBalance.play_balance),
-
-            totalBalance:
-                num(
-                    Number(newBalance.balance) +
-                    Number(newBalance.play_balance)
-                )
-        });
-
-    } catch (err) {
-
-        console.error(
-            "GAME START ERROR:",
-            err
-        );
-
-        return res.status(500).json({
-            success: false,
-            error:
-                err.message ||
-                "Failed to start/join game"
-        });
-    }
+app.post("/api/game/start", auth, async (req, res) => {
+  try {
+    const stake = num(req.body.stake);
+    const cards = Number(req.body.cards);
+
+    // -----------------------------  
+    // VALIDATION  
+    // -----------------------------  
+    if (!validStake(stake)) {  
+      return res.status(400).json({  
+        success: false,  
+        error: "Invalid stake"  
+      });  
+    }  
+
+    if (!validCards(cards)) {  
+      return res.status(400).json({  
+        success: false,  
+        error: "Invalid number of cards"  
+      });  
+    }  
+
+    const userId = req.user.id;  
+
+    // -----------------------------  
+    // FIND OR CREATE WAITING MATCH  
+    // -----------------------------  
+    let match = findWaitingMatch(stake);  
+
+    if (!match) {  
+      const result = db.prepare(`  
+        INSERT INTO matches (  
+          stake, status, prize_pool, winner_count, paid, countdown_seconds, called_balls, current_ball  
+        ) VALUES (?, 'WAITING', 0, 0, 0, ?, '[]', '')  
+      `).run(stake, COUNTDOWN_SECONDS);  
+
+      const matchId = Number(result.lastInsertRowid);  
+      match = db.prepare(`SELECT * FROM matches WHERE id = ?`).get(matchId);  
+    }  
+
+    const matchId = Number(match.id);  
+
+    // -----------------------------  
+    // CHECK MATCH STATUS  
+    // -----------------------------  
+    if (match.status === "FINISHED") {  
+      return res.status(400).json({  
+        success: false,  
+        error: "This game has already finished"  
+      });  
+    }  
+
+    // -----------------------------  
+    // CHECK IF PLAYER ALREADY JOINED  
+    // -----------------------------  
+    const existingGame = db.prepare(`  
+      SELECT * FROM games WHERE match_id = ? AND user_id = ? LIMIT 1  
+    `).get(matchId, userId);  
+
+    if (existingGame) {  
+      const players = db.prepare(`  
+        SELECT COUNT(*) AS count FROM games WHERE match_id = ?  
+      `).get(matchId);  
+
+      return res.json({  
+        success: true,  
+        gameId: matchId,  
+        sharedGameId: matchId,  
+        matchId,  
+        playerGameId: existingGame.id,  
+        stake: existingGame.stake,  
+        cards: existingGame.cards,  
+        playerCount: players.count,  
+        minPlayers: MIN_PLAYERS,  
+        countdown: getMatchCountdown(match),  
+        status: match.status,  
+        alreadyJoined: true  
+      });  
+    }  
+
+    // -----------------------------  
+    // CALCULATE COST & CHECK BALANCE  
+    // -----------------------------  
+    const cost = num(stake * cards);  
+    const user = db.prepare(`  
+      SELECT id, balance, play_balance FROM users WHERE id = ?  
+    `).get(userId);  
+
+    if (!user) {  
+      return res.status(404).json({  
+        success: false,  
+        error: "User not found"  
+      });  
+    }  
+
+    const totalBalance = num(Number(user.balance) + Number(user.play_balance));  
+    if (totalBalance < cost) {  
+      return res.status(400).json({  
+        success: false,  
+        error: "Insufficient balance",  
+        required: cost,  
+        balance: totalBalance  
+      });  
+    }  
+
+    const playSpent = Math.min(Number(user.play_balance), cost);  
+    const mainSpent = num(cost - playSpent);  
+
+    // -----------------------------  
+    // TRANSACTION  
+    // -----------------------------  
+    const transaction = db.transaction(() => {  
+      const updateBalance = db.prepare(`  
+        UPDATE users  
+        SET balance = balance - ?, play_balance = play_balance - ?  
+        WHERE id = ? AND balance >= ? AND play_balance >= ?  
+      `).run(mainSpent, playSpent, userId, mainSpent, playSpent);  
+
+      if (updateBalance.changes !== 1) {  
+        throw new Error("Balance changed. Please try again.");  
+      }  
+
+      const gameResult = db.prepare(`  
+        INSERT INTO games (  
+          match_id, user_id, stake, cards, result, prize, status, play_spent, main_spent  
+        ) VALUES (?, ?, ?, ?, 'STARTED', 0, 'STARTED', ?, ?)  
+      `).run(matchId, userId, stake, cards, playSpent, mainSpent);  
+
+      if (!match.countdown_started_at) {  
+        db.prepare(`  
+          UPDATE matches  
+          SET countdown_started_at = CURRENT_TIMESTAMP, countdown_seconds = ?, prize_pool = ?  
+          WHERE id = ? AND status = 'WAITING'  
+        `).run(COUNTDOWN_SECONDS, 0, matchId);  
+      } else {  
+        const totalCost = db.prepare(`  
+          SELECT COALESCE(SUM(stake * cards), 0) AS total FROM games WHERE match_id = ?  
+        `).get(matchId).total;  
+
+        db.prepare(`  
+          UPDATE matches SET prize_pool = ? WHERE id = ?  
+        `).run(num(totalCost * WIN_RATE), matchId);  
+      }  
+
+      return Number(gameResult.lastInsertRowid);  
+    });  
+
+    // Execute transaction  
+    const playerGameId = transaction();  
+
+    // -----------------------------  
+    // RESPONSE  
+    // -----------------------------  
+    const updatedMatch = db.prepare(`SELECT * FROM matches WHERE id = ?`).get(matchId);  
+    const playerCount = db.prepare(`SELECT COUNT(*) AS count FROM games WHERE match_id = ?`).get(matchId).count;  
+    const newBalance = db.prepare(`SELECT balance, play_balance FROM users WHERE id = ?`).get(userId);  
+
+    return res.json({  
+      success: true,  
+      gameId: matchId,  
+      sharedGameId: matchId,  
+      matchId,  
+      playerGameId,  
+      stake,  
+      cards,  
+      playerCount,  
+      minPlayers: MIN_PLAYERS,  
+      countdown: getMatchCountdown(updatedMatch),  
+      status: updatedMatch.status,  
+      ready: playerCount >= MIN_PLAYERS,  
+      started: updatedMatch.status === "PLAYING",  
+      balance: num(newBalance.balance),  
+      playBalance: num(newBalance.play_balance),  
+      totalBalance: num(Number(newBalance.balance) + Number(newBalance.play_balance))  
+    });  
+
+  } catch (err) {  
+    console.error("GAME START ERROR:", err);  
+    return res.status(500).json({  
+      success: false,  
+      error: err.message || "Failed to start/join game"  
+    });  
+  }  
 });
-            // ------------------------------------------------
-            // CREATE COMPATIBILITY MATCH
-            // ------------------------------------------------
-
-            if (!matchId) {
-
-                const result =
-                    db.prepare(`
-                        INSERT INTO matches (
-                            stake,
-                            status
-                        )
-                        VALUES (?, 'WAITING')
-                    `).run(
-                        stake
-                    );
-
-                matchId =
-                    Number(
-                        result.lastInsertRowid
-                    );
-            }
-
-            // ------------------------------------------------
-            // LOAD MATCH
-            // ------------------------------------------------
-
-            const match =
-                db.prepare(`
-                    SELECT *
-                    FROM matches
-                    WHERE id = ?
-                `).get(
-                    matchId
-                );
-
-            if (!match) {
-
-                return res.status(404).json({
-                    success: false,
-                    error:
-                        "Match not found"
-                });
-
-            }
-
-            if (
-                num(match.stake) !==
-                stake
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    error:
-                        "Stake does not match this game"
-                });
-
-            }
-
-            // ------------------------------------------------
-            // GAME ALREADY JOINED?
-            // ------------------------------------------------
-
-            const existingGame =
-                db.prepare(`
-                    SELECT *
-                    FROM games
-                    WHERE match_id = ?
-                    AND user_id = ?
-                `).get(
-                    matchId,
-                    req.user.id
-                );
-
-            if (existingGame) {
-
-                const currentUser =
-                    db.prepare(`
-                        SELECT
-                            balance,
-                            play_balance
-                        FROM users
-                        WHERE id = ?
-                    `).get(
-                        req.user.id
-                    );
-
-                const playerCount =
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM games
-                        WHERE match_id = ?
-                    `).get(
-                        matchId
-                    ).count;
-
-                return res.json({
-
-                    success: true,
-
-                    alreadyJoined: true,
-
-                    gameId:
-                        matchId,
-
-                    matchId,
-
-                    sharedGameId:
-                        matchId,
-
-                    playerCount,
-
-                    status:
-                        match.status,
-
-                    game:
-                        existingGame,
-
-                    mainBalance:
-                        num(
-                            currentUser.balance
-                        ),
-
-                    playBalance:
-                        num(
-                            currentUser.play_balance
-                        )
-
-                });
-            }
-
-            // ------------------------------------------------
-            // DO NOT JOIN FINISHED MATCH
-            // ------------------------------------------------
-
-            if (
-                match.status ===
-                "FINISHED"
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    error:
-                        "This game is already finished"
-                });
-
-            }
-
-            // ------------------------------------------------
-            // COST
-            // ------------------------------------------------
-
-            const cost =
-                num(
-                    stake * cards
-                );
-
-            // ------------------------------------------------
-            // GET BALANCE
-            // ------------------------------------------------
-
-            const user =
-                db.prepare(`
-                    SELECT
-                        balance,
-                        play_balance
-                    FROM users
-                    WHERE id = ?
-                `).get(
-                    req.user.id
-                );
-
-            const play =
-                num(
-                    user.play_balance
-                );
-
-            const main =
-                num(
-                    user.balance
-                );
-
-            const total =
-                num(
-                    play + main
-                );
-
-            if (total < cost) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error:
-                        "Insufficient balance",
-
-                    required:
-                        cost,
-
-                    mainBalance:
-                        main,
-
-                    playBalance:
-                        play
-
-                });
-
-            }
-
-            // ------------------------------------------------
-            // SPEND PLAY FIRST
-            // ------------------------------------------------
-
-            const playSpent =
-                num(
-                    Math.min(
-                        play,
-                        cost
-                    )
-                );
-
-            const mainSpent =
-                num(
-                    cost -
-                    playSpent
-                );
-
-            // ------------------------------------------------
-            // TRANSACTION
-            // ------------------------------------------------
-
-            const transaction =
-                db.transaction(() => {
-
-                    db.prepare(`
-                        UPDATE users
-
-                        SET
-                            balance =
-                                balance - ?,
-
-                            play_balance =
-                                play_balance - ?
-
-                        WHERE id = ?
-
-                        AND balance >= ?
-
-                        AND play_balance >= ?
-                    `).run(
-                        mainSpent,
-                        playSpent,
-                        req.user.id,
-                        mainSpent,
-                        playSpent
-                    );
-
-                    const updated =
-                        db.prepare(`
-                            SELECT
-                                balance,
-                                play_balance
-                            FROM users
-                            WHERE id = ?
-                        `).get(
-                            req.user.id
-                        );
-
-                    if (
-                        num(updated.balance) <
-                        0 ||
-                        num(updated.play_balance) <
-                        0
-                    ) {
-                        throw new Error(
-                            "Balance update failed"
-                        );
-                    }
-
-                    const result =
-                        db.prepare(`
-                            INSERT INTO games (
-                                match_id,
-                                user_id,
-                                stake,
-                                cards,
-                                result,
-                                prize,
-                                status,
-                                play_spent,
-                                main_spent
-                            )
-                            VALUES (
-                                ?,
-                                ?,
-                                ?,
-                                ?,
-                                'STARTED',
-                                0,
-                                'STARTED',
-                                ?,
-                                ?
-                            )
-                        `).run(
-                            matchId,
-                            req.user.id,
-                            stake,
-                            cards,
-                            playSpent,
-                            mainSpent
-                        );
-
-                    return Number(
-                        result.lastInsertRowid
-                    );
-                });
-
-            const gameId =
-                transaction();
-
-            // ------------------------------------------------
-            // SET MATCH PLAYING
-            // ------------------------------------------------
-
-            db.prepare(`
-                UPDATE matches
-
-                SET
-                    status = 'PLAYING',
-
-                    started_at =
-                        COALESCE(
-                            started_at,
-                            CURRENT_TIMESTAMP
-                        )
-
-                WHERE id = ?
-
-                AND status = 'WAITING'
-            `).run(
-                matchId
-            );
-
-            // ------------------------------------------------
-            // CURRENT BALANCE
-            // ------------------------------------------------
-
-            const updatedUser =
-                db.prepare(`
-                    SELECT
-                        balance,
-                        play_balance
-                    FROM users
-                    WHERE id = ?
-                `).get(
-                    req.user.id
-                );
-
-            const playerCount =
-                db.prepare(`
-                    SELECT COUNT(*) AS count
-                    FROM games
-                    WHERE match_id = ?
-                `).get(
-                    matchId
-                ).count;
-
-            res.json({
-
-                success: true,
-
-                gameId:
-                    matchId,
-
-                matchId,
-
-                sharedGameId:
-                    matchId,
-
-                playerGameId:
-                    gameId,
-
-                stake,
-
-                cards,
-
-                cost,
-
-                playSpent,
-
-                mainSpent,
-
-                mainBalance:
-                    num(
-                        updatedUser.balance
-                    ),
-
-                playBalance:
-                    num(
-                        updatedUser.play_balance
-                    ),
-
-                playerCount,
-
-                status:
-                    "PLAYING"
-
-            });
-
-                    }catch (error) {
-
-            console.error(
-                "GAME START ERROR:",
-                error
-             );
-
-            res.status(500).json({
-
-                success: false,
-
-                error:
-                    error.message ||
-                    "Could not start game"
-
-            });
-        }
-});
-
-// ======================================================
-// FINALIZE MATCH PAYOUT
-// ======================================================
-//
-// IMPORTANT RULE:
-//
-// totalPlayerCost =
-//     SUM(stake * cards)
-//     for ALL players in the same match
-//
-// totalPrize =
-//     totalPlayerCost * 85%
-//
-// If there are multiple winners:
-//
-// winnerShare =
-//     totalPrize / numberOfWinners
-//
-// The prize is added to the WINNER'S MAIN WALLET.
-//
-// The payout can happen only ONCE.
-// ======================================================
 
 function finalizeMatchPayout(matchId) {
 
-    const transaction =
-        db.transaction(() => {
-
-            // ------------------------------------------------
-            // GET MATCH
-            // ------------------------------------------------
-
-            const match =
-                db.prepare(`
-                    SELECT *
-                    FROM matches
-                    WHERE id = ?
-                `).get(
-                    matchId
-                );
-
-            if (!match) {
-
-                throw new Error(
-                    "Match not found"
-                );
-
-            }
-
-            // ------------------------------------------------
-            // ALREADY PAID
-            // ------------------------------------------------
-
-            if (
-                Number(match.paid) === 1
-            ) {
-
-                return {
-                    complete: true,
-                    alreadyPaid: true,
-                    totalCost:
-                        num(match.prize_pool / WIN_RATE),
-                    totalPrize:
-                        num(match.prize_pool),
-                    winnerCount:
-                        Number(
-                            match.winner_count
-                        )
-                };
-
-            }
-
-            // ------------------------------------------------
-            // ALL PLAYERS IN THIS GAME
-            // ------------------------------------------------
-
-            const games =
-                db.prepare(`
-                    SELECT
-                        *
-                    FROM games
-                    WHERE match_id = ?
-                    ORDER BY id ASC
-                `).all(
-                    matchId
-                );
-
-            if (
-                games.length === 0
-            ) {
-
-                return {
-                    complete: false,
-                    reason:
-                        "No players"
-                };
-
-            }
-
-            // ------------------------------------------------
-            // WAIT UNTIL EVERY PLAYER FINISHES
-            // ------------------------------------------------
-
-            const unfinished =
-                games.filter(
-                    game =>
-                        game.status !==
-                        "FINISHED"
-                );
-
-            if (
-                unfinished.length > 0
-            ) {
-
-                return {
-
-                    complete: false,
-
-                    reason:
-                        "Waiting for all players",
-
-                    playerCount:
-                        games.length,
-
-                    finishedCount:
-                        games.length -
-                        unfinished.length
+const transaction =  
+    db.transaction(() => {  
+
+        // ------------------------------------------------  
+        // GET MATCH  
+        // ------------------------------------------------  
+
+        const match =  
+            db.prepare(`  
+                SELECT *  
+                FROM matches  
+                WHERE id = ?  
+            `).get(  
+                matchId  
+            );  
+
+        if (!match) {  
+
+            throw new Error(  
+                "Match not found"  
+            );  
+
+        }  
+
+        // ------------------------------------------------  
+        // ALREADY PAID  
+        // ------------------------------------------------  
+
+        if (  
+            Number(match.paid) === 1  
+        ) {  
+
+            return {  
+                complete: true,  
+                alreadyPaid: true,  
+                totalCost:  
+                    num(match.prize_pool / WIN_RATE),  
+                totalPrize:  
+                    num(match.prize_pool),  
+                winnerCount:  
+                    Number(  
+                        match.winner_count  
+                    )  
+            };  
+
+        }  
+
+        // ------------------------------------------------  
+        // ALL PLAYERS IN THIS GAME  
+        // ------------------------------------------------  
+
+        const games =  
+            db.prepare(`  
+                SELECT  
+                    *  
+                FROM games  
+                WHERE match_id = ?  
+                ORDER BY id ASC  
+            `).all(  
+                matchId  
+            );  
+
+        if (  
+            games.length === 0  
+        ) {  
+
+            return {  
+                complete: false,  
+                reason:  
+                    "No players"  
+            };  
+
+        }  
+
+        // ------------------------------------------------  
+        // WAIT UNTIL EVERY PLAYER FINISHES  
+        // ------------------------------------------------  
+
+        const unfinished =  
+            games.filter(  
+                game =>  
+                    game.status !==  
+                    "FINISHED"  
+            );  
+
+        if (  
+            unfinished.length > 0  
+        ) {  
+
+            return {  
+
+                complete: false,  
+
+                reason:  
+                    "Waiting for all players",  
+
+                playerCount:  
+                    games.length,  
+
+                finishedCount:  
+                    games.length -  
+                    unfinished.length  
 
-                };
+            };  
 
-            }
+        }  
 
-            // ------------------------------------------------
-            // TOTAL COST OF ALL PLAYERS
-            // ------------------------------------------------
-
-            let totalPlayerCost = 0;
+        // ------------------------------------------------  
+        // TOTAL COST OF ALL PLAYERS  
+        // ------------------------------------------------  
+
+        let totalPlayerCost = 0;  
 
-            for (
-                const game of games
-            ) {
+        for (  
+            const game of games  
+        ) {  
 
-                const playerCost =
-                    num(
-                        Number(game.stake) *
-                        Number(game.cards)
-                    );
-
-                totalPlayerCost =
-                    num(
-                        totalPlayerCost +
-                        playerCost
-                    );
-            }
-
-            // ------------------------------------------------
-            // TOTAL PRIZE = 85% OF TOTAL GAME COST
-            // ------------------------------------------------
-
-            const totalPrize =
-                num(
-                    totalPlayerCost *
-                    WIN_RATE
-                );
-
-            // ------------------------------------------------
-            // FIND WINNERS
-            // ------------------------------------------------
-
-            const winners =
-                games.filter(
-                    game =>
-                        String(
-                            game.result
-                        ).toUpperCase() ===
-                        "WIN"
-                );
-
-            const winnerCount =
-                winners.length;
-
-            // ------------------------------------------------
-            // NO WINNER
-            // ------------------------------------------------
-
-            if (
-                winnerCount === 0
-            ) {
-
-                db.prepare(`
-                    UPDATE matches
-
-                    SET
-                        prize_pool = ?,
-                        winner_count = 0,
-                        paid = 1,
-                        status = 'FINISHED',
-                        finished_at =
-                            CURRENT_TIMESTAMP
-
-                    WHERE id = ?
-                `).run(
-                    totalPrize,
-                    matchId
-                );
-
-                return {
-
-                    complete: true,
-
-                    alreadyPaid: false,
-
-                    totalCost:
-                        totalPlayerCost,
-
-                    totalPrize,
-
-                    winnerCount: 0
-
-                };
-            }
-
-            // ------------------------------------------------
-            // CALCULATE EQUAL WINNER SHARE
-            // ------------------------------------------------
-
-            const prizeInCents =
-                Math.round(
-                    totalPrize * 100
-                );
-
-            const baseShareCents =
-                Math.floor(
-                    prizeInCents /
-                    winnerCount
-                );
-
-            const remainderCents =
-                prizeInCents %
-                winnerCount;
-
-            // ------------------------------------------------
-            // PAY EACH WINNER
-            // ------------------------------------------------
-
-            winners.forEach(
-                (winner, index) => {
-
-                    let shareCents =
-                        baseShareCents;
-
-                    // Any remaining cents are
-                    // distributed one by one.
-                    if (
-                        index <
-                        remainderCents
-                    ) {
-                        shareCents += 1;
-                    }
+            const playerCost =  
+                num(  
+                    Number(game.stake) *  
+                    Number(game.cards)  
+                );  
+
+            totalPlayerCost =  
+                num(  
+                    totalPlayerCost +  
+                    playerCost  
+                );  
+        }  
+
+        // ------------------------------------------------  
+        // TOTAL PRIZE = 85% OF TOTAL GAME COST  
+        // ------------------------------------------------  
+
+        const totalPrize =  
+            num(  
+                totalPlayerCost *  
+                WIN_RATE  
+            );  
+
+        // ------------------------------------------------  
+        // FIND WINNERS  
+        // ------------------------------------------------  
+
+        const winners =  
+            games.filter(  
+                game =>  
+                    String(  
+                        game.result  
+                    ).toUpperCase() ===  
+                    "WIN"  
+            );  
+
+        const winnerCount =  
+            winners.length;  
+
+        // ------------------------------------------------  
+        // NO WINNER  
+        // ------------------------------------------------  
+
+        if (  
+            winnerCount === 0  
+        ) {  
+
+            db.prepare(`  
+                UPDATE matches  
+
+                SET  
+                    prize_pool = ?,  
+                    winner_count = 0,  
+                    paid = 1,  
+                    status = 'FINISHED',  
+                    finished_at =  
+                        CURRENT_TIMESTAMP  
+
+                WHERE id = ?  
+            `).run(  
+                totalPrize,  
+                matchId  
+            );  
+
+            return {  
+
+                complete: true,  
+
+                alreadyPaid: false,  
+
+                totalCost:  
+                    totalPlayerCost,  
+
+                totalPrize,  
+
+                winnerCount: 0  
+
+            };  
+        }  
+
+        // ------------------------------------------------  
+        // CALCULATE EQUAL WINNER SHARE  
+        // ------------------------------------------------  
+
+        const prizeInCents =  
+            Math.round(  
+                totalPrize * 100  
+            );  
+
+        const baseShareCents =  
+            Math.floor(  
+                prizeInCents /  
+                winnerCount  
+            );  
+
+        const remainderCents =  
+            prizeInCents %  
+            winnerCount;  
+
+        // ------------------------------------------------  
+        // PAY EACH WINNER  
+        // ------------------------------------------------  
+
+        winners.forEach(  
+            (winner, index) => {  
+
+                let shareCents =  
+                    baseShareCents;  
+
+                // Any remaining cents are  
+                // distributed one by one.  
+                if (  
+                    index <  
+                    remainderCents  
+                ) {  
+                    shareCents += 1;  
+                }  
 
-                    const winnerPrize =
-                        num(
-                            shareCents / 100
-                        );
+                const winnerPrize =  
+                    num(  
+                        shareCents / 100  
+                    );  
 
-                    // ----------------------------------------
-                    // ADD PRIZE TO MAIN WALLET
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // ADD PRIZE TO MAIN WALLET  
+                // ----------------------------------------  
 
-                    db.prepare(`
-                        UPDATE users
+                db.prepare(`  
+                    UPDATE users  
 
-                        SET
-                            balance =
-                                balance + ?
+                    SET  
+                        balance =  
+                            balance + ?  
 
-                        WHERE id = ?
-                    `).run(
-                        winnerPrize,
-                        winner.user_id
-                    );
+                    WHERE id = ?  
+                `).run(  
+                    winnerPrize,  
+                    winner.user_id  
+                );  
 
-                    // ----------------------------------------
-                    // SAVE PRIZE IN GAME RECORD
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // SAVE PRIZE IN GAME RECORD  
+                // ----------------------------------------  
 
-                    db.prepare(`
-                        UPDATE games
+                db.prepare(`  
+                    UPDATE games  
 
-                        SET
-                            prize = ?,
-                            result = 'WIN'
+                    SET  
+                        prize = ?,  
+                        result = 'WIN'  
 
-                        WHERE id = ?
-                    `).run(
-                        winnerPrize,
-                        winner.id
-                    );
-                }
-            );
+                    WHERE id = ?  
+                `).run(  
+                    winnerPrize,  
+                    winner.id  
+                );  
+            }  
+        );  
 
-            // ------------------------------------------------
-            // UPDATE LOSERS
-            // ------------------------------------------------
+        // ------------------------------------------------  
+        // UPDATE LOSERS  
+        // ------------------------------------------------  
 
-            db.prepare(`
-                UPDATE games
+        db.prepare(`  
+            UPDATE games  
 
-                SET prize = 0
+            SET prize = 0  
 
-                WHERE match_id = ?
+            WHERE match_id = ?  
 
-                AND result != 'WIN'
-            `).run(
-                matchId
-            );
+            AND result != 'WIN'  
+        `).run(  
+            matchId  
+        );  
 
-            // ------------------------------------------------
-            // FINISH MATCH
-            // ------------------------------------------------
+        // ------------------------------------------------  
+        // FINISH MATCH  
+        // ------------------------------------------------  
 
-            db.prepare(`
-                UPDATE matches
+        db.prepare(`  
+            UPDATE matches  
 
-                SET
-                    prize_pool = ?,
-                    winner_count = ?,
-                    paid = 1,
-                    status = 'FINISHED',
-                    finished_at =
-                        CURRENT_TIMESTAMP
+            SET  
+                prize_pool = ?,  
+                winner_count = ?,  
+                paid = 1,  
+                status = 'FINISHED',  
+                finished_at =  
+                    CURRENT_TIMESTAMP  
 
-                WHERE id = ?
-            `).run(
-                totalPrize,
-                winnerCount,
-                matchId
-            );
+            WHERE id = ?  
+        `).run(  
+            totalPrize,  
+            winnerCount,  
+            matchId  
+        );  
 
-            return {
+        return {  
 
-                complete: true,
+            complete: true,  
 
-                alreadyPaid: false,
+            alreadyPaid: false,  
 
-                totalCost:
-                    totalPlayerCost,
+            totalCost:  
+                totalPlayerCost,  
 
-                totalPrize,
+            totalPrize,  
 
-                winnerCount
+            winnerCount  
 
-            };
-        });
+        };  
+    });  
 
-    return transaction();
+return transaction();
+
 }
-
 
 // ======================================================
 // FINISH GAME
@@ -2104,323 +1469,323 @@ function finalizeMatchPayout(matchId) {
 // ======================================================
 
 app.post(
-    "/api/game/finish",
-    auth,
-    (req, res) => {
+"/api/game/finish",
+auth,
+(req, res) => {
 
-        try {
+try {  
 
-            const matchId =
-                integer(
-                    req.body.matchId ||
-                    req.body.gameId
-                );
+        const matchId =  
+            integer(  
+                req.body.matchId ||  
+                req.body.gameId  
+            );  
 
-            let result =
-                String(
-                    req.body.result ||
-                    "LOSE"
-                ).toUpperCase();
+        let result =  
+            String(  
+                req.body.result ||  
+                "LOSE"  
+            ).toUpperCase();  
 
-            if (!matchId) {
+        if (!matchId) {  
 
-                return res.status(400).json({
+            return res.status(400).json({  
 
-                    success: false,
+                success: false,  
 
-                    error:
-                        "matchId is required"
+                error:  
+                    "matchId is required"  
 
-                });
-            }
+            });  
+        }  
 
-            if (
-                result !== "WIN" &&
-                result !== "LOSE"
-            ) {
+        if (  
+            result !== "WIN" &&  
+            result !== "LOSE"  
+        ) {  
 
-                result = "LOSE";
-            }
+            result = "LOSE";  
+        }  
 
-            // ------------------------------------------------
-            // FIND PLAYER GAME
-            // ------------------------------------------------
+        // ------------------------------------------------  
+        // FIND PLAYER GAME  
+        // ------------------------------------------------  
 
-            const game =
-                db.prepare(`
-                    SELECT *
-                    FROM games
+        const game =  
+            db.prepare(`  
+                SELECT *  
+                FROM games  
 
-                    WHERE match_id = ?
+                WHERE match_id = ?  
 
-                    AND user_id = ?
+                AND user_id = ?  
 
-                    ORDER BY id DESC
+                ORDER BY id DESC  
 
-                    LIMIT 1
-                `).get(
-                    matchId,
-                    req.user.id
-                );
+                LIMIT 1  
+            `).get(  
+                matchId,  
+                req.user.id  
+            );  
 
-            if (!game) {
+        if (!game) {  
 
-                return res.status(404).json({
+            return res.status(404).json({  
 
-                    success: false,
+                success: false,  
 
-                    error:
-                        "Player game not found"
+                error:  
+                    "Player game not found"  
 
-                });
-            }
+            });  
+        }  
 
-            // ------------------------------------------------
-            // IF ALREADY FINISHED
-            // ------------------------------------------------
+        // ------------------------------------------------  
+        // IF ALREADY FINISHED  
+        // ------------------------------------------------  
 
-            if (
-                game.status ===
-                "FINISHED"
-            ) {
+        if (  
+            game.status ===  
+            "FINISHED"  
+        ) {  
 
-                const user =
-                    db.prepare(`
-                        SELECT
-                            balance,
-                            play_balance
-                        FROM users
-                        WHERE id = ?
-                    `).get(
-                        req.user.id
-                    );
+            const user =  
+                db.prepare(`  
+                    SELECT  
+                        balance,  
+                        play_balance  
+                    FROM users  
+                    WHERE id = ?  
+                `).get(  
+                    req.user.id  
+                );  
 
-                const match =
-                    db.prepare(`
-                        SELECT *
-                        FROM matches
-                        WHERE id = ?
-                    `).get(
-                        matchId
-                    );
+            const match =  
+                db.prepare(`  
+                    SELECT *  
+                    FROM matches  
+                    WHERE id = ?  
+                `).get(  
+                    matchId  
+                );  
 
-                return res.json({
-
-                    success: true,
-
-                    alreadyFinished: true,
-
-                    gameId:
-                        matchId,
-
-                    matchId,
-
-                    sharedGameId:
-                        matchId,
-
-                    result:
-                        game.result,
-
-                    prize:
-                        num(game.prize),
-
-                    mainBalance:
-                        num(
-                            user.balance
-                        ),
-
-                    playBalance:
-                        num(
-                            user.play_balance
-                        ),
-
-                    matchStatus:
-                        match.status,
-
-                    payoutComplete:
-                        Boolean(
-                            match.paid
-                        )
-
-                });
-            }
-
-            // ------------------------------------------------
-            // MARK PLAYER FINISHED
-            // ------------------------------------------------
-
-            db.prepare(`
-                UPDATE games
-
-                SET
-                    result = ?,
-                    status = 'FINISHED',
-                    finished_at =
-                        CURRENT_TIMESTAMP
-
-                WHERE id = ?
-
-                AND user_id = ?
-            `).run(
-                result,
-                game.id,
-                req.user.id
-            );
-
-            // ------------------------------------------------
-            // FINALIZE SHARED MATCH
-            // ------------------------------------------------
-
-            const payout =
-                finalizeMatchPayout(
-                    matchId
-                );
-
-            // ------------------------------------------------
-            // GET UPDATED GAME
-            // ------------------------------------------------
-
-            const updatedGame =
-                db.prepare(`
-                    SELECT *
-                    FROM games
-                    WHERE id = ?
-                `).get(
-                    game.id
-                );
-
-            // ------------------------------------------------
-            // GET MATCH
-            // ------------------------------------------------
-
-            const match =
-                db.prepare(`
-                    SELECT *
-                    FROM matches
-                    WHERE id = ?
-                `).get(
-                    matchId
-                );
-
-            // ------------------------------------------------
-            // GET USER BALANCE
-            // ------------------------------------------------
-
-            const user =
-                db.prepare(`
-                    SELECT
-                        balance,
-                        play_balance
-                    FROM users
-                    WHERE id = ?
-                `).get(
-                    req.user.id
-                );
-
-            // ------------------------------------------------
-            // TOTAL GAME COST
-            // ------------------------------------------------
-
-            const totalCost =
-                payout.totalCost !==
-                undefined
-                    ? num(
-                        payout.totalCost
-                    )
-                    : num(
-                        match.prize_pool /
-                        WIN_RATE
-                    );
-
-            // ------------------------------------------------
-            // RESPONSE
-            // ------------------------------------------------
-
-            res.json({
-
-                success: true,
-
-                gameId:
-                    matchId,
-
-                matchId,
-
-                sharedGameId:
-                    matchId,
-
-                result:
-                    updatedGame.result,
-
-                // This will be zero while
-                // waiting for the other
-                // players to finish.
-                prize:
-                    num(
-                        updatedGame.prize
-                    ),
-
-                totalPlayerCost:
-                    totalCost,
-
-                totalPrize:
-                    num(
-                        match.prize_pool
-                    ),
-
-                winnerCount:
-                    Number(
-                        match.winner_count
-                    ),
-
-                playerCount:
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM games
-                        WHERE match_id = ?
-                    `).get(
-                        matchId
-                    ).count,
-
-                matchStatus:
-                    match.status,
-
-                payoutComplete:
-                    Boolean(
-                        match.paid
-                    ),
-
-                mainBalance:
-                    num(
-                        user.balance
-                    ),
-
-                playBalance:
-                    num(
-                        user.play_balance
-                    )
-
-            });
-
-        } catch (error) {
-
-            console.error(
-                "GAME FINISH ERROR:",
-                error
-            );
-
-            res.status(500).json({
-
-                success: false,
-
-                error:
-                    error.message ||
-                    "Could not finish game"
-
-            });
-        }
-    }
+            return res.json({  
+
+                success: true,  
+
+                alreadyFinished: true,  
+
+                gameId:  
+                    matchId,  
+
+                matchId,  
+
+                sharedGameId:  
+                    matchId,  
+
+                result:  
+                    game.result,  
+
+                prize:  
+                    num(game.prize),  
+
+                mainBalance:  
+                    num(  
+                        user.balance  
+                    ),  
+
+                playBalance:  
+                    num(  
+                        user.play_balance  
+                    ),  
+
+                matchStatus:  
+                    match.status,  
+
+                payoutComplete:  
+                    Boolean(  
+                        match.paid  
+                    )  
+
+            });  
+        }  
+
+        // ------------------------------------------------  
+        // MARK PLAYER FINISHED  
+        // ------------------------------------------------  
+
+        db.prepare(`  
+            UPDATE games  
+
+            SET  
+                result = ?,  
+                status = 'FINISHED',  
+                finished_at =  
+                    CURRENT_TIMESTAMP  
+
+            WHERE id = ?  
+
+            AND user_id = ?  
+        `).run(  
+            result,  
+            game.id,  
+            req.user.id  
+        );  
+
+        // ------------------------------------------------  
+        // FINALIZE SHARED MATCH  
+        // ------------------------------------------------  
+
+        const payout =  
+            finalizeMatchPayout(  
+                matchId  
+            );  
+
+        // ------------------------------------------------  
+        // GET UPDATED GAME  
+        // ------------------------------------------------  
+
+        const updatedGame =  
+            db.prepare(`  
+                SELECT *  
+                FROM games  
+                WHERE id = ?  
+            `).get(  
+                game.id  
+            );  
+
+        // ------------------------------------------------  
+        // GET MATCH  
+        // ------------------------------------------------  
+
+        const match =  
+            db.prepare(`  
+                SELECT *  
+                FROM matches  
+                WHERE id = ?  
+            `).get(  
+                matchId  
+            );  
+
+        // ------------------------------------------------  
+        // GET USER BALANCE  
+        // ------------------------------------------------  
+
+        const user =  
+            db.prepare(`  
+                SELECT  
+                    balance,  
+                    play_balance  
+                FROM users  
+                WHERE id = ?  
+            `).get(  
+                req.user.id  
+            );  
+
+        // ------------------------------------------------  
+        // TOTAL GAME COST  
+        // ------------------------------------------------  
+
+        const totalCost =  
+            payout.totalCost !==  
+            undefined  
+                ? num(  
+                    payout.totalCost  
+                )  
+                : num(  
+                    match.prize_pool /  
+                    WIN_RATE  
+                );  
+
+        // ------------------------------------------------  
+        // RESPONSE  
+        // ------------------------------------------------  
+
+        res.json({  
+
+            success: true,  
+
+            gameId:  
+                matchId,  
+
+            matchId,  
+
+            sharedGameId:  
+                matchId,  
+
+            result:  
+                updatedGame.result,  
+
+            // This will be zero while  
+            // waiting for the other  
+            // players to finish.  
+            prize:  
+                num(  
+                    updatedGame.prize  
+                ),  
+
+            totalPlayerCost:  
+                totalCost,  
+
+            totalPrize:  
+                num(  
+                    match.prize_pool  
+                ),  
+
+            winnerCount:  
+                Number(  
+                    match.winner_count  
+                ),  
+
+            playerCount:  
+                db.prepare(`  
+                    SELECT COUNT(*) AS count  
+                    FROM games  
+                    WHERE match_id = ?  
+                `).get(  
+                    matchId  
+                ).count,  
+
+            matchStatus:  
+                match.status,  
+
+            payoutComplete:  
+                Boolean(  
+                    match.paid  
+                ),  
+
+            mainBalance:  
+                num(  
+                    user.balance  
+                ),  
+
+            playBalance:  
+                num(  
+                    user.play_balance  
+                )  
+
+        });  
+
+    } catch (error) {  
+
+        console.error(  
+            "GAME FINISH ERROR:",  
+            error  
+        );  
+
+        res.status(500).json({  
+
+            success: false,  
+
+            error:  
+                error.message ||  
+                "Could not finish game"  
+
+        });  
+    }  
+}
+
 );
-
 
 // ======================================================
 // CREATE DEPOSIT
@@ -2432,150 +1797,150 @@ app.post(
 // ======================================================
 
 app.post(
-    "/api/deposit",
-    auth,
-    (req, res) => {
+"/api/deposit",
+auth,
+(req, res) => {
 
-        try {
+try {  
 
-            const amount =
-                num(
-                    req.body.amount
-                );
+        const amount =  
+            num(  
+                req.body.amount  
+            );  
 
-            const reference =
-                String(
-                    req.body.reference ||
-                    ""
-                ).trim();
+        const reference =  
+            String(  
+                req.body.reference ||  
+                ""  
+            ).trim();  
 
-            if (
-                amount <
-                MIN_DEPOSIT
-            ) {
+        if (  
+            amount <  
+            MIN_DEPOSIT  
+        ) {  
 
-                return res.status(400).json({
+            return res.status(400).json({  
 
-                    success: false,
+                success: false,  
 
-                    error:
-                        `Minimum deposit is ${MIN_DEPOSIT} ETB`
+                error:  
+                    `Minimum deposit is ${MIN_DEPOSIT} ETB`  
 
-                });
-            }
+            });  
+        }  
 
-            if (!reference) {
+        if (!reference) {  
 
-                return res.status(400).json({
+            return res.status(400).json({  
 
-                    success: false,
+                success: false,  
 
-                    error:
-                        "Payment reference is required"
+                error:  
+                    "Payment reference is required"  
 
-                });
-            }
+            });  
+        }  
 
-            const result =
-                db.prepare(`
-                    INSERT INTO deposits (
-                        user_id,
-                        amount,
-                        reference,
-                        status
-                    )
-                    VALUES (
-                        ?,
-                        ?,
-                        ?,
-                        'pending'
-                    )
-                `).run(
-                    req.user.id,
-                    amount,
-                    reference
-                );
+        const result =  
+            db.prepare(`  
+                INSERT INTO deposits (  
+                    user_id,  
+                    amount,  
+                    reference,  
+                    status  
+                )  
+                VALUES (  
+                    ?,  
+                    ?,  
+                    ?,  
+                    'pending'  
+                )  
+            `).run(  
+                req.user.id,  
+                amount,  
+                reference  
+            );  
 
-            const depositId =
-                Number(
-                    result.lastInsertRowid
-                );
+        const depositId =  
+            Number(  
+                result.lastInsertRowid  
+            );  
 
-            res.json({
+        res.json({  
 
-                success: true,
+            success: true,  
 
-                depositId,
+            depositId,  
 
-                amount,
+            amount,  
 
-                reference,
+            reference,  
 
-                status:
-                    "PENDING",
+            status:  
+                "PENDING",  
 
-                message:
-                    "Deposit submitted. Waiting for admin approval."
+            message:  
+                "Deposit submitted. Waiting for admin approval."  
 
-            });
+        });  
 
-        } catch (error) {
+    } catch (error) {  
 
-            console.error(
-                "DEPOSIT ERROR:",
-                error
-            );
+        console.error(  
+            "DEPOSIT ERROR:",  
+            error  
+        );  
 
-            res.status(500).json({
+        res.status(500).json({  
 
-                success: false,
+            success: false,  
 
-                error:
-                    "Could not submit deposit"
+            error:  
+                "Could not submit deposit"  
 
-            });
-        }
-    }
+        });  
+    }  
+}
+
 );
-
 
 // ======================================================
 // DEPOSIT HISTORY
 // ======================================================
 
 app.get(
-    "/api/deposits",
-    auth,
-    (req, res) => {
+"/api/deposits",
+auth,
+(req, res) => {
 
-        const deposits =
-            db.prepare(`
-                SELECT
-                    id,
-                    amount,
-                    reference,
-                    status,
-                    created_at,
-                    approved_at
-                FROM deposits
-                WHERE user_id = ?
-                ORDER BY id DESC
-                LIMIT 100
-            `).all(
-                req.user.id
-            );
+const deposits =  
+        db.prepare(`  
+            SELECT  
+                id,  
+                amount,  
+                reference,  
+                status,  
+                created_at,  
+                approved_at  
+            FROM deposits  
+            WHERE user_id = ?  
+            ORDER BY id DESC  
+            LIMIT 100  
+        `).all(  
+            req.user.id  
+        );  
 
-        res.json({
+    res.json({  
 
-            success: true,
+        success: true,  
 
-            deposits
+        deposits  
 
-        });
+    });  
 
-    }
+}
+
 );
-
 
 // ======================================================
 // ADMIN CHECK
@@ -2583,13 +1948,13 @@ app.get(
 
 function isAdmin(chatId) {
 
-    return (
-        ADMIN_CHAT_ID &&
-        String(chatId) ===
-        String(ADMIN_CHAT_ID)
-    );
-}
+return (  
+    ADMIN_CHAT_ID &&  
+    String(chatId) ===  
+    String(ADMIN_CHAT_ID)  
+);
 
+}
 
 // ======================================================
 // ADMIN APPROVE DEPOSIT
@@ -2601,72 +1966,72 @@ function isAdmin(chatId) {
 // ======================================================
 
 function approveDeposit(
-    depositId
+depositId
 ) {
 
-    const transaction =
-        db.transaction(() => {
+const transaction =  
+    db.transaction(() => {  
 
-            const deposit =
-                db.prepare(`
-                    SELECT *
-                    FROM deposits
-                    WHERE id = ?
-                `).get(
-                    depositId
-                );
+        const deposit =  
+            db.prepare(`  
+                SELECT *  
+                FROM deposits  
+                WHERE id = ?  
+            `).get(  
+                depositId  
+            );  
 
-            if (!deposit) {
+        if (!deposit) {  
 
-                throw new Error(
-                    "Deposit not found"
-                );
+            throw new Error(  
+                "Deposit not found"  
+            );  
 
-            }
+        }  
 
-            if (
-                deposit.status !==
-                "pending"
-            ) {
+        if (  
+            deposit.status !==  
+            "pending"  
+        ) {  
 
-                throw new Error(
-                    `Deposit is already ${deposit.status}`
-                );
+            throw new Error(  
+                `Deposit is already ${deposit.status}`  
+            );  
 
-            }
+        }  
 
-            db.prepare(`
-                UPDATE deposits
+        db.prepare(`  
+            UPDATE deposits  
 
-                SET
-                    status = 'approved',
-                    approved_at =
-                        CURRENT_TIMESTAMP
+            SET  
+                status = 'approved',  
+                approved_at =  
+                    CURRENT_TIMESTAMP  
 
-                WHERE id = ?
-            `).run(
-                depositId
-            );
+            WHERE id = ?  
+        `).run(  
+            depositId  
+        );  
 
-            db.prepare(`
-                UPDATE users
+        db.prepare(`  
+            UPDATE users  
 
-                SET
-                    play_balance =
-                        play_balance + ?
+            SET  
+                play_balance =  
+                    play_balance + ?  
 
-                WHERE id = ?
-            `).run(
-                num(deposit.amount),
-                deposit.user_id
-            );
+            WHERE id = ?  
+        `).run(  
+            num(deposit.amount),  
+            deposit.user_id  
+        );  
 
-            return deposit;
-        });
+        return deposit;  
+    });  
 
-    return transaction();
+return transaction();
+
 }
-
 
 // ======================================================
 // ADMIN REJECT DEPOSIT
@@ -2679,49 +2044,50 @@ function approveDeposit(
 // ======================================================
 
 function rejectDeposit(
-    depositId
+depositId
 ) {
 
-    const deposit =
-        db.prepare(`
-            SELECT *
-            FROM deposits
-            WHERE id = ?
-        `).get(
-            depositId
-        );
+const deposit =  
+    db.prepare(`  
+        SELECT *  
+        FROM deposits  
+        WHERE id = ?  
+    `).get(  
+        depositId  
+    );  
 
-    if (!deposit) {
+if (!deposit) {  
 
-        throw new Error(
-            "Deposit not found"
-        );
+    throw new Error(  
+        "Deposit not found"  
+    );  
 
-    }
+}  
 
-    if (
-        deposit.status !==
-        "pending"
-    ) {
+if (  
+    deposit.status !==  
+    "pending"  
+) {  
 
-        throw new Error(
-            `Deposit is already ${deposit.status}`
-        );
+    throw new Error(  
+        `Deposit is already ${deposit.status}`  
+    );  
 
-    }
+}  
 
-    db.prepare(`
-        UPDATE deposits
+db.prepare(`  
+    UPDATE deposits  
 
-        SET
-            status = 'rejected'
+    SET  
+        status = 'rejected'  
 
-        WHERE id = ?
-    `).run(
-        depositId
-    );
+    WHERE id = ?  
+`).run(  
+    depositId  
+);  
 
-    return deposit;
+return deposit;
+
 }
 
 // ======================================================
@@ -2741,249 +2107,249 @@ function rejectDeposit(
 // ======================================================
 
 app.post(
-    "/api/withdraw",
-    auth,
-    (req, res) => {
+"/api/withdraw",
+auth,
+(req, res) => {
 
-        try {
+try {  
 
-            const amount =
-                num(
-                    req.body.amount
-                );
+        const amount =  
+            num(  
+                req.body.amount  
+            );  
 
-            const accountDetails =
-                String(
-                    req.body.accountDetails ||
-                    req.body.account_details ||
-                    ""
-                ).trim();
+        const accountDetails =  
+            String(  
+                req.body.accountDetails ||  
+                req.body.account_details ||  
+                ""  
+            ).trim();  
 
-            if (
-                amount <
-                MIN_WITHDRAW
-            ) {
+        if (  
+            amount <  
+            MIN_WITHDRAW  
+        ) {  
 
-                return res.status(400).json({
+            return res.status(400).json({  
 
-                    success: false,
+                success: false,  
 
-                    error:
-                        `Minimum withdrawal is ${MIN_WITHDRAW} ETB`
+                error:  
+                    `Minimum withdrawal is ${MIN_WITHDRAW} ETB`  
 
-                });
-            }
+            });  
+        }  
 
-            if (!accountDetails) {
+        if (!accountDetails) {  
 
-                return res.status(400).json({
+            return res.status(400).json({  
 
-                    success: false,
+                success: false,  
 
-                    error:
-                        "Account details are required"
+                error:  
+                    "Account details are required"  
 
-                });
-            }
+            });  
+        }  
 
-            // ------------------------------------------------
-            // TRANSACTION
-            // ------------------------------------------------
+        // ------------------------------------------------  
+        // TRANSACTION  
+        // ------------------------------------------------  
 
-            const transaction =
-                db.transaction(() => {
+        const transaction =  
+            db.transaction(() => {  
 
-                    const user =
-                        db.prepare(`
-                            SELECT
-                                balance
-                            FROM users
-                            WHERE id = ?
-                        `).get(
-                            req.user.id
-                        );
+                const user =  
+                    db.prepare(`  
+                        SELECT  
+                            balance  
+                        FROM users  
+                        WHERE id = ?  
+                    `).get(  
+                        req.user.id  
+                    );  
 
-                    if (!user) {
+                if (!user) {  
 
-                        throw new Error(
-                            "User not found"
-                        );
+                    throw new Error(  
+                        "User not found"  
+                    );  
 
-                    }
+                }  
 
-                    const balance =
-                        num(
-                            user.balance
-                        );
+                const balance =  
+                    num(  
+                        user.balance  
+                    );  
 
-                    if (
-                        balance <
-                        amount
-                    ) {
+                if (  
+                    balance <  
+                    amount  
+                ) {  
 
-                        throw new Error(
-                            "Insufficient Main Wallet balance"
-                        );
+                    throw new Error(  
+                        "Insufficient Main Wallet balance"  
+                    );  
 
-                    }
+                }  
 
-                    // ----------------------------------------
-                    // RESERVE MONEY
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // RESERVE MONEY  
+                // ----------------------------------------  
 
-                    db.prepare(`
-                        UPDATE users
+                db.prepare(`  
+                    UPDATE users  
 
-                        SET
-                            balance =
-                                balance - ?
+                    SET  
+                        balance =  
+                            balance - ?  
 
-                        WHERE id = ?
+                    WHERE id = ?  
 
-                        AND balance >= ?
-                    `).run(
-                        amount,
-                        req.user.id,
-                        amount
-                    );
+                    AND balance >= ?  
+                `).run(  
+                    amount,  
+                    req.user.id,  
+                    amount  
+                );  
 
-                    // ----------------------------------------
-                    // CREATE WITHDRAWAL
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // CREATE WITHDRAWAL  
+                // ----------------------------------------  
 
-                    const result =
-                        db.prepare(`
-                            INSERT INTO withdrawals (
-                                user_id,
-                                telegram_id,
-                                amount,
-                                account_details,
-                                status
-                            )
-                            VALUES (
-                                ?,
-                                ?,
-                                ?,
-                                ?,
-                                'pending'
-                            )
-                        `).run(
-                            req.user.id,
-                            String(
-                                req.telegramUser.id
-                            ),
-                            amount,
-                            accountDetails
-                        );
+                const result =  
+                    db.prepare(`  
+                        INSERT INTO withdrawals (  
+                            user_id,  
+                            telegram_id,  
+                            amount,  
+                            account_details,  
+                            status  
+                        )  
+                        VALUES (  
+                            ?,  
+                            ?,  
+                            ?,  
+                            ?,  
+                            'pending'  
+                        )  
+                    `).run(  
+                        req.user.id,  
+                        String(  
+                            req.telegramUser.id  
+                        ),  
+                        amount,  
+                        accountDetails  
+                    );  
 
-                    return Number(
-                        result.lastInsertRowid
-                    );
-                });
+                return Number(  
+                    result.lastInsertRowid  
+                );  
+            });  
 
-            const withdrawalId =
-                transaction();
+        const withdrawalId =  
+            transaction();  
 
-            const updatedUser =
-                db.prepare(`
-                    SELECT
-                        balance,
-                        play_balance
-                    FROM users
-                    WHERE id = ?
-                `).get(
-                    req.user.id
-                );
+        const updatedUser =  
+            db.prepare(`  
+                SELECT  
+                    balance,  
+                    play_balance  
+                FROM users  
+                WHERE id = ?  
+            `).get(  
+                req.user.id  
+            );  
 
-            res.json({
+        res.json({  
 
-                success: true,
+            success: true,  
 
-                withdrawalId,
+            withdrawalId,  
 
-                amount,
+            amount,  
 
-                accountDetails,
+            accountDetails,  
 
-                status:
-                    "PENDING",
+            status:  
+                "PENDING",  
 
-                mainBalance:
-                    num(
-                        updatedUser.balance
-                    ),
+            mainBalance:  
+                num(  
+                    updatedUser.balance  
+                ),  
 
-                playBalance:
-                    num(
-                        updatedUser.play_balance
-                    ),
+            playBalance:  
+                num(  
+                    updatedUser.play_balance  
+                ),  
 
-                message:
-                    "Withdrawal submitted. Waiting for admin approval."
+            message:  
+                "Withdrawal submitted. Waiting for admin approval."  
 
-            });
+        });  
 
-        } catch (error) {
+    } catch (error) {  
 
-            console.error(
-                "WITHDRAW ERROR:",
-                error
-            );
+        console.error(  
+            "WITHDRAW ERROR:",  
+            error  
+        );  
 
-            res.status(400).json({
+        res.status(400).json({  
 
-                success: false,
+            success: false,  
 
-                error:
-                    error.message ||
-                    "Could not submit withdrawal"
+            error:  
+                error.message ||  
+                "Could not submit withdrawal"  
 
-            });
-        }
-    }
+        });  
+    }  
+}
+
 );
-
 
 // ======================================================
 // WITHDRAWAL HISTORY
 // ======================================================
 
 app.get(
-    "/api/withdrawals",
-    auth,
-    (req, res) => {
+"/api/withdrawals",
+auth,
+(req, res) => {
 
-        const withdrawals =
-            db.prepare(`
-                SELECT
-                    id,
-                    amount,
-                    account_details,
-                    status,
-                    created_at,
-                    approved_at
-                FROM withdrawals
+const withdrawals =  
+        db.prepare(`  
+            SELECT  
+                id,  
+                amount,  
+                account_details,  
+                status,  
+                created_at,  
+                approved_at  
+            FROM withdrawals  
 
-                WHERE user_id = ?
+            WHERE user_id = ?  
 
-                ORDER BY id DESC
+            ORDER BY id DESC  
 
-                LIMIT 100
-            `).all(
-                req.user.id
-            );
+            LIMIT 100  
+        `).all(  
+            req.user.id  
+        );  
 
-        res.json({
+    res.json({  
 
-            success: true,
+        success: true,  
 
-            withdrawals
+        withdrawals  
 
-        });
+    });  
 
-    }
+}
+
 );
-
 
 // ======================================================
 // APPROVE WITHDRAWAL
@@ -2997,59 +2363,59 @@ app.get(
 // ======================================================
 
 function approveWithdrawal(
-    withdrawalId
+withdrawalId
 ) {
 
-    const transaction =
-        db.transaction(() => {
+const transaction =  
+    db.transaction(() => {  
 
-            const withdrawal =
-                db.prepare(`
-                    SELECT *
-                    FROM withdrawals
-                    WHERE id = ?
-                `).get(
-                    withdrawalId
-                );
+        const withdrawal =  
+            db.prepare(`  
+                SELECT *  
+                FROM withdrawals  
+                WHERE id = ?  
+            `).get(  
+                withdrawalId  
+            );  
 
-            if (!withdrawal) {
+        if (!withdrawal) {  
 
-                throw new Error(
-                    "Withdrawal not found"
-                );
+            throw new Error(  
+                "Withdrawal not found"  
+            );  
 
-            }
+        }  
 
-            if (
-                withdrawal.status !==
-                "pending"
-            ) {
+        if (  
+            withdrawal.status !==  
+            "pending"  
+        ) {  
 
-                throw new Error(
-                    `Withdrawal is already ${withdrawal.status}`
-                );
+            throw new Error(  
+                `Withdrawal is already ${withdrawal.status}`  
+            );  
 
-            }
+        }  
 
-            db.prepare(`
-                UPDATE withdrawals
+        db.prepare(`  
+            UPDATE withdrawals  
 
-                SET
-                    status = 'approved',
-                    approved_at =
-                        CURRENT_TIMESTAMP
+            SET  
+                status = 'approved',  
+                approved_at =  
+                    CURRENT_TIMESTAMP  
 
-                WHERE id = ?
-            `).run(
-                withdrawalId
-            );
+            WHERE id = ?  
+        `).run(  
+            withdrawalId  
+        );  
 
-            return withdrawal;
-        });
+        return withdrawal;  
+    });  
 
-    return transaction();
+return transaction();
+
 }
-
 
 // ======================================================
 // REJECT WITHDRAWAL
@@ -3061,80 +2427,80 @@ function approveWithdrawal(
 // ======================================================
 
 function rejectWithdrawal(
-    withdrawalId
+withdrawalId
 ) {
 
-    const transaction =
-        db.transaction(() => {
+const transaction =  
+    db.transaction(() => {  
 
-            const withdrawal =
-                db.prepare(`
-                    SELECT *
-                    FROM withdrawals
-                    WHERE id = ?
-                `).get(
-                    withdrawalId
-                );
+        const withdrawal =  
+            db.prepare(`  
+                SELECT *  
+                FROM withdrawals  
+                WHERE id = ?  
+            `).get(  
+                withdrawalId  
+            );  
 
-            if (!withdrawal) {
+        if (!withdrawal) {  
 
-                throw new Error(
-                    "Withdrawal not found"
-                );
+            throw new Error(  
+                "Withdrawal not found"  
+            );  
 
-            }
+        }  
 
-            if (
-                withdrawal.status !==
-                "pending"
-            ) {
+        if (  
+            withdrawal.status !==  
+            "pending"  
+        ) {  
 
-                throw new Error(
-                    `Withdrawal is already ${withdrawal.status}`
-                );
+            throw new Error(  
+                `Withdrawal is already ${withdrawal.status}`  
+            );  
 
-            }
+        }  
 
-            // ----------------------------------------------
-            // REFUND MAIN WALLET
-            // ----------------------------------------------
+        // ----------------------------------------------  
+        // REFUND MAIN WALLET  
+        // ----------------------------------------------  
 
-            db.prepare(`
-                UPDATE users
+        db.prepare(`  
+            UPDATE users  
 
-                SET
-                    balance =
-                        balance + ?
+            SET  
+                balance =  
+                    balance + ?  
 
-                WHERE id = ?
-            `).run(
-                num(
-                    withdrawal.amount
-                ),
-                withdrawal.user_id
-            );
+            WHERE id = ?  
+        `).run(  
+            num(  
+                withdrawal.amount  
+            ),  
+            withdrawal.user_id  
+        );  
 
-            // ----------------------------------------------
-            // MARK REJECTED
-            // ----------------------------------------------
+        // ----------------------------------------------  
+        // MARK REJECTED  
+        // ----------------------------------------------  
 
-            db.prepare(`
-                UPDATE withdrawals
+        db.prepare(`  
+            UPDATE withdrawals  
 
-                SET
-                    status = 'rejected'
+            SET  
+                status = 'rejected'  
 
-                WHERE id = ?
-            `).run(
-                withdrawalId
-            );
+            WHERE id = ?  
+        `).run(  
+            withdrawalId  
+        );  
 
-            return withdrawal;
-        });
+        return withdrawal;  
+    });  
 
-    return transaction();
+return transaction();
+
 }
-
 
 // ======================================================
 // TELEGRAM BOT
@@ -3144,75 +2510,75 @@ let bot = null;
 
 if (BOT_TOKEN) {
 
-    bot =
-        new TelegramBot(
-            BOT_TOKEN,
-            {
-                polling: true
-            }
-        );
+bot =  
+    new TelegramBot(  
+        BOT_TOKEN,  
+        {  
+            polling: true  
+        }  
+    );  
 
-    console.log(
-        "✅ Telegram bot polling started"
-    );
+console.log(  
+    "✅ Telegram bot polling started"  
+);
 
 } else {
 
-    console.warn(
-        "⚠️ BOT_TOKEN is not configured"
-    );
-}
+console.warn(  
+    "⚠️ BOT_TOKEN is not configured"  
+);
 
+}
 
 // ======================================================
 // BOT SEND MESSAGE HELPER
 // ======================================================
 
 async function sendBotMessage(
-    chatId,
-    text,
-    options = {}
+chatId,
+text,
+options = {}
 ) {
 
-    if (!bot) {
-        return;
-    }
+if (!bot) {  
+    return;  
+}  
 
-    try {
+try {  
 
-        await bot.sendMessage(
-            chatId,
-            text,
-            options
-        );
+    await bot.sendMessage(  
+        chatId,  
+        text,  
+        options  
+    );  
 
-    } catch (error) {
+} catch (error) {  
 
-        console.error(
-            "BOT MESSAGE ERROR:",
-            error.message
-        );
-    }
+    console.error(  
+        "BOT MESSAGE ERROR:",  
+        error.message  
+    );  
 }
 
+}
 
 // ======================================================
 // USER TELEGRAM ID -> DATABASE USER
 // ======================================================
 
 function getUserByTelegramId(
-    telegramId
+telegramId
 ) {
 
-    return db.prepare(`
-        SELECT *
-        FROM users
-        WHERE telegram_id = ?
-    `).get(
-        String(telegramId)
-    );
-}
+return db.prepare(`  
+    SELECT *  
+    FROM users  
+    WHERE telegram_id = ?  
+`).get(  
+    String(telegramId)  
+);
 
+}
 
 // ======================================================
 // /START
@@ -3220,59 +2586,59 @@ function getUserByTelegramId(
 
 if (bot) {
 
-    bot.onText(
-        /^\/start$/,
-        async msg => {
+bot.onText(  
+    /^\/start$/,  
+    async msg => {  
 
-            const chatId =
-                msg.chat.id;
+        const chatId =  
+            msg.chat.id;  
 
-            const telegramUser =
-                msg.from;
+        const telegramUser =  
+            msg.from;  
 
-            try {
+        try {  
 
-                const user =
-                    getOrCreateUser(
-                        telegramUser
-                    );
+            const user =  
+                getOrCreateUser(  
+                    telegramUser  
+                );  
 
-                let keyboard = [];
+            let keyboard = [];
 
 if (WEB_APP_URL) {
-    keyboard = [
-        [
-            { text: "⭐ Start", callback_data: "start_menu" },
-            { text: "📝 Register", callback_data: "register" }
-        ],
-        [
-            {
-                text: "🎮 Play",
-                web_app: {
-                    url: WEB_APP_URL
-                }
-            },
-            { text: "💰 Balance", callback_data: "balance" }
-        ],
-        [
-            { text: "➕ Deposit", callback_data: "deposit" },
-            { text: "💸 Withdraw", callback_data: "withdraw" }
-        ],
-        [
-            { text: "📜 Game History", callback_data: "history" }
-        ]
-    ];
+keyboard = [
+[
+{ text: "⭐ Start", callback_data: "start_menu" },
+{ text: "📝 Register", callback_data: "register" }
+],
+[
+{
+text: "🎮 Play",
+web_app: {
+url: WEB_APP_URL
+}
+},
+{ text: "💰 Balance", callback_data: "balance" }
+],
+[
+{ text: "➕ Deposit", callback_data: "deposit" },
+{ text: "💸 Withdraw", callback_data: "withdraw" }
+],
+[
+{ text: "📜 Game History", callback_data: "history" }
+]
+];
 }
 
-                await sendBotMessage(
-                    chatId,
+await sendBotMessage(  
+                chatId,  
 
-                    `🎉 Welcome to Frick Bingo!
+                `🎉 Welcome to Frick Bingo!
 
 Hello ${
-                        telegramUser.first_name ||
-                        "Player"
-                    }!
+telegramUser.first_name ||
+"Player"
+}!
 
 Your account is ready.
 
@@ -3284,57 +2650,56 @@ ${num(user.play_balance)} ETB
 
 Choose an option below.`,
 
-                    {
-                        reply_markup: {
-                            keyboard,
-                            resize_keyboard: true
-                        }
-                    }
-                );
+{  
+                    reply_markup: {  
+                        keyboard,  
+                        resize_keyboard: true  
+                    }  
+                }  
+            );  
 
-            } catch (error) {
+        } catch (error) {  
 
-                console.error(
-                    "/start ERROR:",
-                    error
-                );
+            console.error(  
+                "/start ERROR:",  
+                error  
+            );  
 
-                await sendBotMessage(
-                    chatId,
-                    "❌ Something went wrong."
-                );
-            }
+            await sendBotMessage(  
+                chatId,  
+                "❌ Something went wrong."  
+            );  
+        }  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // /REGISTER
 // ======================================================
 
-    bot.onText(
-        /^\/register$/,
-        async msg => {
+bot.onText(  
+    /^\/register$/,  
+    async msg => {  
 
-            try {
+        try {  
 
-                const user =
-                    getOrCreateUser(
-                        msg.from
-                    );
+            const user =  
+                getOrCreateUser(  
+                    msg.from  
+                );  
 
-                await sendBotMessage(
+            await sendBotMessage(  
 
-                    msg.chat.id,
+                msg.chat.id,  
 
-                    `✅ Registration successful!
+                `✅ Registration successful!
 
 Player:
 ${
-                        user.first_name ||
-                        "Player"
-                    }
+user.first_name ||
+"Player"
+}
 
 Telegram ID:
 ${user.telegram_id}
@@ -3345,55 +2710,54 @@ ${num(user.balance)} ETB
 🎮 Play Wallet:
 ${num(user.play_balance)} ETB`
 
-                );
+);  
 
-            } catch (error) {
+        } catch (error) {  
 
-                console.error(
-                    "/register ERROR:",
-                    error
-                );
+            console.error(  
+                "/register ERROR:",  
+                error  
+            );  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Registration failed."
-                );
-            }
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Registration failed."  
+            );  
+        }  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // /BALANCE
 // ======================================================
 
-    bot.onText(
-        /^\/balance$/,
-        async msg => {
+bot.onText(  
+    /^\/balance$/,  
+    async msg => {  
 
-            try {
+        try {  
 
-                const user =
-                    getUserByTelegramId(
-                        msg.from.id
-                    );
+            const user =  
+                getUserByTelegramId(  
+                    msg.from.id  
+                );  
 
-                if (!user) {
+            if (!user) {  
 
-                    await sendBotMessage(
-                        msg.chat.id,
-                        "❌ Please use /start first."
-                    );
+                await sendBotMessage(  
+                    msg.chat.id,  
+                    "❌ Please use /start first."  
+                );  
 
-                    return;
-                }
+                return;  
+            }  
 
-                await sendBotMessage(
+            await sendBotMessage(  
 
-                    msg.chat.id,
+                msg.chat.id,  
 
-                    `💰 Your Balance
+                `💰 Your Balance
 
 Main Wallet:
 ${num(user.balance)} ETB
@@ -3403,195 +2767,192 @@ ${num(user.play_balance)} ETB
 
 Total:
 ${num(
-                        user.balance +
-                        user.play_balance
-                    )} ETB`
+user.balance +
+user.play_balance
+)} ETB`
 
-                );
+);  
 
-            } catch (error) {
+        } catch (error) {  
 
-                console.error(
-                    "/balance ERROR:",
-                    error
-                );
+            console.error(  
+                "/balance ERROR:",  
+                error  
+            );  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Could not load balance."
-                );
-            }
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Could not load balance."  
+            );  
+        }  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // /PLAY
 // ======================================================
 
-    bot.onText(
-        /^\/play$/,
-        async msg => {
+bot.onText(  
+    /^\/play$/,  
+    async msg => {  
 
-            if (!WEB_APP_URL) {
+        if (!WEB_APP_URL) {  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Game URL is not configured."
-                );
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Game URL is not configured."  
+            );  
 
-                return;
-            }
+            return;  
+        }  
 
-            await sendBotMessage(
+        await sendBotMessage(  
 
-                msg.chat.id,
+            msg.chat.id,  
 
-                "🎮 Tap below to open Frick Bingo.",
+            "🎮 Tap below to open Frick Bingo.",  
 
-                {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text:
-                                        "🎮 PLAY FRICK BINGO",
-                                    web_app: {
-                                        url:
-                                            WEB_APP_URL
-                                    }
-                                }
-                            ]
-                        ]
-                    }
-                }
+            {  
+                reply_markup: {  
+                    inline_keyboard: [  
+                        [  
+                            {  
+                                text:  
+                                    "🎮 PLAY FRICK BINGO",  
+                                web_app: {  
+                                    url:  
+                                        WEB_APP_URL  
+                                }  
+                            }  
+                        ]  
+                    ]  
+                }  
+            }  
 
-            );
+        );  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // /GAMES
 // ======================================================
 
-    bot.onText(
-        /^\/games$/,
-        async msg => {
+bot.onText(  
+    /^\/games$/,  
+    async msg => {  
 
-            try {
+        try {  
 
-                const user =
-                    getUserByTelegramId(
-                        msg.from.id
-                    );
+            const user =  
+                getUserByTelegramId(  
+                    msg.from.id  
+                );  
 
-                if (!user) {
+            if (!user) {  
 
-                    await sendBotMessage(
-                        msg.chat.id,
-                        "❌ Please use /start first."
-                    );
+                await sendBotMessage(  
+                    msg.chat.id,  
+                    "❌ Please use /start first."  
+                );  
 
-                    return;
-                }
+                return;  
+            }  
 
-                const games =
-                    db.prepare(`
-                        SELECT
-                            id,
-                            match_id,
-                            stake,
-                            cards,
-                            result,
-                            prize,
-                            status,
-                            created_at
-                        FROM games
+            const games =  
+                db.prepare(`  
+                    SELECT  
+                        id,  
+                        match_id,  
+                        stake,  
+                        cards,  
+                        result,  
+                        prize,  
+                        status,  
+                        created_at  
+                    FROM games  
 
-                        WHERE user_id = ?
+                    WHERE user_id = ?  
 
-                        ORDER BY id DESC
+                    ORDER BY id DESC  
 
-                        LIMIT 10
-                    `).all(
-                        user.id
-                    );
+                    LIMIT 10  
+                `).all(  
+                    user.id  
+                );  
 
-                if (
-                    games.length === 0
-                ) {
+            if (  
+                games.length === 0  
+            ) {  
 
-                    await sendBotMessage(
-                        msg.chat.id,
-                        "📋 You have no games yet."
-                    );
+                await sendBotMessage(  
+                    msg.chat.id,  
+                    "📋 You have no games yet."  
+                );  
 
-                    return;
-                }
+                return;  
+            }  
 
-                let text =
-                    "🎮 Your Recent Games\n\n";
+            let text =  
+                "🎮 Your Recent Games\n\n";  
 
-                games.forEach(
-                    (game, index) => {
+            games.forEach(  
+                (game, index) => {  
 
-                        text +=
-                            `${index + 1}. ` +
-                            `Game #${game.match_id || game.id}\n`;
+                    text +=  
+                        `${index + 1}. ` +  
+                        `Game #${game.match_id || game.id}\n`;  
 
-                        text +=
-                            `Stake: ${num(game.stake)} ETB\n`;
+                    text +=  
+                        `Stake: ${num(game.stake)} ETB\n`;  
 
-                        text +=
-                            `Cards: ${game.cards}\n`;
+                    text +=  
+                        `Cards: ${game.cards}\n`;  
 
-                        text +=
-                            `Result: ${game.result}\n`;
+                    text +=  
+                        `Result: ${game.result}\n`;  
 
-                        text +=
-                            `Prize: ${num(game.prize)} ETB\n`;
+                    text +=  
+                        `Prize: ${num(game.prize)} ETB\n`;  
 
-                        text +=
-                            `Status: ${game.status}\n\n`;
-                    }
-                );
+                    text +=  
+                        `Status: ${game.status}\n\n`;  
+                }  
+            );  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    text
-                );
+            await sendBotMessage(  
+                msg.chat.id,  
+                text  
+            );  
 
-            } catch (error) {
+        } catch (error) {  
 
-                console.error(
-                    "/games ERROR:",
-                    error
-                );
+            console.error(  
+                "/games ERROR:",  
+                error  
+            );  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Could not load games."
-                );
-            }
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Could not load games."  
+            );  
+        }  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // /HELP
 // ======================================================
 
-    bot.onText(
-        /^\/help$/,
-        async msg => {
+bot.onText(  
+    /^\/help$/,  
+    async msg => {  
 
-            await sendBotMessage(
+        await sendBotMessage(  
 
-                msg.chat.id,
+            msg.chat.id,
 
 `ℹ️ Frick Bingo Help
 
@@ -3628,23 +2989,22 @@ the prize is divided equally among them.
 
 💰 Winning money is added to Main Wallet.`
 
-            );
+);  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // /DEPOSIT
 // ======================================================
 
-    bot.onText(
-        /^\/deposit$/,
-        async msg => {
+bot.onText(  
+    /^\/deposit$/,  
+    async msg => {  
 
-            await sendBotMessage(
+        await sendBotMessage(  
 
-                msg.chat.id,
+            msg.chat.id,
 
 `💳 Deposit
 
@@ -3657,7 +3017,11 @@ ${PAYMENT_ADDRESS || "Not configured"}
 After payment, submit your:
 
 1. Amount
+
+
 2. Payment reference
+
+
 
 Your deposit will first be marked PENDING.
 
@@ -3665,23 +3029,22 @@ An administrator must approve it before the amount is added to your Play Wallet.
 
 ❌ Rejected deposits are NOT added to your wallet.`
 
-            );
+);  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // /WITHDRAW
 // ======================================================
 
-    bot.onText(
-        /^\/withdraw$/,
-        async msg => {
+bot.onText(  
+    /^\/withdraw$/,  
+    async msg => {  
 
-            await sendBotMessage(
+        await sendBotMessage(  
 
-                msg.chat.id,
+            msg.chat.id,
 
 `💸 Withdrawal
 
@@ -3702,110 +3065,109 @@ The amount is returned to your Main Wallet.
 
 Please submit your withdrawal account/payment details through the game.`
 
-            );
+);  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // ADMIN APPROVE DEPOSIT
 // ======================================================
 
-    bot.on(
-        "callback_query",
-        async query => {
+bot.on(  
+    "callback_query",  
+    async query => {  
 
-            try {
+        try {  
 
-                const data =
-                    String(
-                        query.data || ""
-                    );
+            const data =  
+                String(  
+                    query.data || ""  
+                );  
 
-                const chatId =
-                    query.message &&
-                    query.message.chat
-                        ? query.message.chat.id
-                        : null;
+            const chatId =  
+                query.message &&  
+                query.message.chat  
+                    ? query.message.chat.id  
+                    : null;  
 
-                // --------------------------------------------
-                // SECURITY
-                // --------------------------------------------
+            // --------------------------------------------  
+            // SECURITY  
+            // --------------------------------------------  
 
-                if (
-                    !isAdmin(chatId)
-                ) {
+            if (  
+                !isAdmin(chatId)  
+            ) {  
 
-                    await bot.answerCallbackQuery(
-                        query.id,
-                        {
-                            text:
-                                "❌ Not authorized",
-                            show_alert: true
-                        }
-                    );
+                await bot.answerCallbackQuery(  
+                    query.id,  
+                    {  
+                        text:  
+                            "❌ Not authorized",  
+                        show_alert: true  
+                    }  
+                );  
 
-                    return;
-                }
+                return;  
+            }  
 
-                // --------------------------------------------
-                // APPROVE DEPOSIT
-                // --------------------------------------------
+            // --------------------------------------------  
+            // APPROVE DEPOSIT  
+            // --------------------------------------------  
 
-                if (
-                    data.startsWith(
-                        "approve_deposit:"
-                    )
-                ) {
+            if (  
+                data.startsWith(  
+                    "approve_deposit:"  
+                )  
+            ) {  
 
-                    const id =
-                        integer(
-                            data.split(":")[1]
-                        );
+                const id =  
+                    integer(  
+                        data.split(":")[1]  
+                    );  
 
-                    if (!id) {
+                if (!id) {  
 
-                        await bot.answerCallbackQuery(
-                            query.id,
-                            {
-                                text:
-                                    "Invalid deposit ID",
-                                show_alert: true
-                            }
-                        );
+                    await bot.answerCallbackQuery(  
+                        query.id,  
+                        {  
+                            text:  
+                                "Invalid deposit ID",  
+                            show_alert: true  
+                        }  
+                    );  
 
-                        return;
-                    }
+                    return;  
+                }  
 
-                    const deposit =
-                        approveDeposit(id);
+                const deposit =  
+                    approveDeposit(id);  
 
-                    // ----------------------------------------
-                    // GET USER AFTER APPROVAL
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // GET USER AFTER APPROVAL  
+                // ----------------------------------------  
 
-                    const user =
-                        db.prepare(`
-                            SELECT
-                                telegram_id,
-                                balance,
-                                play_balance
-                            FROM users
-                            WHERE id = ?
-                        `).get(
-                            deposit.user_id
-                        );
+                const user =  
+                    db.prepare(`  
+                        SELECT  
+                            telegram_id,  
+                            balance,  
+                            play_balance  
+                        FROM users  
+                        WHERE id = ?  
+                    `).get(  
+                        deposit.user_id  
+                    );  
 
-                    // ----------------------------------------
-                    // NOTIFY PLAYER
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // NOTIFY PLAYER  
+                // ----------------------------------------  
 
-                    if (user) {
+                if (user) {  
 
-                        await sendBotMessage(
+                    await sendBotMessage(  
 
-                            user.telegram_id,
+                        user.telegram_id,
 
 `✅ Deposit Approved
 
@@ -3820,104 +3182,104 @@ ${num(user.balance)} ETB
 Play Wallet:
 ${num(user.play_balance)} ETB`
 
-                        );
-                    }
+);  
+                }  
 
-                    await bot.answerCallbackQuery(
-                        query.id,
-                        {
-                            text:
-                                "✅ Deposit approved"
-                        }
-                    );
+                await bot.answerCallbackQuery(  
+                    query.id,  
+                    {  
+                        text:  
+                            "✅ Deposit approved"  
+                    }  
+                );  
 
-                    // ----------------------------------------
-                    // UPDATE ADMIN MESSAGE
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // UPDATE ADMIN MESSAGE  
+                // ----------------------------------------  
 
-                    try {
+                try {  
 
-                        await bot.editMessageReplyMarkup(
+                    await bot.editMessageReplyMarkup(  
 
-                            {
-                                inline_keyboard: []
-                            },
+                        {  
+                            inline_keyboard: []  
+                        },  
 
-                            {
-                                chat_id:
-                                    chatId,
+                        {  
+                            chat_id:  
+                                chatId,  
 
-                                message_id:
-                                    query.message.message_id
-                            }
+                            message_id:  
+                                query.message.message_id  
+                        }  
 
-                        );
+                    );  
 
-                    } catch (e) {
-                        // Message may already
-                        // have no keyboard.
-                    }
+                } catch (e) {  
+                    // Message may already  
+                    // have no keyboard.  
+                }  
 
-                    return;
-                }
+                return;  
+            }  
 
-                // --------------------------------------------
-                // REJECT DEPOSIT
-                // --------------------------------------------
+            // --------------------------------------------  
+            // REJECT DEPOSIT  
+            // --------------------------------------------  
 
-                if (
-                    data.startsWith(
-                        "reject_deposit:"
-                    )
-                ) {
+            if (  
+                data.startsWith(  
+                    "reject_deposit:"  
+                )  
+            ) {  
 
-                    const id =
-                        integer(
-                            data.split(":")[1]
-                        );
+                const id =  
+                    integer(  
+                        data.split(":")[1]  
+                    );  
 
-                    if (!id) {
+                if (!id) {  
 
-                        await bot.answerCallbackQuery(
-                            query.id,
-                            {
-                                text:
-                                    "Invalid deposit ID",
-                                show_alert: true
-                            }
-                        );
+                    await bot.answerCallbackQuery(  
+                        query.id,  
+                        {  
+                            text:  
+                                "Invalid deposit ID",  
+                            show_alert: true  
+                        }  
+                    );  
 
-                        return;
-                    }
+                    return;  
+                }  
 
-                    const deposit =
-                        rejectDeposit(id);
+                const deposit =  
+                    rejectDeposit(id);  
 
-                    // ----------------------------------------
-                    // GET USER
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // GET USER  
+                // ----------------------------------------  
 
-                    const user =
-                        db.prepare(`
-                            SELECT
-                                telegram_id,
-                                balance,
-                                play_balance
-                            FROM users
-                            WHERE id = ?
-                        `).get(
-                            deposit.user_id
-                        );
+                const user =  
+                    db.prepare(`  
+                        SELECT  
+                            telegram_id,  
+                            balance,  
+                            play_balance  
+                        FROM users  
+                        WHERE id = ?  
+                    `).get(  
+                        deposit.user_id  
+                    );  
 
-                    // ----------------------------------------
-                    // NOTIFY PLAYER
-                    // ----------------------------------------
+                // ----------------------------------------  
+                // NOTIFY PLAYER  
+                // ----------------------------------------  
 
-                    if (user) {
+                if (user) {  
 
-                        await sendBotMessage(
+                    await sendBotMessage(  
 
-                            user.telegram_id,
+                        user.telegram_id,
 
 `❌ Deposit Rejected
 
@@ -3931,91 +3293,91 @@ The amount was NOT added to your Play Wallet.
 
 If you believe this was rejected by mistake, please contact the administrator.`
 
-                        );
-                    }
+);  
+                }  
 
-                    await bot.answerCallbackQuery(
-                        query.id,
-                        {
-                            text:
-                                "❌ Deposit rejected"
-                        }
-                    );
+                await bot.answerCallbackQuery(  
+                    query.id,  
+                    {  
+                        text:  
+                            "❌ Deposit rejected"  
+                    }  
+                );  
 
-                    try {
+                try {  
 
-                        await bot.editMessageReplyMarkup(
+                    await bot.editMessageReplyMarkup(  
 
-                            {
-                                inline_keyboard: []
-                            },
+                        {  
+                            inline_keyboard: []  
+                        },  
 
-                            {
-                                chat_id:
-                                    chatId,
+                        {  
+                            chat_id:  
+                                chatId,  
 
-                                message_id:
-                                    query.message.message_id
-                            }
+                            message_id:  
+                                query.message.message_id  
+                        }  
 
-                        );
+                    );  
 
-                    } catch (e) {
-                        // Ignore
-                    }
+                } catch (e) {  
+                    // Ignore  
+                }  
 
-                    return;
-                }
+                return;  
+            }  
 
-                // --------------------------------------------
-                // APPROVE WITHDRAWAL
-                // --------------------------------------------
+            // --------------------------------------------  
+            // APPROVE WITHDRAWAL  
+            // --------------------------------------------  
 
-                if (
-                    data.startsWith(
-                        "approve_withdraw:"
-                    )
-                ) {
+            if (  
+                data.startsWith(  
+                    "approve_withdraw:"  
+                )  
+            ) {  
 
-                    const id =
-                        integer(
-                            data.split(":")[1]
-                        );
+                const id =  
+                    integer(  
+                        data.split(":")[1]  
+                    );  
 
-                    if (!id) {
+                if (!id) {  
 
-                        await bot.answerCallbackQuery(
-                            query.id,
-                            {
-                                text:
-                                    "Invalid withdrawal ID",
-                                show_alert: true
-                            }
-                        );
+                    await bot.answerCallbackQuery(  
+                        query.id,  
+                        {  
+                            text:  
+                                "Invalid withdrawal ID",  
+                            show_alert: true  
+                        }  
+                    );  
 
-                        return;
-                    }
+                    return;  
+                }  
 
-                    const withdrawal =
-                        approveWithdrawal(id);
+                const withdrawal =  
+                    approveWithdrawal(id);  
 
-                    const user =
-                        db.prepare(`
-                            SELECT
-                                telegram_id,
-                                balance,
-                                play_balance
-                            FROM users
-                            WHERE id = ?
-                        `).get(
-                            withdrawal.user_id
-                        );
+                const user =  
+                    db.prepare(`  
+                        SELECT  
+                            telegram_id,  
+                            balance,  
+                            play_balance  
+                        FROM users  
+                        WHERE id = ?  
+                    `).get(  
+                        withdrawal.user_id  
+                    );  
 
-                    if (user) {
+                if (user) {  
 
-                        await sendBotMessage(
+                    await sendBotMessage(  
 
-                            user.telegram_id,
+                        user.telegram_id,
 
 `✅ Withdrawal Approved
 
@@ -4030,91 +3392,91 @@ ${num(user.balance)} ETB
 🎮 Play Wallet:
 ${num(user.play_balance)} ETB`
 
-                        );
-                    }
+);  
+                }  
 
-                    await bot.answerCallbackQuery(
-                        query.id,
-                        {
-                            text:
-                                "✅ Withdrawal approved"
-                        }
-                    );
+                await bot.answerCallbackQuery(  
+                    query.id,  
+                    {  
+                        text:  
+                            "✅ Withdrawal approved"  
+                    }  
+                );  
 
-                    try {
+                try {  
 
-                        await bot.editMessageReplyMarkup(
+                    await bot.editMessageReplyMarkup(  
 
-                            {
-                                inline_keyboard: []
-                            },
+                        {  
+                            inline_keyboard: []  
+                        },  
 
-                            {
-                                chat_id:
-                                    chatId,
+                        {  
+                            chat_id:  
+                                chatId,  
 
-                                message_id:
-                                    query.message.message_id
-                            }
+                            message_id:  
+                                query.message.message_id  
+                        }  
 
-                        );
+                    );  
 
-                    } catch (e) {
-                        // Ignore
-                    }
+                } catch (e) {  
+                    // Ignore  
+                }  
 
-                    return;
-                }
+                return;  
+            }  
 
-                // --------------------------------------------
-                // REJECT WITHDRAWAL
-                // --------------------------------------------
+            // --------------------------------------------  
+            // REJECT WITHDRAWAL  
+            // --------------------------------------------  
 
-                if (
-                    data.startsWith(
-                        "reject_withdraw:"
-                    )
-                ) {
+            if (  
+                data.startsWith(  
+                    "reject_withdraw:"  
+                )  
+            ) {  
 
-                    const id =
-                        integer(
-                            data.split(":")[1]
-                        );
+                const id =  
+                    integer(  
+                        data.split(":")[1]  
+                    );  
 
-                    if (!id) {
+                if (!id) {  
 
-                        await bot.answerCallbackQuery(
-                            query.id,
-                            {
-                                text:
-                                    "Invalid withdrawal ID",
-                                show_alert: true
-                            }
-                        );
+                    await bot.answerCallbackQuery(  
+                        query.id,  
+                        {  
+                            text:  
+                                "Invalid withdrawal ID",  
+                            show_alert: true  
+                        }  
+                    );  
 
-                        return;
-                    }
+                    return;  
+                }  
 
-                    const withdrawal =
-                        rejectWithdrawal(id);
+                const withdrawal =  
+                    rejectWithdrawal(id);  
 
-                    const user =
-                        db.prepare(`
-                            SELECT
-                                telegram_id,
-                                balance,
-                                play_balance
-                            FROM users
-                            WHERE id = ?
-                        `).get(
-                            withdrawal.user_id
-                        );
+                const user =  
+                    db.prepare(`  
+                        SELECT  
+                            telegram_id,  
+                            balance,  
+                            play_balance  
+                        FROM users  
+                        WHERE id = ?  
+                    `).get(  
+                        withdrawal.user_id  
+                    );  
 
-                    if (user) {
+                if (user) {  
 
-                        await sendBotMessage(
+                    await sendBotMessage(  
 
-                            user.telegram_id,
+                        user.telegram_id,
 
 `❌ Withdrawal Rejected
 
@@ -4128,85 +3490,84 @@ The withdrawal was rejected.
 Main Wallet:
 ${num(user.balance)} ETB`
 
-                        );
-                    }
+);  
+                }  
 
-                    await bot.answerCallbackQuery(
-                        query.id,
-                        {
-                            text:
-                                "❌ Withdrawal rejected and refunded"
-                        }
-                    );
+                await bot.answerCallbackQuery(  
+                    query.id,  
+                    {  
+                        text:  
+                            "❌ Withdrawal rejected and refunded"  
+                    }  
+                );  
 
-                    try {
+                try {  
 
-                        await bot.editMessageReplyMarkup(
+                    await bot.editMessageReplyMarkup(  
 
-                            {
-                                inline_keyboard: []
-                            },
+                        {  
+                            inline_keyboard: []  
+                        },  
 
-                            {
-                                chat_id:
-                                    chatId,
+                        {  
+                            chat_id:  
+                                chatId,  
 
-                                message_id:
-                                    query.message.message_id
-                            }
+                            message_id:  
+                                query.message.message_id  
+                        }  
 
-                        );
+                    );  
 
-                    } catch (e) {
-                        // Ignore
-                    }
+                } catch (e) {  
+                    // Ignore  
+                }  
 
-                    return;
-                }
+                return;  
+            }  
 
-            } catch (error) {
+        } catch (error) {  
 
-                console.error(
-                    "CALLBACK ERROR:",
-                    error
-                );
+            console.error(  
+                "CALLBACK ERROR:",  
+                error  
+            );  
 
-                try {
+            try {  
 
-                    await bot.answerCallbackQuery(
-                        query.id,
-                        {
-                            text:
-                                "❌ An error occurred",
-                            show_alert: true
-                        }
-                    );
+                await bot.answerCallbackQuery(  
+                    query.id,  
+                    {  
+                        text:  
+                            "❌ An error occurred",  
+                        show_alert: true  
+                    }  
+                );  
 
-                } catch (e) {
-                    // Ignore
-                }
-            }
-        }
-    );
-
+            } catch (e) {  
+                // Ignore  
+            }  
+        }  
+    }  
+);
 
 // ======================================================
 // BOT ERROR HANDLER
 // ======================================================
 
-    bot.on(
-        "polling_error",
-        error => {
+bot.on(  
+    "polling_error",  
+    error => {  
 
-            console.error(
-                "TELEGRAM POLLING ERROR:",
-                error.message
-            );
+        console.error(  
+            "TELEGRAM POLLING ERROR:",  
+            error.message  
+        );  
 
-        }
-    );
+    }  
+);
+
 }
-
 
 // ======================================================
 // ADMIN PENDING DEPOSITS COMMAND
@@ -4214,63 +3575,63 @@ ${num(user.balance)} ETB`
 
 if (bot) {
 
-    bot.onText(
-        /^\/pendingdeposits$/,
-        async msg => {
+bot.onText(  
+    /^\/pendingdeposits$/,  
+    async msg => {  
 
-            if (
-                !isAdmin(
-                    msg.chat.id
-                )
-            ) {
+        if (  
+            !isAdmin(  
+                msg.chat.id  
+            )  
+        ) {  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Not authorized."
-                );
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Not authorized."  
+            );  
 
-                return;
-            }
+            return;  
+        }  
 
-            const deposits =
-                db.prepare(`
-                    SELECT
-                        d.id,
-                        d.amount,
-                        d.reference,
-                        d.created_at,
+        const deposits =  
+            db.prepare(`  
+                SELECT  
+                    d.id,  
+                    d.amount,  
+                    d.reference,  
+                    d.created_at,  
 
-                        u.telegram_id,
-                        u.username,
-                        u.first_name
+                    u.telegram_id,  
+                    u.username,  
+                    u.first_name  
 
-                    FROM deposits d
+                FROM deposits d  
 
-                    JOIN users u
-                        ON u.id = d.user_id
+                JOIN users u  
+                    ON u.id = d.user_id  
 
-                    WHERE d.status = 'pending'
+                WHERE d.status = 'pending'  
 
-                    ORDER BY d.id ASC
-                `).all();
+                ORDER BY d.id ASC  
+            `).all();  
 
-            if (
-                deposits.length === 0
-            ) {
+        if (  
+            deposits.length === 0  
+        ) {  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "✅ No pending deposits."
-                );
+            await sendBotMessage(  
+                msg.chat.id,  
+                "✅ No pending deposits."  
+            );  
 
-                return;
-            }
+            return;  
+        }  
 
-            for (
-                const deposit of deposits
-            ) {
+        for (  
+            const deposit of deposits  
+        ) {  
 
-                const text =
+            const text =
 
 `💳 PENDING DEPOSIT
 
@@ -4279,15 +3640,15 @@ ${deposit.id}
 
 Player:
 ${
-                    deposit.first_name ||
-                    "Unknown"
-                }
+deposit.first_name ||
+"Unknown"
+}
 
 Username:
 @${
-                    deposit.username ||
-                    "none"
-                }
+deposit.username ||
+"none"
+}
 
 Telegram ID:
 ${deposit.telegram_id}
@@ -4301,104 +3662,103 @@ ${deposit.reference}
 Time:
 ${deposit.created_at}`;
 
-                await sendBotMessage(
+await sendBotMessage(  
 
-                    msg.chat.id,
+                msg.chat.id,  
 
-                    text,
+                text,  
 
-                    {
-                        reply_markup: {
-                            inline_keyboard: [
+                {  
+                    reply_markup: {  
+                        inline_keyboard: [  
 
-                                [
-                                    {
-                                        text:
-                                            "✅ APPROVE",
-                                        callback_data:
-                                            `approve_deposit:${deposit.id}`
-                                    },
+                            [  
+                                {  
+                                    text:  
+                                        "✅ APPROVE",  
+                                    callback_data:  
+                                        `approve_deposit:${deposit.id}`  
+                                },  
 
-                                    {
-                                        text:
-                                            "❌ REJECT",
-                                        callback_data:
-                                            `reject_deposit:${deposit.id}`
-                                    }
-                                ]
+                                {  
+                                    text:  
+                                        "❌ REJECT",  
+                                    callback_data:  
+                                        `reject_deposit:${deposit.id}`  
+                                }  
+                            ]  
 
-                            ]
-                        }
-                    }
+                        ]  
+                    }  
+                }  
 
-                );
-            }
+            );  
+        }  
 
-        }
-    );
-
+    }  
+);
 
 // ======================================================
 // ADMIN PENDING WITHDRAWALS COMMAND
 // ======================================================
 
-    bot.onText(
-        /^\/pendingwithdrawals$/,
-        async msg => {
+bot.onText(  
+    /^\/pendingwithdrawals$/,  
+    async msg => {  
 
-            if (
-                !isAdmin(
-                    msg.chat.id
-                )
-            ) {
+        if (  
+            !isAdmin(  
+                msg.chat.id  
+            )  
+        ) {  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Not authorized."
-                );
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Not authorized."  
+            );  
 
-                return;
-            }
+            return;  
+        }  
 
-            const withdrawals =
-                db.prepare(`
-                    SELECT
-                        w.id,
-                        w.amount,
-                        w.account_details,
-                        w.created_at,
+        const withdrawals =  
+            db.prepare(`  
+                SELECT  
+                    w.id,  
+                    w.amount,  
+                    w.account_details,  
+                    w.created_at,  
 
-                        u.telegram_id,
-                        u.username,
-                        u.first_name
+                    u.telegram_id,  
+                    u.username,  
+                    u.first_name  
 
-                    FROM withdrawals w
+                FROM withdrawals w  
 
-                    JOIN users u
-                        ON u.id = w.user_id
+                JOIN users u  
+                    ON u.id = w.user_id  
 
-                    WHERE w.status = 'pending'
+                WHERE w.status = 'pending'  
 
-                    ORDER BY w.id ASC
-                `).all();
+                ORDER BY w.id ASC  
+            `).all();  
 
-            if (
-                withdrawals.length === 0
-            ) {
+        if (  
+            withdrawals.length === 0  
+        ) {  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "✅ No pending withdrawals."
-                );
+            await sendBotMessage(  
+                msg.chat.id,  
+                "✅ No pending withdrawals."  
+            );  
 
-                return;
-            }
+            return;  
+        }  
 
-            for (
-                const withdrawal of withdrawals
-            ) {
+        for (  
+            const withdrawal of withdrawals  
+        ) {  
 
-                const text =
+            const text =
 
 `💸 PENDING WITHDRAWAL
 
@@ -4407,15 +3767,15 @@ ${withdrawal.id}
 
 Player:
 ${
-                    withdrawal.first_name ||
-                    "Unknown"
-                }
+withdrawal.first_name ||
+"Unknown"
+}
 
 Username:
 @${
-                    withdrawal.username ||
-                    "none"
-                }
+withdrawal.username ||
+"none"
+}
 
 Telegram ID:
 ${withdrawal.telegram_id}
@@ -4429,43 +3789,43 @@ ${withdrawal.account_details}
 Time:
 ${withdrawal.created_at}`;
 
-                await sendBotMessage(
+await sendBotMessage(  
 
-                    msg.chat.id,
+                msg.chat.id,  
 
-                    text,
+                text,  
 
-                    {
-                        reply_markup: {
-                            inline_keyboard: [
+                {  
+                    reply_markup: {  
+                        inline_keyboard: [  
 
-                                [
-                                    {
-                                        text:
-                                            "✅ APPROVE",
-                                        callback_data:
-                                            `approve_withdraw:${withdrawal.id}`
-                                    },
+                            [  
+                                {  
+                                    text:  
+                                        "✅ APPROVE",  
+                                    callback_data:  
+                                        `approve_withdraw:${withdrawal.id}`  
+                                },  
 
-                                    {
-                                        text:
-                                            "❌ REJECT + REFUND",
-                                        callback_data:
-                                            `reject_withdraw:${withdrawal.id}`
-                                    }
-                                ]
+                                {  
+                                    text:  
+                                        "❌ REJECT + REFUND",  
+                                    callback_data:  
+                                        `reject_withdraw:${withdrawal.id}`  
+                                }  
+                            ]  
 
-                            ]
-                        }
-                    }
+                        ]  
+                    }  
+                }  
 
-                );
-            }
+            );  
+        }  
 
-        }
-    );
+    }  
+);
+
 }
-
 
 // ======================================================
 // END OF PART 3
@@ -4476,70 +3836,70 @@ ${withdrawal.created_at}`;
 
 if (bot) {
 
-    bot.onText(
-        /^\/admin$/,
-        async msg => {
+bot.onText(  
+    /^\/admin$/,  
+    async msg => {  
 
-            if (
-                !isAdmin(
-                    msg.chat.id
-                )
-            ) {
+        if (  
+            !isAdmin(  
+                msg.chat.id  
+            )  
+        ) {  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Not authorized."
-                );
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Not authorized."  
+            );  
 
-                return;
-            }
+            return;  
+        }  
 
-            try {
+        try {  
 
-                const users =
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM users
-                    `).get().count;
+            const users =  
+                db.prepare(`  
+                    SELECT COUNT(*) AS count  
+                    FROM users  
+                `).get().count;  
 
-                const pendingDeposits =
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM deposits
-                        WHERE status = 'pending'
-                    `).get().count;
+            const pendingDeposits =  
+                db.prepare(`  
+                    SELECT COUNT(*) AS count  
+                    FROM deposits  
+                    WHERE status = 'pending'  
+                `).get().count;  
 
-                const pendingWithdrawals =
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM withdrawals
-                        WHERE status = 'pending'
-                    `).get().count;
+            const pendingWithdrawals =  
+                db.prepare(`  
+                    SELECT COUNT(*) AS count  
+                    FROM withdrawals  
+                    WHERE status = 'pending'  
+                `).get().count;  
 
-                const waitingMatches =
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM matches
-                        WHERE status = 'WAITING'
-                    `).get().count;
+            const waitingMatches =  
+                db.prepare(`  
+                    SELECT COUNT(*) AS count  
+                    FROM matches  
+                    WHERE status = 'WAITING'  
+                `).get().count;  
 
-                const playingMatches =
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM matches
-                        WHERE status = 'PLAYING'
-                    `).get().count;
+            const playingMatches =  
+                db.prepare(`  
+                    SELECT COUNT(*) AS count  
+                    FROM matches  
+                    WHERE status = 'PLAYING'  
+                `).get().count;  
 
-                const finishedMatches =
-                    db.prepare(`
-                        SELECT COUNT(*) AS count
-                        FROM matches
-                        WHERE status = 'FINISHED'
-                    `).get().count;
+            const finishedMatches =  
+                db.prepare(`  
+                    SELECT COUNT(*) AS count  
+                    FROM matches  
+                    WHERE status = 'FINISHED'  
+                `).get().count;  
 
-                await sendBotMessage(
+            await sendBotMessage(  
 
-                    msg.chat.id,
+                msg.chat.id,
 
 `🛠 FRICK BINGO ADMIN
 
@@ -4561,243 +3921,233 @@ ${playingMatches}
 🏁 Finished Games:
 ${finishedMatches}`
 
-                );
+);  
 
-            } catch (error) {
+        } catch (error) {  
 
-                console.error(
-                    "/admin ERROR:",
-                    error
-                );
+            console.error(  
+                "/admin ERROR:",  
+                error  
+            );  
 
-                await sendBotMessage(
-                    msg.chat.id,
-                    "❌ Could not load admin information."
-                );
-            }
+            await sendBotMessage(  
+                msg.chat.id,  
+                "❌ Could not load admin information."  
+            );  
+        }  
 
-        }
-    );
-}
-
+    }  
+);
 
 // ======================================================
 // SERVER ROOT
 // ======================================================
 
 app.get(
-    "/",
-    (req, res) => {
+"/",
+(req, res) => {
 
-        res.sendFile(
-            path.join(
-                __dirname,
-                "public",
-                "index.html"
-            )
-        );
+res.sendFile(  
+        path.join(  
+            __dirname,  
+            "public",  
+            "index.html"  
+        )  
+    );  
 
-    }
+}
+
 );
-
 
 // ======================================================
 // 404 API HANDLER
 // ======================================================
 
 app.use(
-    "/api",
-    (req, res) => {
+"/api",
+(req, res) => {
 
-        res.status(404).json({
+res.status(404).json({  
 
-            success: false,
+        success: false,  
 
-            error:
-                "API endpoint not found",
+        error:  
+            "API endpoint not found",  
 
-            path:
-                req.originalUrl
+        path:  
+            req.originalUrl  
 
-        });
+    });  
 
-    }
+}
+
 );
-
 
 // ======================================================
 // GLOBAL ERROR HANDLER
 // ======================================================
 
 app.use(
-    (error, req, res, next) => {
+(error, req, res, next) => {
 
-        console.error(
-            "GLOBAL ERROR:",
-            error
-        );
+console.error(  
+        "GLOBAL ERROR:",  
+        error  
+    );  
 
-        if (
-            res.headersSent
-        ) {
+    if (  
+        res.headersSent  
+    ) {  
 
-            return next(
-                error
-            );
+        return next(  
+            error  
+        );  
 
-        }
+    }  
 
-        res.status(500).json({
+    res.status(500).json({  
 
-            success: false,
+        success: false,  
 
-            error:
-                "Internal server error"
+        error:  
+            "Internal server error"  
 
-        });
+    });  
 
-    }
+}
+
 );
-
 
 // ======================================================
 // GRACEFUL SHUTDOWN
 // ======================================================
 
 function shutdown(
-    signal
+signal
 ) {
 
-    console.log(
-        `\n⚠️ ${signal} received. Shutting down...`
-    );
+console.log(  
+    `\n⚠️ ${signal} received. Shutting down...`  
+);  
 
-    try {
+try {  
 
-        if (bot) {
+    if (bot) {  
 
-            bot.stopPolling();
+        bot.stopPolling();  
 
-            console.log(
-                "✅ Telegram polling stopped"
-            );
-        }
+        console.log(  
+            "✅ Telegram polling stopped"  
+        );  
+    }  
 
-    } catch (error) {
+} catch (error) {  
 
-        console.error(
-            "Bot shutdown error:",
-            error.message
-        );
+    console.error(  
+        "Bot shutdown error:",  
+        error.message  
+    );  
 
-    }
+}  
 
-    try {
+try {  
 
-        db.close();
+    db.close();  
 
-        console.log(
-            "✅ Database closed"
-        );
+    console.log(  
+        "✅ Database closed"  
+    );  
 
-    } catch (error) {
+} catch (error) {  
 
-        console.error(
-            "Database shutdown error:",
-            error.message
-        );
+    console.error(  
+        "Database shutdown error:",  
+        error.message  
+    );  
 
-    }
+}  
 
-    process.exit(0);
+process.exit(0);
+
 }
 
-
 process.on(
-    "SIGINT",
-    () => shutdown("SIGINT")
+"SIGINT",
+() => shutdown("SIGINT")
 );
 
 process.on(
-    "SIGTERM",
-    () => shutdown("SIGTERM")
+"SIGTERM",
+() => shutdown("SIGTERM")
 );
-
-
 // ======================================================
 // START SERVER
 // ======================================================
 
 app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
+PORT,
+"0.0.0.0",
+() => {
 
-        console.log("");
-        console.log(
-            "======================================"
-        );
+console.log("");  
+    console.log(  
+        "======================================"  
+    );  
 
-        console.log(
-            "🎮 FRICK BINGO SERVER"
-        );
+    console.log(  
+        "🎮 FRICK BINGO SERVER"  
+    );  
 
-        console.log(
-            "======================================"
-        );
+    console.log(  
+        "======================================"  
+    );  
 
-        console.log(
-            `🚀 Server running on port ${PORT}`
-        );
+    console.log(  
+        `🚀 Server running on port ${PORT}`  
+    );  
 
-        console.log(
-            `🌐 Web App: ${
-                WEB_APP_URL ||
-                "Not configured"
-            }`
-        );
+    console.log(  
+        `🌐 Web App: ${  
+            WEB_APP_URL ||  
+            "Not configured"  
+        }`  
+    );  
 
-        console.log(
-            `💾 Database: ${
-                DATABASE_FILE
-            }`
-        );
+    console.log(  
+        `💾 Database: ${  
+            DATABASE_FILE  
+        }`  
+    );  
 
-        console.log(
-            `💰 Stakes: ${
-                GAME_STAKES.join(", ")
-            } ETB`
-        );
+    console.log(  
+        `💰 Stakes: ${  
+            GAME_STAKES.join(", ")  
+        } ETB`  
+    );  
 
-        console.log(
-            `🎟 Max Cards: ${
-                MAX_CARDS
-            }`
-        );
+    console.log(  
+        `🎟 Max Cards: ${  
+            MAX_CARDS  
+        }`  
+    );  
 
-        console.log(
-            `🏆 Prize Rate: ${
-                WIN_RATE * 100
-            }% of TOTAL MATCH COST`
-        );
+    console.log(  
+        `🏆 Prize Rate: ${  
+            WIN_RATE * 100  
+        }% of TOTAL MATCH COST`  
+    );  
 
-        console.log(
-            "👥 Players: 200+ supported"
-        );
+    console.log(  
+        "👥 Players: 200+ supported"  
+    );  
 
-        console.log(
-            "🆔 Shared Game ID: ENABLED"
-        );
+    console.log(  
+        "🆔 Shared Game ID: ENABLED"  
+    );  
 
-        console.log(
-            "======================================"
-        );
+    console.log(  
+        "======================================"  
+    );  
 
-        console.log("");
-
-    }
-);
-
-
-
-
+    console.log("");
+})};
