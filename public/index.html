@@ -2780,36 +2780,55 @@ function navigateNav(pageId,button){
    LOAD USER  
 ================================================== */  
   
-async function loadUser(){  
-  
-    try{  
-  
-        const data =  
-            await apiFetch("/api/me");  
-  
-        if(data.user){  
-  
-            currentUser = data.user;  
-  
-        }else if(data){  
-  
-            currentUser = data;  
-  
-        }  
-  
-        updateAllDisplays();  
-  
-    }catch(error){  
-  
-        console.log(  
-            "User loading:",  
-            error.message  
-        );  
-  
-    }  
-  
+async function loadUser(){
+    try{
+        const data = await apiFetch("/api/me");
+
+        if(data.user){
+            currentUser = data.user;
+        }else if(data){
+            currentUser = data;
+        }
+
+        updateAllDisplays();
+
+        // Get the latest wallet values from database
+        await refreshBalance();
+
+    }catch(error){
+        console.log(
+            "User loading:",
+            error.message
+        );
+    }
+}
+async function refreshBalance() {
+    try {
+        const data = await apiFetch("/api/balance");
+
+        if (data.success) {
+            if (!currentUser) {
+                currentUser = {};
+            }
+
+            currentUser.mainBalance = Number(data.mainBalance || 0);
+            currentUser.playBalance = Number(data.playBalance || 0);
+
+            // Keep the original names too
+            currentUser.balance = currentUser.mainBalance;
+            currentUser.play_balance = currentUser.playBalance;
+
+            updateAllDisplays();
+
+            console.log("✅ Balance refreshed:", {
+                main: currentUser.mainBalance,
+                play: currentUser.playBalance
+            });
+        }
+    } catch (error) {
+        console.error("❌ Balance refresh:", error);
+    }
 }  
-  
   
 /* ==================================================  
    BALANCE HELPERS  
