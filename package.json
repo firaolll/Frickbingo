@@ -1,13 +1,39 @@
 {
+<<<<<<< HEAD
   "version": "1.0.0",
   "description": "Frick Bingo Telegram Mini App server",
+=======
+  "name": "frick-bingo-server",
+  "version": "1.0.0",
+  "description": "Frick Bingo Telegram Bot Server",
+>>>>>>> a863a5c98395c15cf521daac2de9967ae1fed342
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+<<<<<<< HEAD
     "better-sqlite3": "^12.4.1",
     "express": "^5.1.0",
     "node-telegram-bot-api": "^0.66.0"
   }
 }
+=======
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "node-telegram-bot-api": "^0.66.0",
+    "sqlite3": "^6.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0"
+  }
+}
+>>>>>>> a863a5c98395c15cf521daac2de9967ae1fed342
