@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "description": "Frick Bingo Telegram Mini App server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "express": "^5.1.0",
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}
