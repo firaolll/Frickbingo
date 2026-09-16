@@ -9,7 +9,6 @@ const path = require("path");
 const app = express();
 
 const PORT = Number(process.env.PORT || 3000);
-
 const BOT_TOKEN = String(process.env.BOT_TOKEN || "").trim();
 const WEB_APP_URL = String(process.env.WEB_APP_URL || "").trim();
 const ADMIN_CHAT_ID = String(process.env.ADMIN_CHAT_ID || "").trim();
@@ -141,8 +140,7 @@ finished_at DATETIME,
 FOREIGN KEY(user_id)  
 REFERENCES users(id),  
 
-FOREIGN KEY(match_id)  
-REFERENCES matches(id)
+FOREIGN KEY(match_id) REFERENCES matches(id)
 
 );
 `);
@@ -170,7 +168,6 @@ if (!exists) {
         `✅ Added column ${table}.${column}`  
     );  
 }
-
 }
 
 // ======================================================
@@ -185,7 +182,7 @@ addColumnIfMissing(
 
 addColumnIfMissing(
 "games",
-"play_spent",
+"play_spent", 
 "REAL NOT NULL DEFAULT 0"
 );
 
@@ -281,27 +278,188 @@ return db.prepare(`
     AND status = 'WAITING'  
     ORDER BY id ASC  
     LIMIT 1  
-`).get(stake);
-
-}
-function getMatchCountdown(match) {
-
+`).get(stake);}
+function getMatchCountdown(match){
 if (!match.countdown_started_at) {  
     return COUNTDOWN_SECONDS;  
 }  
+const started =
+  new Date(match.countdown_started_at + "Z").getTime();
 
-const started =  
-    new Date(match.countdown_started_at + "Z").getTime();  
+const elapsed =
+  Math.floor((Date.now() - started) / 1000);
 
-const elapsed =  
-    Math.floor((Date.now() - started) / 1000);  
-
-return Math.max(  
-    0,  
-    COUNTDOWN_SECONDS - elapsed  
+return Math.max(
+  0,
+  COUNTDOWN_SECONDS - elapsed
 );
-
 }
+// ======================================================
+// MATCH COUNTDOWN
+// ======================================================
+
+function getMatchCountdown(match) {
+
+    if (!match.countdown_started_at) {
+        return COUNTDOWN_SECONDS;
+    }
+
+    const started =
+        new Date(
+            match.countdown_started_at + "Z"
+        ).getTime();
+
+    const elapsed =
+        Math.floor(
+            (Date.now() - started) / 1000
+        );
+
+    return Math.max(
+        0,
+        COUNTDOWN_SECONDS - elapsed
+    );
+}
+
+
+// ======================================================
+// PROCESS WAITING MATCHES
+// ======================================================
+
+function processWaitingMatches() {
+
+    try {
+
+        const waitingMatches =
+            db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE status = 'WAITING'
+                  AND countdown_started_at IS NOT NULL
+            `).all();
+
+
+        for (const match of waitingMatches) {
+
+            // ------------------------------------------
+            // COUNT PLAYERS
+            // ------------------------------------------
+
+            const playerCount =
+                db.prepare(`
+                    SELECT COUNT(*) AS count
+                    FROM games
+                    WHERE match_id = ?
+                `).get(
+                    match.id
+                ).count;
+
+
+            // ------------------------------------------
+            // GET COUNTDOWN
+            // ------------------------------------------
+
+            const countdown =
+                getMatchCountdown(match);
+
+
+            // ------------------------------------------
+            // COUNTDOWN STILL RUNNING
+            // ------------------------------------------
+
+            if (countdown > 0) {
+
+                continue;
+            }
+
+
+            // ------------------------------------------
+            // ENOUGH PLAYERS
+            // ------------------------------------------
+
+            if (
+                playerCount >= MIN_PLAYERS
+            ) {
+
+                const result =
+                    db.prepare(`
+                        UPDATE matches
+                        SET status = 'PLAYING'
+                        WHERE id = ?
+                          AND status = 'WAITING'
+                    `).run(
+                        match.id
+                    );
+
+
+                if (
+                    result.changes === 1
+                ) {
+
+                    // ----------------------------------
+                    // START ALL PLAYERS
+                    // ----------------------------------
+
+                    db.prepare(`
+                        UPDATE games
+                        SET status = 'PLAYING'
+                        WHERE match_id = ?
+                          AND status = 'STARTED'
+                    `).run(
+                        match.id
+                    );
+
+
+                    console.log(
+                        `🎮 Match ${match.id} STARTED with ${playerCount} players`
+                    );
+                }
+
+            } else {
+
+                // --------------------------------------
+                // NOT ENOUGH PLAYERS
+                // RESTART COUNTDOWN
+                // --------------------------------------
+
+                db.prepare(`
+                    UPDATE matches
+                    SET
+                        countdown_started_at =
+                            CURRENT_TIMESTAMP,
+                        countdown_seconds = ?,
+                        status = 'WAITING'
+                    WHERE id = ?
+                      AND status = 'WAITING'
+                `).run(
+                    COUNTDOWN_SECONDS,
+                    match.id
+                );
+
+
+                console.log(
+                    `⏳ Match ${match.id}: only ${playerCount} player(s). Countdown restarted.`
+                );
+            }
+        }
+
+    } catch (error) {
+
+        console.error(
+            "❌ MATCH PROCESSOR ERROR:",
+            error
+        );
+    }
+}
+// ======================================================
+// RUN MATCH PROCESSOR EVERY SECOND
+// ======================================================
+
+setInterval(
+    () => {
+        processWaitingMatches();
+    },
+    1000
+);
 
 // ======================================================
 // TELEGRAM INIT DATA
@@ -530,7 +688,6 @@ try {
             "Unauthorized"  
     });  
 }
-
 }
 
 // ======================================================
@@ -3994,7 +4151,7 @@ await sendBotMessage(
 if (bot) {
 
 bot.onText(  
-    /^\/admin$/,  
+    /^\/admin$/,
     async msg => {  
 
         if (  
@@ -4077,7 +4234,6 @@ ${playingMatches}
 
 🏁 Finished Games:
 ${finishedMatches}`
-
 );  
 
         } catch (error) {  
@@ -4170,7 +4326,6 @@ console.error(
             "Internal server error"  
 
     });  
-
 }
 
 );
@@ -4241,12 +4396,8 @@ process.on(
 // START SERVER
 // ======================================================
 
-app.listen(
-PORT,
-"0.0.0.0",
-() => {
-
-console.log("");  
+app.listen(PORT,"0.0.0.0",() => {
+    console.log("");  
     console.log(  
         "======================================"  
     );  
@@ -4267,8 +4418,8 @@ console.log("");
         `🌐 Web App: ${  
             WEB_APP_URL ||  
             "Not configured"  
-        }`  
-    );  
+        }  
+    `);  
 
     console.log(  
         `💾 Database: ${  
