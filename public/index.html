@@ -5875,129 +5875,76 @@ function removeCard(number){
    UPDATE SELECTED  
 ===================================================== */  
   
-function updateSelectedCards(){  
-  
- const container =  
-  document.getElementById(  
-   "selectedCards"  
-  );  
-  
- const preview =  
-  document.getElementById(  
-   "cardsPreview"  
-  );  
-  
-  
- if(!container || !preview){  
-  
-  return;  
-  
- }  
-  
-  
- container.innerHTML = "";  
- preview.innerHTML = "";  
-  
-  
- selectedCards.forEach(  
-  number=>{  
-  
-   const chip =  
-    document.createElement("button");  
-  
-   chip.type = "button";  
-  
-   chip.className =  
-    "selected-chip";  
-  
-   container.innerHTML = "";
-preview.innerHTML = "";
+function updateSelectedCards() {
 
-selectedCards.forEach(number => {
+    const container =
+        document.getElementById("selectedCards");
 
-    const chip = document.createElement("button");
+    const preview =
+        document.getElementById("cardsPreview");
 
-    chip.type = "button";
+    if (!container || !preview) {
+        return;
+    }
 
-    chip.className =
-        "selected-chip";
+    container.innerHTML = "";
+    preview.innerHTML = "";
 
-    chip.textContent =
-        Card ${number} ✕;
+    selectedCards.forEach(number => {
 
-    chip.onclick = () =>
-        removeCard(number);
+        const chip =
+            document.createElement("button");
 
-    container.appendChild(
-        chip
-    );
+        chip.type = "button";
 
-    preview.appendChild(
-        createCardElement(number)
-    );
+        chip.className =
+            "selected-chip";
 
-});
+        chip.textContent =
+            `Card ${number} ✕`;
 
-updateAllDisplays();
-  
-   chip.onclick =  
-    ()=>removeCard(number);  
-  
-   container.appendChild(  
-    chip  
-   );  
-  
-  
-   preview.appendChild(  
-    createCardElement(number)  
-   );  
-  
-  }  
- );  
-  
-  
- updateAllDisplays();  
-  
-}  
+        chip.onclick = () =>
+            removeCard(number);
+
+        container.appendChild(chip);
+
+        preview.appendChild(
+            createCardElement(number)
+        );
+
+    });
+
+    updateAllDisplays();
+}
   
   
 /* =====================================================  
    TIMER  
 ===================================================== */  
-function startSelectionTimer(){
+function startSelectionTimer() {
+    clearInterval(selectionTimer);
 
-    if(selectionTimerInterval){
-        clearInterval(selectionTimerInterval);
+    selectionSeconds = 30;
+
+    const timerElement = document.getElementById("selectionTimer");
+
+    if (timerElement) {
+        timerElement.textContent = selectionSeconds;
     }
 
-    let seconds = 30;
+    selectionTimer = setInterval(() => {
+        selectionSeconds--;
 
-    const timer =
-        document.getElementById("selectionTimer");
+        if (timerElement) {
+            timerElement.textContent = selectionSeconds;
+        }
 
-    if(!timer) return;
-
-    timer.textContent =
-        "time to start: " + seconds;
-
-    selectionTimerInterval = setInterval(() => {
-
-        seconds--;
-
-        timer.textContent =
-            "time to start: " + seconds;
-
-        if(seconds <= 0){
-
-            clearInterval(
-                selectionTimerInterval
-            );
-
-            selectionTimerInterval = null;
+        if (selectionSeconds <= 0) {
+            clearInterval(selectionTimer);
+            selectionTimer = null;
 
             finishSelectionPeriod();
         }
-
     }, 1000);
 }
   
