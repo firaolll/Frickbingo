@@ -2,7 +2,10 @@
 <head>  
 <meta charset="UTF-8">  
 <meta name="viewport"  
-      content="width=device-width,initial-scale=1,viewport-fit=cover">  <title>Frick Bingo</title>  <script src="https://telegram.org/js/telegram-web-app.js"></script>  <style>  
+content="width=device-width,initial-scale=1,viewport-fit=cover"> 
+<title>Frick Bingo</title>  
+<script src="https://telegram.org/js/telegram-web-app.js"></script> 
+<style>  
   
 :root{  
     --bg:#080612;  
@@ -2568,7 +2571,7 @@ button{
 
 </div>
 
-</div>  <script>  
+</div>  
   
 /* ==================================================  
    TELEGRAM  
@@ -4663,11 +4666,10 @@ document.addEventListener(
     "DOMContentLoaded",  
     init  
 );  
-  
-</script>  </body>  
-</html>  <div class="selection-title">  
-   Frick Bingo • LIVE  
-  </div>  <button  
+      
+<div class="selection-title">  
+Frick Bingo • LIVE  
+</div>  <button  
 class="refresh-btn"  
 type="button"  
 onclick="refreshGame()">
@@ -4844,7 +4846,8 @@ CLOSE
   </div>   </div>  </div>  <!-- TOAST -->  <div  
  id="toast"  
  class="toast">  
-</div>  <script>  
+</div>  
+
 "use strict";  
   
 /* =====================================================  
@@ -5017,7 +5020,6 @@ function initializeTelegram() {
             tg.initData || "";
         console.log("INIT DATA LENGTH:", telegramInitData.length);
         console.log("INIT DATA UNSAFE:", tg.initDataUnsafe);
-        
         console.log(
             "Telegram initData:",
             telegramInitData
