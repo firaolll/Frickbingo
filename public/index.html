@@ -2709,34 +2709,6 @@ function hideLoading(){
   
   
 /* ==================================================  
-   TOAST  
-================================================== */  
-  
-let toastTimer = null;  
-  
-function showToast(message){  
-  
-    const toast =  
-        document.getElementById("toast");  
-  
-    toast.textContent = message;  
-  
-    toast.classList.add("show");  
-  
-    clearTimeout(toastTimer);  
-  
-    toastTimer =  
-        setTimeout(  
-            ()=>{  
-                toast.classList.remove("show");  
-            },  
-            2600  
-        );  
-  
-}  
-  
-  
-/* ==================================================  
    PAGE NAVIGATION  
 ================================================== */  
   
@@ -4863,17 +4835,7 @@ CLOSE
    CONFIG  
 ===================================================== */  
   
-/*  
- IMPORTANT:  
- index.html is served from the SAME Render server.  
-  
- Keep this EMPTY.  
-  
- Do NOT use:  
- http://192.168.1.15:3000  
-  
- Do NOT use GitHub Pages here.  
-*/  
+
 const SERVER_URL = "";  
   
   
