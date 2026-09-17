@@ -2193,18 +2193,17 @@ function approveDeposit(depositId) {
             WHERE id = ?
         `).run(depositId);
 
-
         // Add money to Play Wallet
         const result = db.prepare(`
             UPDATE users
             SET
-                play_balance = COALESCE(play_balance, 0) + ?
+                play_balance =
+                    COALESCE(play_balance, 0) + ?
             WHERE id = ?
         `).run(
             amount,
             deposit.user_id
         );
-
 
         if (result.changes !== 1) {
             throw new Error(
@@ -2217,7 +2216,6 @@ function approveDeposit(depositId) {
 
     return transaction();
 }
-
 
 // ======================================================
 // ADMIN REJECT DEPOSIT
