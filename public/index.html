@@ -5015,7 +5015,9 @@ function initializeTelegram() {
 
         telegramInitData =
             tg.initData || "";
-
+        console.log("INIT DATA LENGTH:", telegramInitData.length);
+        console.log("INIT DATA UNSAFE:", tg.initDataUnsafe);
+        
         console.log(
             "Telegram initData:",
             telegramInitData
