@@ -4995,314 +4995,132 @@ function showToast(message){
    TELEGRAM INITIALIZATION  
 ===================================================== */  
   
-function initializeTelegram(){  
-  
- tg =  
-  window.Telegram &&  
-  window.Telegram.WebApp  
-   ? window.Telegram.WebApp  
-   : null;  
-  
- if(!tg){  
-  
-  console.warn(  
-   "Telegram WebApp SDK is not available."  
-  );  
-  
-  return false;  
-  
- }  
-  
- try{  
-  
-  tg.ready();  
-  
-  tg.expand();  
-  
-  telegramInitData =  
-   tg.initData || "";  
-  
-  console.log(  
-   "Telegram initData:",  
-   telegramInitData  
-    ? "AVAILABLE"  
-    : "EMPTY"  
-  );  
-  
-  return true;  
-  
- }catch(error){  
-  
-  console.error(  
-   "Telegram initialization error:",  
-   error  
-  );  
-  
-  return false;  
-  
- }  
-  
-}  
-  
-  
-/* =====================================================  
-   API HEADERS  
-===================================================== */  
-  
-function headers(){  
-  
- return {  
-  "Content-Type":"application/json",  
-  "X-Telegram-Init-Data":  
-   telegramInitData  
- };  
-  
-}  
-  
-  
-/* =====================================================  
-   API  
-===================================================== */  
-  
-async function api(  
- path,  
- options={}  
-){  
-  
- try{  
-  
-  const response =  
-   await fetch(  
-    SERVER_URL + path,  
-    {  
-     ...options,  
-     cache:"no-store",  
-     headers:{  
-      ...headers(),  
-      ...(options.headers || {})  
-     }  
-    }  
-   );  
-  
-  
-  const text =  
-   await response.text();  
-  
-  
-  let data = {};  
-  
-  try{  
-  
-   data =  
-    text  
-     ? JSON.parse(text)  
-     : {};  
-  
-  }catch(e){  
-  
-   throw new Error(  
-    "Server returned invalid JSON."  
-   );  
-  
-  }  
-  
-  
-  if(!response.ok){  
-  
-   throw new Error(  
-    data.error ||  
-    data.message ||  
-    `Server error (${response.status})`  
-   );  
-  
-  }  
-  
-  
-  return data;  
-  
- }catch(error){  
-  
-  console.error(  
-   "API ERROR:",  
-   path,  
-   error  
-  );  
-  
-  throw error;  
-  
- }  
-  
-}  
-  
-  
-/* =====================================================  
-   PROFILE  
-===================================================== */  
-  
-async function loadProfile(  
- showError=true  
-){  
-  
- try{  
-  
-  const telegramOK =  
-   initializeTelegram();  
-  
-  
-  if(!telegramOK){  
-  
-   if(showError){  
-  
-    showToast(  
-     "እባክዎ Frick Bingoን ከTelegram ውስጥ ይክፈቱ።"  
-    );  
-  
-   }  
-  
-   return false;  
-  
-  }  
-  
-  
-  if(!telegramInitData){  
-  
-   if(showError){  
-  
-    showToast(  
-     "Telegram user information አልተገኘም።"  
-    );  
-  
-   }  
-  
-   return false;  
-  
-  }  
-  
-  
-  const data =  
-   await api("/api/me");  
-  
-  
-  console.log(  
-   "/api/me response:",  
-   data  
-  );  
-  
-  
-  if(  
-   !data ||  
-   data.ok === false ||  
-   !data.user  
-  ){  
-  
-   throw new Error(  
-    data?.error ||  
-    "Could not load user account."  
-   );  
-  
-  }  
-  
-  
-  const user =  
-   data.user;  
-  
-  
-  profileData = {  
-  
-   id:  
-    String(  
-     user.telegramId ??  
-     user.telegram_id ??  
-     user.id ??  
-     ""  
-    ),  
-  
-   name:  
-    String(  
-     user.firstName ??  
-     user.first_name ??  
-     user.name ??  
-     "Player"  
-    ),  
-  
-   username:  
-    String(  
-     user.username ??  
-     ""  
-    )  
-  
-  };  
-  
-  
-  mainBalance =  
-   Number(  
-    user.mainBalance ??  
-    user.balance ??  
-    0  
-   );  
-  
-  
-  playBalance =  
-   Number(  
-    user.playBalance ??  
-    user.play_balance ??  
-    0  
-   );  
-  
-  
-  if(!Number.isFinite(mainBalance)){  
-  
-   mainBalance = 0;  
-  
-  }  
-  
-  
-  if(!Number.isFinite(playBalance)){  
-  
-   playBalance = 0;  
-  
-  }  
-  
-  
-  updateAllDisplays();  
-  
-  renderProfile();  
-  
-  
-  console.log(  
-   "BALANCE:",  
-   mainBalance,  
-   playBalance  
-  );  
-  
-  
-  return true;  
-  
- }catch(error){  
-  
-  console.error(  
-   "loadProfile error:",  
-   error  
-  );  
-  
-  
-  if(showError){  
-  
-   showToast(  
-    error.message ||  
-    "Could not load balance."  
-   );  
-  
-  }  
-  
-  
-  return false;  
-  
- }  
-  
-}  
-  
-  
+async function loadProfile(showError = true) {
+
+    try {
+
+        const telegramOK =
+            initializeTelegram();
+
+        if (!telegramOK) {
+
+            if (showError) {
+                showToast(
+                    "እባክዎ Frick Bingoን ከTelegram ውስጥ ይክፈቱ።"
+                );
+            }
+
+            return false;
+        }
+
+        if (!telegramInitData) {
+
+            if (showError) {
+                showToast(
+                    "Telegram user information አልተገኘም።"
+                );
+            }
+
+            return false;
+        }
+
+        const data =
+            await api("/api/me");
+
+        console.log(
+            "/api/me response:",
+            data
+        );
+
+        if (
+            !data ||
+            data.ok === false ||
+            !data.user
+        ) {
+
+            throw new Error(
+                data?.error ||
+                "Could not load user account."
+            );
+        }
+
+        const user =
+            data.user;
+
+        profileData = {
+
+            id: String(
+                user.telegramId ??
+                user.telegram_id ??
+                user.id ??
+                ""
+            ),
+
+            name: String(
+                user.firstName ??
+                user.first_name ??
+                user.name ??
+                "Player"
+            ),
+
+            username: String(
+                user.username ??
+                ""
+            )
+        };
+
+        mainBalance =
+            Number(
+                user.mainBalance ??
+                user.balance ??
+                0
+            );
+
+        playBalance =
+            Number(
+                user.playBalance ??
+                user.play_balance ??
+                0
+            );
+
+        if (!Number.isFinite(mainBalance)) {
+            mainBalance = 0;
+        }
+
+        if (!Number.isFinite(playBalance)) {
+            playBalance = 0;
+        }
+
+        updateAllDisplays();
+
+        renderProfile();
+
+        console.log(
+            "BALANCE:",
+            mainBalance,
+            playBalance
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "loadProfile error:",
+            error
+        );
+
+        if (showError) {
+
+            showToast(
+                error.message ||
+                "Could not load balance."
+            );
+        }
+
+        return false;
+    }
+}
 /* =====================================================  
    BALANCE REFRESH  
 ===================================================== */  
