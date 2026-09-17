@@ -3165,9 +3165,11 @@ function selectCard(number){
   
   
     selectedCards.push(number);  
-  
+  if(selectedCards.length === 1){
+      console.log("FIRST CARD SELECTED");
+    startSelectionTimer();
+      }
     updateSelectedCards();  
-  
 }  
   
   
@@ -5962,62 +5964,42 @@ updateAllDisplays();
 /* =====================================================  
    TIMER  
 ===================================================== */  
-  
-function startSelectionTimer(){  
-  
- stopSelectionTimer();  
-  
- selectionSeconds = 30;  
-  
-  
- const timer =  
-  document.getElementById(  
-   "selectionTimer"  
-  );  
-  
-  
- if(timer){  
-  
-  timer.textContent = "30";  
-  
- }  
-  
-  
- selectionTimerInterval =  
-  setInterval(  
-   async()=>{  
-  
-    selectionSeconds--;  
-  
-    if(timer){  
-  
-     timer.textContent =  
-      String(  
-       Math.max(  
-        0,  
-        selectionSeconds  
-       )  
-      );  
-  
-    }  
-  
-  
-    if(  
-     selectionSeconds <= 0  
-    ){  
-  
-     stopSelectionTimer();  
-  
-     await finishSelectionPeriod();  
-  
-    }  
-  
-   },  
-   1000  
-  );  
-  
-}  
-  
+function startSelectionTimer(){
+
+    if(selectionTimerInterval){
+        clearInterval(selectionTimerInterval);
+    }
+
+    let seconds = 30;
+
+    const timer =
+        document.getElementById("selectionTimer");
+
+    if(!timer) return;
+
+    timer.textContent =
+        "time to start: " + seconds;
+
+    selectionTimerInterval = setInterval(() => {
+
+        seconds--;
+
+        timer.textContent =
+            "time to start: " + seconds;
+
+        if(seconds <= 0){
+
+            clearInterval(
+                selectionTimerInterval
+            );
+
+            selectionTimerInterval = null;
+
+            finishSelectionPeriod();
+        }
+
+    }, 1000);
+}
   
 /* =====================================================  
    START GAME  
