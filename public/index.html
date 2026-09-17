@@ -2756,26 +2756,37 @@ function navigateNav(pageId,button){
    LOAD USER  
 ================================================== */  
   
-async function loadUser(){
-    try{
-        const data = await apiFetch("/api/me");
+async function loadUser() {
 
-        if(data.user){
-            currentUser = data.user;
-        }else if(data){
-            currentUser = data;
+    try {
+
+        const data =
+            await apiFetch("/api/me");
+
+        if (data.user) {
+
+            currentUser =
+                data.user;
+
+        } else if (data) {
+
+            currentUser =
+                data;
         }
 
-        updateAllDisplays();
-
-        // Get the latest wallet values from database
+        // Get latest wallet balance first
         await refreshBalance();
 
-    }catch(error){
+        // Then update every wallet display
+        updateAllDisplays();
+
+    } catch (error) {
+
         console.log(
             "User loading:",
             error.message
         );
+
     }
 }
 async function refreshBalance() {
@@ -4307,7 +4318,7 @@ function leaveGame(){
     gameRunning = false;  
   
     showPage("page1");  
-  
+    await refreshBalance();
 }  
   
   
@@ -5558,7 +5569,7 @@ function backToHome(){
  stopSelectionTimer();  
   
  showPage("page1");  
-  
+ await refreshBalance(); 
 }  
   
   
@@ -7571,10 +7582,12 @@ async function resetAfterWinner(){
   
  }  
   
+ await refreshBalance();
+
+ showPage("page2");  
   
- showPage("page1");  
-  
-  
+ renderCardSelection();
+
  updateAllDisplays();  
   
   
