@@ -2646,76 +2646,41 @@ let winnerShown = false;
    API  
 ================================================== */  
   
-async function apiFetch(  
-    url,  
-    options={}  
-){  
-  
-    const headers = {  
-        "Content-Type":"application/json",  
-        ...(options.headers || {})  
-    };  
-  
-    if(tg && tg.initData){  
-  
-        headers["X-Telegram-Init-Data"] =  
-            tg.initData;  
-  
-    }  
-  
-    const response =  
-        await fetch(  
-            SERVER_URL + url,  
-            {  
-                ...options,  
-                headers  
-            }  
-        );  
-  
-    let data = null;  
-  
-    try{  
-        data = await response.json();  
-    }catch(e){  
-        data = {};  
-    }  
-  
-    if(!response.ok){  
-  
-        throw new Error(  
-            data.error ||  
-            data.message ||  
-            `Request failed: ${response.status}`  
-        );  
-  
-    }  
-  
-    return data;  
-  
-}  
-  
-  
-/* ==================================================  
-   LOADING  
-================================================== */  
-  
-function showLoading(){  
-  
-    document  
-        .getElementById("loading")  
-        .classList.add("show");  
-  
-}  
-  
-function hideLoading(){  
-  
-    document  
-        .getElementById("loading")  
-        .classList.remove("show");  
-  
-}  
-  
-  
+async function apiFetch(
+    url,
+    options = {}
+) {
+    const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+    };
+
+    if (telegramInitData) {
+        headers["X-Telegram-Init-Data"] =
+            telegramInitData;
+    }
+
+    const response =
+        await fetch(
+            SERVER_URL + url,
+            {
+                ...options,
+                headers
+            }
+        );
+
+    const data =
+        await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data?.error ||
+            `HTTP ${response.status}`
+        );
+    }
+
+    return data;
+}
 /* ==================================================  
    PAGE NAVIGATION  
 ================================================== */  
