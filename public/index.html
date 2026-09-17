@@ -2681,6 +2681,16 @@ async function apiFetch(
 
     return data;
 }
+async function api(
+    url,
+    options = {}
+) {
+    return await apiFetch(
+        url,
+        options
+    );
+}
+
 /* ==================================================  
    PAGE NAVIGATION  
 ================================================== */  
