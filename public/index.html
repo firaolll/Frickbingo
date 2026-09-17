@@ -4994,7 +4994,47 @@ function showToast(message){
 /* =====================================================  
    TELEGRAM INITIALIZATION  
 ===================================================== */  
-  
+function initializeTelegram() {
+
+    tg =
+        window.Telegram &&
+        window.Telegram.WebApp
+            ? window.Telegram.WebApp
+            : null;
+
+    if (!tg) {
+        console.warn(
+            "Telegram WebApp SDK is not available."
+        );
+        return false;
+    }
+
+    try {
+        tg.ready();
+        tg.expand();
+
+        telegramInitData =
+            tg.initData || "";
+
+        console.log(
+            "Telegram initData:",
+            telegramInitData
+                ? "AVAILABLE"
+                : "EMPTY"
+        );
+
+        return true;
+
+    } catch (error) {
+        console.error(
+            "Telegram initialization error:",
+            error
+        );
+        return false;
+    }
+}
+
+
 async function loadProfile(showError = true) {
 
     try {
