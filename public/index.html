@@ -2574,7 +2574,7 @@ button{
    TELEGRAM  
 ================================================== */  
   
-const tg =  
+let tg =  
     window.Telegram &&  
     window.Telegram.WebApp  
         ? window.Telegram.WebApp  
@@ -2637,7 +2637,8 @@ let playBalance = 0;
 let actualGameStarted = false;
 let selectionSeconds = 30;
 let selectionTimer = null;  
-  
+let profileData = {};
+let winnerShown = false;  
 /* ==================================================  
    API  
 ================================================== */  
