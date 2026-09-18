@@ -2652,21 +2652,37 @@ const SERVER_URL = "https://frickbingo.onrender.com";
 
 let telegramInitData = "";
 
-if (window.Telegram && window.Telegram.WebApp) {
-    const tg = window.Telegram.WebApp;
+const tg = window.Telegram?.WebApp;
+
+if (tg) {
 
     tg.ready();
     tg.expand();
 
     telegramInitData = tg.initData || "";
 
-    console.log("Telegram initData:", telegramInitData);
+    console.log(
+        "TELEGRAM INIT DATA LENGTH:",
+        telegramInitData.length
+    );
 
-    if (!telegramInitData) {
-        console.warn("⚠️ Telegram initData is EMPTY");
-    } else {
+    console.log(
+        "TELEGRAM INIT DATA UNSAFE:",
+        tg.initDataUnsafe
+    );
+
+    if (telegramInitData) {
         console.log("✅ Telegram initData received");
+    } else {
+        console.warn("⚠️ Telegram initData is EMPTY");
     }
+
+} else {
+
+    console.warn(
+        "⚠️ Telegram WebApp API not available"
+    );
+
 }
 
 /* ==================================================  
