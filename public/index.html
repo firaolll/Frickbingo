@@ -2674,13 +2674,32 @@ if (window.Telegram && window.Telegram.WebApp) {
 ================================================== */  
 async function apiFetch(endpoint, options = {}) {
 
+    const tg = window.Telegram?.WebApp;
+
+    const initData =
+        tg?.initData ||
+        telegramInitData ||
+        "";
+
+    console.log(
+        "API REQUEST:",
+        endpoint,
+        "INIT DATA LENGTH:",
+        initData.length
+    );
+
     const headers = {
         "Content-Type": "application/json",
         ...(options.headers || {})
     };
 
-    if (telegramInitData) {
-        headers["X-Telegram-Init-Data"] = telegramInitData;
+    if (initData) {
+        headers["X-Telegram-Init-Data"] = initData;
+    } else {
+        console.warn(
+            "⚠️ API request has NO Telegram initData:",
+            endpoint
+        );
     }
 
     const response = await fetch(
