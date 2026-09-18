@@ -2652,7 +2652,6 @@ const SERVER_URL = "https://frickbingo.onrender.com";
 
 let telegramInitData = "";
 
-const tg = window.Telegram?.WebApp;
 
 if (tg) {
 
@@ -2691,7 +2690,6 @@ if (tg) {
 async function apiFetch(endpoint, options = {}) {
 
     const tg = window.Telegram?.WebApp;
-
     const initData =
         tg?.initData ||
         telegramInitData ||
