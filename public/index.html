@@ -4996,7 +4996,7 @@ function showToast(message){
 ===================================================== */  
 function initializeTelegram() {
 
-    tg =
+    const tg =
         window.Telegram &&
         window.Telegram.WebApp
             ? window.Telegram.WebApp
@@ -5010,17 +5010,28 @@ function initializeTelegram() {
     }
 
     try {
+
         tg.ready();
         tg.expand();
 
         telegramInitData =
             tg.initData || "";
-        console.log("INIT DATA LENGTH:", telegramInitData.length);
-        console.log("INIT DATA UNSAFE:", tg.initDataUnsafe);
-                  alert(
-    "INIT DATA LENGTH: " +
-    telegramInitData.length
-);
+
+        console.log(
+            "INIT DATA LENGTH:",
+            telegramInitData.length
+        );
+
+        console.log(
+            "INIT DATA UNSAFE:",
+            tg.initDataUnsafe
+        );
+
+        alert(
+            "INIT DATA LENGTH: " +
+            telegramInitData.length
+        );
+
         console.log(
             "Telegram initData:",
             telegramInitData
@@ -5031,15 +5042,15 @@ function initializeTelegram() {
         return true;
 
     } catch (error) {
+
         console.error(
             "Telegram initialization error:",
             error
         );
+
         return false;
     }
 }
-
-
 async function loadProfile(showError = true) {
 
     try {
