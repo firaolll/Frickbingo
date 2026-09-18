@@ -2791,6 +2791,7 @@ bot.onText(
             let keyboard = [];
 
 if (WEB_APP_URL) {
+    console.log("WEB_APP_URL USED BY BOT:", WEB_APP_URL);
 keyboard = [
 [
 { text: "⭐ Start", callback_data: "start_menu" },
