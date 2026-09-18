@@ -644,7 +644,7 @@ try {
 
     const telegramUser =  
         getTelegramUser(req);  
-
+    console.log("AUTH TELEGRAM USER:", telegramUser);
     const user =  
         getOrCreateUser(  
             telegramUser  
