@@ -2642,53 +2642,56 @@ let selectionTimer = null;
 let selectionTimerInterval = null; 
 let profileData = {};
 let winnerShown = false;  
+
+ 
+/* =====================================================  
+   CONFIG  
+===================================================== */  
+  
+const SERVER_URL = "https://frickbingo.onrender.com";
+
+let telegramInitData = "";
+
+if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+
+    tg.ready();
+    tg.expand();
+
+    telegramInitData = tg.initData || "";
+
+    console.log("Telegram initData:", telegramInitData);
+
+    if (!telegramInitData) {
+        console.warn("⚠️ Telegram initData is EMPTY");
+    } else {
+        console.log("✅ Telegram initData received");
+    }
+}
+
 /* ==================================================  
    API  
 ================================================== */  
-  
-async function apiFetch(
-    url,
-    options = {}
-) {
+async function apiFetch(endpoint, options = {}) {
+
     const headers = {
         "Content-Type": "application/json",
         ...(options.headers || {})
     };
 
     if (telegramInitData) {
-        headers["X-Telegram-Init-Data"] =
-            telegramInitData;
+        headers["X-Telegram-Init-Data"] = telegramInitData;
     }
 
-    const response =
-        await fetch(
-            SERVER_URL + url,
-            {
-                ...options,
-                headers
-            }
-        );
-
-    const data =
-        await response.json();
-
-    if (!response.ok) {
-        throw new Error(
-            data?.error ||
-            `HTTP ${response.status}`
-        );
-    }
-
-    return data;
-}
-async function api(
-    url,
-    options = {}
-) {
-    return await apiFetch(
-        url,
-        options
+    const response = await fetch(
+        SERVER_URL + endpoint,
+        {
+            ...options,
+            headers
+        }
     );
+
+    return await response.json();
 }
 
 /* ==================================================  
@@ -4824,23 +4827,7 @@ CLOSE
  class="toast">  
 </div>  <script>  
 "use strict";  
-  
-/* =====================================================  
-   CONFIG  
-===================================================== */  
-  
-
-const SERVER_URL = "https://frickbingo.onrender.com";  
-  
-  
-/* =====================================================  
-   TELEGRAM  
-===================================================== */  
-  
-
-let telegramInitData = "";  
-  
-  
+ 
 /* =====================================================  
    GAME STATE  
 ===================================================== */  
