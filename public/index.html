@@ -4808,7 +4808,7 @@ async function loadProfile(showError = true) {
         }
 
         const data =
-            await api("/api/me");
+            await apiFetch("/api/me");
 
         console.log(
             "/api/me response:",
@@ -5561,7 +5561,7 @@ async function readyForGame(){
 
 
         const data =
-            await api(
+            await apiFetch(
                 "/api/game/start",
                 {
                     method:"POST",
@@ -5753,7 +5753,7 @@ async function waitForSharedGameStart(matchId){
         try{
 
             const data =
-                await api(
+                await apiFetch(
                     "/api/match/" +
                     matchId
                 );
@@ -7170,7 +7170,7 @@ async function showWinner(
   }else{  
   
    const data =  
-    await api(  
+    await apiFetch(  
      "/api/game/finish",  
      {  
       method:"POST",  
@@ -7441,7 +7441,7 @@ async function renderHistory(){
  try{  
   
   const data =  
-   await api(  
+   await  apiFetch( 
     "/api/history"  
    );  
   
@@ -7611,7 +7611,7 @@ async function renderScore(){
  try{  
   
   const data =  
-   await api(  
+   await apiFetch(  
     "/api/history"  
    );  
   
