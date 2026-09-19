@@ -2893,7 +2893,7 @@ Choose an option below.`,
 // ======================================================
 
 bot.onText(  
-    /^\/register$/,  
+    /^(\/register|📝 Register)$/,
     async msg => {  
 
         try {  
@@ -2947,7 +2947,7 @@ ${num(user.play_balance)} ETB`
 // ======================================================
 
 bot.onText(  
-    /^\/balance$/,  
+    /^(\/balance |💰 Balance)$/,  
     async msg => {  
 
         try {  
@@ -3213,7 +3213,7 @@ the prize is divided equally among them.
 // ======================================================
 
 bot.onText(
-    /^\/deposit$/,
+    /^(\/deposit |➕ Deposit)$/,
     async msg => {
 
         const chatId = msg.chat.id;
