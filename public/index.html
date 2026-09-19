@@ -3095,58 +3095,225 @@ function renderCardSelection(){
    SELECT CARD  
 ================================================== */  
   
-function selectCard(number){  
-  
-    number = Number(number);  
-  
-    if(  
-        selectedCards.includes(number)  
-    ){  
-  
-        removeCard(number);  
-  
-        return;  
-  
-    }  
-  
-  
-    if(  
-        selectedCards.length >= MAX_CARDS  
-    ){  
-  
-        showToast(  
-            "You can select maximum 2 cards."  
-        );  
-  
-        return;  
-  
-    }  
-  
-  
-    selectedCards.push(number);  
-  if(selectedCards.length === 1){
-      console.log("FIRST CARD SELECTED");
-    startSelectionTimer();
-      }
-    updateSelectedCards();  
-}  
-  
-  
+async function selectCard(number){
+
+    number = Number(number);
+
+    if(playerReady){
+
+        showToast(
+            "You are already ready."
+        );
+
+        return;
+    }
+
+    if(
+        selectedCards.includes(number)
+    ){
+
+        removeCard(number);
+
+        return;
+    }
+
+    if(
+        selectedCards.length >= MAX_CARDS
+    ){
+
+        showToast(
+            "You can select maximum 2 cards."
+        );
+
+        haptic("error");
+
+        return;
+    }
+
+    selectedCards.push(number);
+
+    if(selectedCards.length === 1){
+
+    console.log(
+        "FIRST CARD SELECTED"
+    );
+
+    await joinSharedMatch();
+}
+
+    haptic();
+
+    updateSelectedCards();
+}
+
+
+async function joinSharedMatch(){
+
+    try{
+
+        console.log(
+            "🌐 Joining shared match..."
+        );
+
+        if(!selectedStake){
+
+            showToast(
+                "Please select a stake."
+            );
+
+            return;
+        }
+
+        if(!telegramInitData){
+
+            initializeTelegram();
+        }
+
+        if(!telegramInitData){
+
+            throw new Error(
+                "Open Frick Bingo from the Telegram bot."
+            );
+        }
+
+        const data =
+            await apiFetch(
+                "/api/match/create",
+                {
+                    method: "POST",
+
+                    body: JSON.stringify({
+                        stake:
+                            selectedStake,
+
+                        cards:
+                            selectedCards.length
+                    })
+                }
+            );
+
+        console.log(
+            "🌐 SHARED MATCH:",
+            data
+        );
+
+        if(
+            !data ||
+            data.success !== true
+        ){
+
+            throw new Error(
+                data?.error ||
+                "Could not join match."
+            );
+
+        }
+
+        currentGameId =
+            data.matchId ??
+            data.sharedGameId ??
+            data.gameId;
+
+        console.log(
+            "🎮 MATCH ID:",
+            currentGameId
+        );
+
+        console.log(
+            "👥 PLAYERS:",
+            data.playerCount
+        );
+
+        console.log(
+            "⏳ SERVER COUNTDOWN:",
+            data.countdown
+        );
+
+        /*
+        ==========================================
+        SHOW SERVER COUNTDOWN
+        ==========================================
+        */
+
+        const timer =
+            document.getElementById(
+                "selectionTimer"
+            );
+
+        if(timer){
+
+            timer.textContent =
+                data.countdown;
+
+        }
+
+        haptic("success");
+
+        /*
+        ==========================================
+        START WATCHING SHARED MATCH
+        ==========================================
+        */
+
+        waitForSharedGameStart(
+            currentGameId
+        );
+
+    }catch(error){
+
+        console.error(
+            "❌ JOIN MATCH ERROR:",
+            error
+        );
+
+        showToast(
+            error.message ||
+            "Could not join the game."
+        );
+
+        haptic("error");
+    }
+
+}
+
 /* ==================================================  
    REMOVE CARD  
 ================================================== */  
   
 function removeCard(number){  
   
-    selectedCards =  
-        selectedCards.filter(  
-            n => Number(n) !== Number(number)  
-        );  
+ if(playerReady){  
   
-    updateSelectedCards();  
+  return;  
+  
+ }  
+  
+  
+ selectedCards =  
+  selectedCards.filter(  
+   item=>  
+    item !== number  
+  );  
+  
+  
+ const button =  
+  document.querySelector(  
+   `.card-number[data-number="${number}"]`  
+  );  
+  
+  
+ if(button){  
+  
+  button.classList.remove(  
+   "selected"  
+  );  
+  
+ }  
+  
+  
+ updateSelectedCards();  
   
 }  
-  
   
 /* ==================================================  
    UPDATE SELECTED CARDS  
@@ -5301,147 +5468,13 @@ function renderCardSelection(){
   
 }  
   
-  
-/* =====================================================  
-   SELECT CARD  
-===================================================== */  
-  
-function selectCard(number){  
-  
- if(playerReady){  
-  
-  showToast(  
-   "You are already ready."  
-  );  
-  
-  return;  
-  
- }  
-  
-  
- if(  
-  selectedCards.includes(number)  
- ){  
-  
-  removeCard(number);  
-  
-  return;  
-  
- }  
-  
-  
- if(  
-  selectedCards.length >= 2  
- ){  
-  
-  showToast(  
-   "Maximum 2 cards."  
-  );  
-  
-  haptic("error");  
-  
-  return;  
-  
- }  
-  
-  
- selectedCards.push(number);  
- if(selectedCards.length === 1){
-    startSelectionTimer();
-} 
- haptic();  
-  
- updateSelectedCards();  
-  
-}  
-  
-  
 /* =====================================================  
    REMOVE CARD  
 ===================================================== */  
   
-function removeCard(number){  
-  
- if(playerReady){  
-  
-  return;  
-  
- }  
-  
-  
- selectedCards =  
-  selectedCards.filter(  
-   item=>  
-    item !== number  
-  );  
-  
-  
- const button =  
-  document.querySelector(  
-   `.card-number[data-number="${number}"]`  
-  );  
-  
-  
- if(button){  
-  
-  button.classList.remove(  
-   "selected"  
-  );  
-  
- }  
-  
-  
- updateSelectedCards();  
-  
-}  
-  
-  
 /* =====================================================  
    UPDATE SELECTED  
 ===================================================== */  
-  
-function updateSelectedCards() {
-
-    const container =
-        document.getElementById("selectedCards");
-
-    const preview =
-        document.getElementById("cardsPreview");
-
-    if (!container || !preview) {
-        return;
-    }
-
-    container.innerHTML = "";
-    preview.innerHTML = "";
-
-    selectedCards.forEach(number => {
-
-        const chip =
-            document.createElement("button");
-
-        chip.type = "button";
-
-        chip.className =
-            "selected-chip";
-
-        chip.textContent =
-            `Card ${number} ✕`;
-
-        chip.onclick = () =>
-            removeCard(number);
-
-        container.appendChild(chip);
-
-        preview.appendChild(
-            createCardElement(number)
-        );
-
-    });
-
-    updateAllDisplays();
-}
-  
   
 /* =====================================================  
    TIMER  
@@ -5768,7 +5801,23 @@ async function waitForSharedGameStart(matchId){
             const match =
                 data.match ||
                 data;
+            const countdown =
+    Number(
+        match.countdown ??
+        data.countdown ??
+        0
+    );
 
+const timer =
+    document.getElementById(
+        "selectionTimer"
+    );
+
+if(timer){
+
+    timer.textContent =
+        countdown;
+}
 
             const players =
                 Number(
@@ -6071,39 +6120,7 @@ function range(
 /* =====================================================  
    SEEDED RANDOM  
 ===================================================== */  
-  
-function seededRandom(seed){  
-  
- let value =  
-  Number(seed) %  
-  2147483647;  
-  
-  
- if(value <= 0){  
-  
-  value += 2147483646;  
-  
- }  
-  
-  
- return ()=>{  
-  
-  value =  
-   value *  
-   16807 %  
-   2147483647;  
-  
-  
-  return (  
-   (value-1) /  
-   2147483646  
-  );  
-  
- };  
-  
-}  
-  
-  
+
 /* =====================================================  
    SHUFFLE  
 ===================================================== */  
@@ -6205,7 +6222,6 @@ function generateBingoCard(seed){
  return card;  
   
 }  
-  
   
 /* =====================================================  
    CREATE CARD  

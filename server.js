@@ -865,95 +865,166 @@ const rows =
 // CREATE MATCH
 // ======================================================
 app.post("/api/match/create", auth, (req, res) => {
-try {
-const stake = num(req.body.stake);
-
-if (!validStake(stake)) {  
-        return res.status(400).json({  
-            success: false,  
-            error: "Invalid stake"  
-        });  
-    }  
-
-    let match = findWaitingMatch(stake);  
-
-    if (!match) {  
-        const result = db.prepare(`  
-            INSERT INTO matches (  
-                stake,  
-                status,  
-                countdown_seconds,  
-                called_balls,  
-                current_ball  
-            )  
-            VALUES (?, 'WAITING', ?, '[]', '')  
-        `).run(  
-            stake,  
-            COUNTDOWN_SECONDS  
-        );  
-
-        match = db.prepare(`  
-            SELECT *  
-            FROM matches  
-            WHERE id = ?  
-        `).get(  
-            Number(result.lastInsertRowid)  
-        );  
-    }  
-
-    const playerCount = db.prepare(`  
-        SELECT COUNT(*) AS count  
-        FROM games  
-        WHERE match_id = ?  
-    `).get(match.id).count;  
-
-    return res.json({  
-        success: true,  
-        matchId: match.id,  
-        gameId: match.id,  
-        sharedGameId: match.id,  
-        stake: match.stake,  
-        status: match.status,  
-        playerCount,  
-        minPlayers: MIN_PLAYERS,  
-        countdown: getMatchCountdown(match)  
-    });  
-
-} catch (err) {  
-    console.error("MATCH CREATE ERROR:", err);  
-
-    return res.status(500).json({  
-        success: false,  
-        error: "Failed to create/join match"  
-    });  
-}
-
-});
-
-// ======================================================
-// MATCH INFORMATION
-// ======================================================
-
-app.get("/api/match/:matchId", auth, (req, res) => {
 
     try {
 
-        const matchId =
-            Number.parseInt(
-                req.params.matchId,
-                10
-            );
+        const stake =
+            num(req.body.stake);
 
-        if (!Number.isInteger(matchId) || matchId <= 0) {
+        const cards =
+            Number(req.body.cards);
+
+        if (!validStake(stake)) {
 
             return res.status(400).json({
                 success: false,
-                error: "Invalid match ID"
+                error: "Invalid stake"
             });
 
         }
 
-        const match =
+        if (!validCards(cards)) {
+
+            return res.status(400).json({
+                success: false,
+                error: "Invalid number of cards"
+            });
+
+        }
+
+        const userId =
+            req.user.id;
+
+        /*
+        ================================================
+        FIND OR CREATE WAITING MATCH
+        ================================================
+        */
+
+        let match =
+            findWaitingMatch(stake);
+
+        if (!match) {
+
+            const result =
+                db.prepare(`
+                    INSERT INTO matches (
+                        stake,
+                        status,
+                        countdown_started_at,
+                        countdown_seconds,
+                        called_balls,
+                        current_ball
+                    )
+                    VALUES (
+                        ?,
+                        'WAITING',
+                        CURRENT_TIMESTAMP,
+                        ?,
+                        '[]',
+                        ''
+                    )
+                `).run(
+                    stake,
+                    COUNTDOWN_SECONDS
+                );
+
+            match =
+                db.prepare(`
+                    SELECT *
+                    FROM matches
+                    WHERE id = ?
+                `).get(
+                    Number(
+                        result.lastInsertRowid
+                    )
+                );
+        }
+
+        const matchId =
+            Number(match.id);
+
+        /*
+        ================================================
+        CHECK IF THIS PLAYER ALREADY JOINED
+        ================================================
+        */
+
+        let existingGame =
+            db.prepare(`
+                SELECT *
+                FROM games
+                WHERE match_id = ?
+                  AND user_id = ?
+                LIMIT 1
+            `).get(
+                matchId,
+                userId
+            );
+
+        /*
+        ================================================
+        REGISTER PLAYER FROM CARD SELECTION
+        ================================================
+        */
+
+        if (!existingGame) {
+
+            db.prepare(`
+                INSERT INTO games (
+                    match_id,
+                    user_id,
+                    stake,
+                    cards,
+                    result,
+                    prize,
+                    status,
+                    play_spent,
+                    main_spent
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    'WAITING',
+                    0,
+                    'WAITING',
+                    0,
+                    0
+                )
+            `).run(
+                matchId,
+                userId,
+                stake,
+                cards
+            );
+
+        }
+
+        /*
+        ================================================
+        GET PLAYER COUNT
+        ================================================
+        */
+
+        const playerCount =
+            db.prepare(`
+                SELECT COUNT(*) AS count
+                FROM games
+                WHERE match_id = ?
+                  AND status = 'WAITING'
+            `).get(
+                matchId
+            ).count;
+
+        /*
+        ================================================
+        REFRESH MATCH
+        ================================================
+        */
+
+        const updatedMatch =
             db.prepare(`
                 SELECT *
                 FROM matches
@@ -962,105 +1033,62 @@ app.get("/api/match/:matchId", auth, (req, res) => {
                 matchId
             );
 
-        if (!match) {
-
-            return res.status(404).json({
-                success: false,
-                error: "Match not found"
-            });
-
-        }
-
-        const players =
-            db.prepare(`
-                SELECT
-                    g.id,
-                    g.user_id,
-                    g.stake,
-                    g.cards,
-                    g.status,
-                    g.result,
-                    g.prize
-                FROM games g
-                WHERE g.match_id = ?
-                ORDER BY g.id ASC
-            `).all(
-                matchId
-            );
-
-        const myGame =
-            players.find(
-                p =>
-                    Number(p.user_id) ===
-                    Number(req.user.id)
-            ) || null;
+        /*
+        ================================================
+        RETURN SHARED MATCH
+        ================================================
+        */
 
         return res.json({
 
             success: true,
 
-            match: {
+            matchId:
+                matchId,
 
-                id: match.id,
+            gameId:
+                matchId,
 
-                // SAME SHARED GAME ID
-                gameId: match.id,
-                sharedGameId: match.id,
+            sharedGameId:
+                matchId,
 
-                stake:
-                    num(match.stake),
+            stake:
+                num(updatedMatch.stake),
 
-                status:
-                    match.status,
+            status:
+                updatedMatch.status,
 
-                countdown:
-                    getMatchCountdown(match),
+            playerCount:
+                playerCount,
 
-                prizePool:
-                    num(match.prize_pool),
+            minPlayers:
+                MIN_PLAYERS,
 
-                winnerCount:
-                    match.winner_count,
-
-                paid:
-                    Boolean(match.paid),
-
-                playerCount:
-                    players.length,
-
-                minPlayers:
-                    MIN_PLAYERS,
-
-                createdAt:
-                    match.created_at,
-
-                startedAt:
-                    match.started_at,
-
-                finishedAt:
-                    match.finished_at
-            },
-
-            players,
-
-            myGame
+            countdown:
+                getMatchCountdown(
+                    updatedMatch
+                )
 
         });
 
-    } catch (error) {
+    } catch (err) {
 
         console.error(
-            "MATCH INFO ERROR:",
-            error
+            "MATCH CREATE ERROR:",
+            err
         );
 
         return res.status(500).json({
+
             success: false,
-            error: "Could not load match"
+
+            error:
+                "Failed to create/join match"
+
         });
-    
+
     }
-    
+
 });
 // ======================================================
 // JOIN / START GAME
@@ -1145,6 +1173,7 @@ app.post("/api/game/start", auth, async (req, res) => {
         alreadyJoined: true  
       });  
     }  
+
     const cost = num(stake * cards);  
     const user = db.prepare(`  
       SELECT id, balance, play_balance FROM users WHERE id = ?  
