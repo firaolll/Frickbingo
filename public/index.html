@@ -3460,206 +3460,7 @@ function createCardElement(cardNumber){
     return wrapper;  
   
 }  
-  
-  
-/* ==================================================  
-   READY FOR GAME  
-================================================== */  
-  
-async function readyForGame(){
 
-    if(selectedCards.length === 0){
-
-        showToast(
-            "Please select at least one card."
-        );
-
-        return;
-
-    }
-
-
-    if(selectedCards.length > MAX_CARDS){
-
-        showToast(
-            "Maximum 2 cards."
-        );
-
-        return;
-
-    }
-
-
-    const playBalance =
-        getPlayBalance();
-
-
-    if(
-        playBalance < selectedStake
-    ){
-
-        showToast(
-            "Insufficient play wallet balance."
-        );
-
-        return;
-
-    }
-
-
-    showLoading();
-
-
-    try{
-
-        const data =
-            await apiFetch(
-                "/api/game/start",
-                {
-                    method:"POST",
-
-                    body:JSON.stringify({
-
-                        stake:selectedStake,
-
-                        cards:selectedCards.length
-
-                    })
-
-                }
-            );
-
-
-        console.log(
-            "🎮 GAME START RESPONSE:",
-            data
-        );
-
-
-        /*
-         * IMPORTANT:
-         * The backend gives every player
-         * the shared match/game ID.
-         */
-
-        currentGameId =
-            data.sharedGameId ||
-            data.shared_game_id ||
-            data.matchId ||
-            data.match_id ||
-            data.gameId ||
-            data.game_id ||
-            data.id ||
-            data.game?.id ||
-            null;
-
-
-        if(!currentGameId){
-
-            console.error(
-                "❌ No shared Game/Match ID:",
-                data
-            );
-
-            showToast(
-                "Unable to join multiplayer game."
-            );
-
-            return;
-
-        }
-
-
-        fakePlayers =
-            Number(
-                data.playerCount ||
-                data.player_count ||
-                data.players ||
-                1
-            );
-
-
-        updateGameStats();
-
-
-        /*
-         * DO NOT start the local game here.
-         *
-         * Wait until the SERVER says
-         * the shared match is PLAYING.
-         */
-
-        await waitForSharedGameStart(
-            currentGameId
-        );
-
-
-    }catch(error){
-
-        console.error(
-            "❌ READY GAME ERROR:",
-            error
-        );
-
-        showToast(
-            error.message ||
-            "Unable to start game."
-        );
-
-    }finally{
-
-        hideLoading();
-
-    }
-
-}
-/* ==================================================  
-   BEGIN GAME  
-================================================== */  
-  
-function beginActualGame(){  
-  
-    calledNumbers = [];  
-  
-    lastCalledNumber = null;  
-  
-    gameRunning = true;  
-  
-    renderBigBoard();  
-  
-    renderPlayingPage();  
-  
-    updateGameStats();  
-  
-    showPage("page3");  
-  
-  
-    if(gameInterval){  
-  
-        clearInterval(  
-            gameInterval  
-        );  
-  
-    }  
-  
-  
-    if(automaticMode){  
-  
-        gameInterval =  
-            setInterval(  
-                ()=>{  
-                    if(gameRunning){  
-                        callNextNumber();  
-                    }  
-                },  
-                3000  
-            );  
-  
-    }  
-  
-}  
-  
-  
 /* ==================================================  
    GAME STATS  
 ================================================== */  
@@ -4853,65 +4654,6 @@ CLOSE
 </div>  <script>  
 "use strict";  
  
-/* =====================================================  
-   GAME STATE  
-===================================================== */  
-  
-function resetSelection(){  
-  
- stopSelectionTimer();  
-  
- selectedCards = [];  
- playerReady = false;  
- actualGameStarted = false;  
- calledNumbers = [];  
- winnerShown = false;  
- currentGameId = null;  
-  
- selectionSeconds = 30;  
-  
- const timer =  
-  document.getElementById(  
-   "selectionTimer"  
-  );  
-  
- if(timer){  
-  
-  timer.textContent = "30";  
-  
- }  
-  
- const ready =  
-  document.getElementById(  
-   "readyButton"  
-  );  
-  
- if(ready){  
-  
-  ready.style.display = "block";  
-  ready.disabled = false;  
-  ready.textContent = "START GAME";  
-  ready.classList.remove("ready");  
-  
- }  
-  
- const watch =  
-  document.getElementById(  
-   "watchMessage"  
-  );  
-  
- if(watch){  
-  
-  watch.style.display = "none";  
-  watch.textContent = "";  
-  
- }  
-  
- updateAllDisplays();  
-  
-}  
-  
-  
 /* =====================================================  
    HAPTIC  
 ===================================================== */  
@@ -6168,59 +5910,78 @@ async function waitForSharedGameStart(matchId){
    FINISH SELECTION  
 ===================================================== */  
   
-async function finishSelectionPeriod(){  
-  
- stopSelectionTimer();  
-  
-  
- if(!selectedCards.length){  
-  
-  const message =  
-   document.getElementById(  
-    "watchMessage"  
-   );  
-  
-  if(message){  
-  
-   message.style.display =  
-    "block";  
-  
-   message.innerHTML =  
-    "የካርቴላ ምርጫ ጊዜ አልቋል።<br>እባክዎ ቀጣዩን ጨዋታ ይጠብቁ 👀";  
-  
-  }  
-  
-  
-  const button =  
-   document.getElementById(  
-    "readyButton"  
-   );  
-  
-  if(button){  
-  
-   button.style.display =  
-    "none";  
-  
-  }  
-  
-  
-  return;  
-  
- }  
-  
-  
- if(!playerReady){  
-  
-  await readyForGame();  
-  
-  return;  
-  
- }  
-  
-  
- beginActualGame();  
-  
-}  
+async function finishSelectionPeriod(){
+
+    stopSelectionTimer();
+
+
+    if(!selectedCards.length){
+
+        const message =
+            document.getElementById(
+                "watchMessage"
+            );
+
+        if(message){
+
+            message.style.display =
+                "block";
+
+            message.innerHTML =
+                "የካርቴላ ምርጫ ጊዜ አልቋል።<br>እባክዎ ቀጣዩን ጨዋታ ይጠብቁ 👀";
+
+        }
+
+
+        const button =
+            document.getElementById(
+                "readyButton"
+            );
+
+        if(button){
+
+            button.style.display =
+                "none";
+
+        }
+
+
+        return;
+
+    }
+
+
+    /*
+     * If the player has not joined
+     * the shared match yet, join it now.
+     */
+
+    if(!playerReady){
+
+        await readyForGame();
+
+        return;
+
+    }
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT start the game locally here.
+     *
+     * readyForGame() is already waiting
+     * for the SERVER to report PLAYING.
+     *
+     * If we reach here, the player is
+     * already waiting for the shared match.
+     */
+
+    console.log(
+        "⏳ Selection finished. Waiting for server to start shared match."
+    );
+
+}
   
   
 /* =====================================================  

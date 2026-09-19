@@ -1145,10 +1145,6 @@ app.post("/api/game/start", auth, async (req, res) => {
         alreadyJoined: true  
       });  
     }  
-
-    // -----------------------------  
-    // CALCULATE COST & CHECK BALANCE  
-    // -----------------------------  
     const cost = num(stake * cards);  
     const user = db.prepare(`  
       SELECT id, balance, play_balance FROM users WHERE id = ?  
