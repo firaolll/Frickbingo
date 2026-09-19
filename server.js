@@ -1090,6 +1090,146 @@ app.post("/api/match/create", auth, (req, res) => {
     }
 
 });
+
+app.get("/api/match/:matchId", auth, (req, res) => {
+
+    try {
+
+        const matchId =
+            Number.parseInt(
+                req.params.matchId,
+                10
+            );
+
+        if (
+            !Number.isInteger(matchId) ||
+            matchId <= 0
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                error: "Invalid match ID"
+            });
+
+        }
+
+        const match =
+            db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE id = ?
+            `).get(
+                matchId
+            );
+
+        if (!match) {
+
+            return res.status(404).json({
+                success: false,
+                error: "Match not found"
+            });
+
+        }
+
+        const players =
+            db.prepare(`
+                SELECT
+                    g.id,
+                    g.user_id,
+                    g.stake,
+                    g.cards,
+                    g.status,
+                    g.result,
+                    g.prize
+                FROM games g
+                WHERE g.match_id = ?
+                ORDER BY g.id ASC
+            `).all(
+                matchId
+            );
+
+        const myGame =
+            players.find(
+                player =>
+                    Number(player.user_id) ===
+                    Number(req.user.id)
+            ) || null;
+
+        return res.json({
+
+            success: true,
+
+            match: {
+
+                id:
+                    match.id,
+
+                gameId:
+                    match.id,
+
+                sharedGameId:
+                    match.id,
+
+                stake:
+                    num(match.stake),
+
+                status:
+                    match.status,
+
+                countdown:
+                    getMatchCountdown(match),
+
+                prizePool:
+                    num(match.prize_pool),
+
+                winnerCount:
+                    match.winner_count,
+
+                paid:
+                    Boolean(match.paid),
+
+                playerCount:
+                    players.length,
+
+                minPlayers:
+                    MIN_PLAYERS,
+
+                createdAt:
+                    match.created_at,
+
+                startedAt:
+                    match.started_at,
+
+                finishedAt:
+                    match.finished_at
+
+            },
+
+            players,
+
+            myGame
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "MATCH INFO ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+
+            success: false,
+
+            error:
+                "Could not load match"
+
+        });
+
+    }
+
+});
 // ======================================================
 // JOIN / START GAME
 // ======================================================
