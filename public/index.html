@@ -2311,6 +2311,7 @@ button{
 </div>  
 
 
+
 </section>  <!-- ==================================================  
      PROFILE  
 ================================================== -->  <section id="profilePage" class="page">  <header class="app-header">  
@@ -3465,120 +3466,153 @@ function createCardElement(cardNumber){
    READY FOR GAME  
 ================================================== */  
   
-async function readyForGame(){  
-  
-    if(selectedCards.length === 0){  
-  
-        showToast(  
-            "Please select at least one card."  
-        );  
-  
-        return;  
-  
-    }  
-  
-  
-    if(selectedCards.length > MAX_CARDS){  
-  
-        showToast(  
-            "Maximum 2 cards."  
-        );  
-  
-        return;  
-  
-    }  
-  
-  
-    const playBalance =  
-        getPlayBalance();  
-  
-  
-    if(  
-        playBalance < selectedStake  
-    ){  
-  
-        showToast(  
-            "Insufficient play wallet balance."  
-        );  
-  
-        return;  
-  
-    }  
-  
-  
-    showLoading();  
-  
-  
-    try{  
-  
-        const data =  
-            await apiFetch(  
-                "/api/game/start",  
-                {  
-                    method:"POST",  
-  
-                    body:JSON.stringify({  
-  
-                        stake:selectedStake,  
-  
-                        cards:selectedCards.length  
-  
-                    })  
-  
-                }  
-            );  
-  
-  
-        currentGameId =  
-            data.gameId ||  
-            data.game_id ||  
-            data.id ||  
-            data.game?.id ||  
-            null;  
-  
-  
-        if(  
-            !currentGameId  
-        ){  
-  
-            console.log(  
-                "Game response:",  
-                data  
-            );  
-  
-        }  
-  
-  
-        fakePlayers =  
-            Number(  
-                data.players ||  
-                data.playerCount ||  
-                data.player_count ||  
-                1  
-            );  
-  
-  
-        updateGameStats();  
-  
-        beginActualGame();  
-  
-  
-    }catch(error){  
-  
-        showToast(  
-            error.message ||  
-            "Unable to start game."  
-        );  
-  
-    }finally{  
-  
-        hideLoading();  
-  
-    }  
-  
-}  
-  
-  
+async function readyForGame(){
+
+    if(selectedCards.length === 0){
+
+        showToast(
+            "Please select at least one card."
+        );
+
+        return;
+
+    }
+
+
+    if(selectedCards.length > MAX_CARDS){
+
+        showToast(
+            "Maximum 2 cards."
+        );
+
+        return;
+
+    }
+
+
+    const playBalance =
+        getPlayBalance();
+
+
+    if(
+        playBalance < selectedStake
+    ){
+
+        showToast(
+            "Insufficient play wallet balance."
+        );
+
+        return;
+
+    }
+
+
+    showLoading();
+
+
+    try{
+
+        const data =
+            await apiFetch(
+                "/api/game/start",
+                {
+                    method:"POST",
+
+                    body:JSON.stringify({
+
+                        stake:selectedStake,
+
+                        cards:selectedCards.length
+
+                    })
+
+                }
+            );
+
+
+        console.log(
+            "🎮 GAME START RESPONSE:",
+            data
+        );
+
+
+        /*
+         * IMPORTANT:
+         * The backend gives every player
+         * the shared match/game ID.
+         */
+
+        currentGameId =
+            data.sharedGameId ||
+            data.shared_game_id ||
+            data.matchId ||
+            data.match_id ||
+            data.gameId ||
+            data.game_id ||
+            data.id ||
+            data.game?.id ||
+            null;
+
+
+        if(!currentGameId){
+
+            console.error(
+                "❌ No shared Game/Match ID:",
+                data
+            );
+
+            showToast(
+                "Unable to join multiplayer game."
+            );
+
+            return;
+
+        }
+
+
+        fakePlayers =
+            Number(
+                data.playerCount ||
+                data.player_count ||
+                data.players ||
+                1
+            );
+
+
+        updateGameStats();
+
+
+        /*
+         * DO NOT start the local game here.
+         *
+         * Wait until the SERVER says
+         * the shared match is PLAYING.
+         */
+
+        await waitForSharedGameStart(
+            currentGameId
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "❌ READY GAME ERROR:",
+            error
+        );
+
+        showToast(
+            error.message ||
+            "Unable to start game."
+        );
+
+    }finally{
+
+        hideLoading();
+
+    }
+
+}
 /* ==================================================  
    BEGIN GAME  
 ================================================== */  
@@ -5701,241 +5735,434 @@ function startSelectionTimer() {
    START GAME  
 ===================================================== */  
   
-async function readyForGame(){  
-  
- if(playerReady){  
-  
-  return;  
-  
- }  
-  
-  
- if(!selectedStake){  
-  
-  showToast(  
-   "Please select a stake."  
-  );  
-  
-  return;  
-  
- }  
-  
-  
- if(!selectedCards.length){  
-  
-  showToast(  
-   "Please select at least one Bingo card."  
-  );  
-  
-  haptic("error");  
-  
-  return;  
-  
- }  
-  
-  
- const cost =  
-  selectedStake *  
-  selectedCards.length;  
-  
-  
- if(mainBalance < cost){  
-  
-  showToast(  
-   `You need ${cost.toFixed(2)} ETB.`  
-  );  
-  
-  haptic("error");  
-  
-  return;  
-  
- }  
-  
-  
- const button =  
-  document.getElementById(  
-   "readyButton"  
-  );  
-  
-  
- try{  
-  
-  if(button){  
-  
-   button.disabled = true;  
-   button.textContent =  
-    "CONNECTING...";  
-  
-  }  
-  
-  
-  if(!telegramInitData){  
-  
-   initializeTelegram();  
-  
-  }  
-  
-  
-  if(!telegramInitData){  
-  
-   throw new Error(  
-    "Open Frick Bingo from the Telegram bot."  
-   );  
-  
-  }  
-  
-  
-  const data =  
-   await api(  
-    "/api/game/start",  
-    {  
-     method:"POST",  
-     body:JSON.stringify({  
-  
-      stake:selectedStake,  
-  
-      cards:selectedCards.length  
-  
-     })  
-    }  
-   );  
-  
-  
-  console.log(  
-   "GAME START:",  
-   data  
-  );  
-  
-  
-  if(  
-   !data ||  
-   data.ok === false  
-  ){  
-  
-   throw new Error(  
-    data?.error ||  
-    "Server rejected the game."  
-   );  
-  
-  }  
-  
-  
-  /*  
-   Accept different common server response formats.  
-  */  
-  
-  const gameId =  
-   data.gameId ??  
-   data.game_id ??  
-   data.id ??  
-   data.game?.id ??  
-   null;  
-  
-  
-  if(!gameId){  
-  
-   throw new Error(  
-     data?.error ||
-    "Server created no game ID."  
-   );  
-  
-  }  
-  
-  
-  currentGameId =  
-   gameId;  
-  
-  
-  if(  
-   data.mainBalance !== undefined  
-  ){  
-  
-   mainBalance =  
-    Number(  
-     data.mainBalance  
-    );  
-  
-  }  
-  
-  
-  if(  
-   data.playBalance !== undefined  
-  ){  
-  
-   playBalance =  
-    Number(  
-     data.playBalance  
-    );  
-  
-  }  
-  
-  
-  playerReady = true;  
-  
-  
-  if(button){  
-  
-   button.disabled = false;  
-   button.textContent = "✓ READY";  
-   button.classList.add("ready");  
-  
-  }  
-  
-  
-  updateAllDisplays();  
-  
-  haptic("success");  
-  
-  
-  /*  
-   If timer already ended,  
-   immediately enter the game.  
-  */  
-  
-  if(selectionSeconds <= 0){  
-  
-   beginActualGame();  
-  
-  }else{  
-  
-   showToast(  
-    "You are ready. Game starts when selection time ends."  
-   );  
-  
-  }  
-  
-  
- }catch(error){  
-  
-  console.error(  
-   "GAME START ERROR:",  
-   error  
-  );  
-  
-  
-  playerReady = false;  
-  
-  
-  if(button){  
-  
-   button.disabled = false;  
-   button.textContent = "START GAME";  
-   button.classList.remove("ready");  
-  
-  }  
-  
-  
-  showToast(  
-   error.message ||  
-   "Could not start game."  
-  );  
-  
-  haptic("error");  
-  
- }  
-  
-}  
-  
+async function readyForGame(){
+
+    if(playerReady){
+        return;
+    }
+
+
+    if(!selectedStake){
+
+        showToast(
+            "Please select a stake."
+        );
+
+        return;
+
+    }
+
+
+    if(!selectedCards.length){
+
+        showToast(
+            "Please select at least one Bingo card."
+        );
+
+        haptic("error");
+
+        return;
+
+    }
+
+
+    const cost =
+        selectedStake *
+        selectedCards.length;
+
+
+    if(mainBalance < cost){
+
+        showToast(
+            `You need ${cost.toFixed(2)} ETB.`
+        );
+
+        haptic("error");
+
+        return;
+
+    }
+
+
+    const button =
+        document.getElementById(
+            "readyButton"
+        );
+
+
+    try{
+
+        if(button){
+
+            button.disabled = true;
+
+            button.textContent =
+                "CONNECTING...";
+
+        }
+
+
+        if(!telegramInitData){
+
+            initializeTelegram();
+
+        }
+
+
+        if(!telegramInitData){
+
+            throw new Error(
+                "Open Frick Bingo from the Telegram bot."
+            );
+
+        }
+
+
+        const data =
+            await api(
+                "/api/game/start",
+                {
+                    method:"POST",
+
+                    body:JSON.stringify({
+
+                        stake:selectedStake,
+
+                        cards:selectedCards.length
+
+                    })
+                }
+            );
+
+
+        console.log(
+            "🎮 GAME START:",
+            data
+        );
+
+
+        if(
+            !data ||
+            data.ok === false
+        ){
+
+            throw new Error(
+                data?.error ||
+                "Server rejected the game."
+            );
+
+        }
+
+
+        /*
+         * IMPORTANT:
+         * Use the SHARED match ID first.
+         */
+
+        const gameId =
+            data.sharedGameId ??
+            data.shared_game_id ??
+            data.matchId ??
+            data.match_id ??
+            data.gameId ??
+            data.game_id ??
+            data.id ??
+            data.game?.id ??
+            null;
+
+
+        if(!gameId){
+
+            throw new Error(
+                data?.error ||
+                "Server created no shared game ID."
+            );
+
+        }
+
+
+        currentGameId =
+            gameId;
+
+
+        /*
+         * Store the server balances
+         * if they were returned.
+         */
+
+        if(
+            data.mainBalance !== undefined
+        ){
+
+            mainBalance =
+                Number(
+                    data.mainBalance
+                );
+
+        }
+
+
+        if(
+            data.playBalance !== undefined
+        ){
+
+            playBalance =
+                Number(
+                    data.playBalance
+                );
+
+        }
+
+
+        /*
+         * Player successfully joined
+         * the shared match.
+         */
+
+        playerReady = true;
+
+
+        if(button){
+
+            button.disabled = false;
+
+            button.textContent =
+                "✓ READY";
+
+            button.classList.add(
+                "ready"
+            );
+
+        }
+
+
+        updateAllDisplays();
+
+        haptic("success");
+
+
+        /*
+         * DO NOT call beginActualGame()
+         * just because the local timer ended.
+         *
+         * The SERVER decides when the
+         * shared match becomes PLAYING.
+         */
+
+        await waitForSharedGameStart(
+            currentGameId
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "❌ GAME START ERROR:",
+            error
+        );
+
+
+        playerReady = false;
+
+
+        if(button){
+
+            button.disabled = false;
+
+            button.textContent =
+                "START GAME";
+
+            button.classList.remove(
+                "ready"
+            );
+
+        }
+
+
+        showToast(
+            error.message ||
+            "Could not start game."
+        );
+
+        haptic("error");
+
+    }
+
+}
+
+async function waitForSharedGameStart(matchId){
+
+    console.log(
+        "⏳ Waiting for shared match:",
+        matchId
+    );
+
+
+    let attempts = 0;
+
+    const MAX_ATTEMPTS = 120;
+
+
+    while(attempts < MAX_ATTEMPTS){
+
+        attempts++;
+
+
+        try{
+
+            const data =
+                await api(
+                    "/api/match/" +
+                    matchId
+                );
+
+
+            console.log(
+                "🔄 SHARED MATCH:",
+                data
+            );
+
+
+            const match =
+                data.match ||
+                data;
+
+
+            const players =
+                Number(
+                    match.playerCount ??
+                    match.player_count ??
+                    data.playerCount ??
+                    data.player_count ??
+                    1
+                );
+
+
+            console.log(
+                "👥 PLAYERS:",
+                players
+            );
+
+
+            fakePlayers =
+                players;
+
+
+            updateGameStats();
+
+
+            const status =
+                String(
+                    match.status ??
+                    data.status ??
+                    ""
+                ).toUpperCase();
+
+
+            console.log(
+                "🎮 MATCH STATUS:",
+                status
+            );
+
+
+            /*
+             * Only the SERVER can authorize
+             * the actual shared game.
+             */
+
+            if(status === "PLAYING"){
+
+                console.log(
+                    "🟢 SHARED GAME STARTED:",
+                    matchId
+                );
+
+
+                currentGameId =
+                    match.id ||
+                    match.gameId ||
+                    match.sharedGameId ||
+                    matchId;
+
+
+                beginActualGame();
+
+                return;
+
+            }
+
+
+            /*
+             * Match is still waiting.
+             */
+
+            if(status === "WAITING"){
+
+                showToast(
+                    `Waiting for players... ${players}`
+                );
+
+            }
+
+
+            /*
+             * Match ended before starting.
+             */
+
+            if(
+                status === "FINISHED" ||
+                status === "CANCELLED"
+            ){
+
+                throw new Error(
+                    "This match is no longer available."
+                );
+
+            }
+
+
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        1000
+                    )
+            );
+
+
+        }catch(error){
+
+            console.error(
+                "❌ MATCH CHECK ERROR:",
+                error
+            );
+
+
+            /*
+             * Don't immediately kill the
+             * player's waiting state because
+             * one status request failed.
+             */
+
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        1000
+                    )
+            );
+
+        }
+
+    }
+
+
+    throw new Error(
+        "Waiting for players timed out."
+    );
+
+}
+
   
 /* =====================================================  
    FINISH SELECTION  
