@@ -2813,9 +2813,10 @@ if (WEB_APP_URL) {
         [
             {
                 text: "🎮 Play",
-                web_app: {
-                    url: WEB_APP_URL
-                }
+                web_app: {  
+                        url:  
+                            WEB_APP_URL  
+                    }  
             },
             {
                 text: "💰 Balance",
