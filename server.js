@@ -2813,10 +2813,7 @@ if (WEB_APP_URL) {
         [
             {
                 text: "🎮 Play",
-                web_app: {  
-                        url:  
-                            WEB_APP_URL  
-                    }  
+                callback_data: "play"  
             },
             {
                 text: "💰 Balance",
