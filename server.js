@@ -376,13 +376,13 @@ function processWaitingMatches() {
                 if (result.changes === 1) {
 
                     db.prepare(`
-                        UPDATE games
-                        SET status = 'PLAYING'
-                        WHERE match_id = ?
-                          AND status = 'STARTED'
-                    `).run(
-                        match.id
-                    );
+    UPDATE games
+    SET status = 'PLAYING'
+    WHERE match_id = ?
+      AND status = 'WAITING'
+`).run(
+    match.id
+);
 
 
                     console.log(
