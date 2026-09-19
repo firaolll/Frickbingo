@@ -217,8 +217,8 @@ button{
     background:  
         linear-gradient(  
             145deg,  
-            var(--purple),  
-            #5421bd  
+            #7c3cff,  
+            #5517d1  
         );  
   
     border-color:#bd94ff;  
@@ -5319,58 +5319,6 @@ function closeRules(){
  document  
   .getElementById("rulesModal")  
   ?.classList.remove("show");  
-  
-}  
-  
-  
-/* =====================================================  
-   STAKE  
-===================================================== */  
-  
-function chooseStake(  
- value,  
- button  
-){  
-  
- const stake =  
-  Number(value);  
-  
-  
- if(  
-  ![10,20].includes(stake)  
- ){  
-  
-  showToast(  
-   "Invalid stake."  
-  );  
-  
-  return;  
-  
- }  
-  
-  
- selectedStake =  
-  stake;  
-  
-  
- document  
-  .querySelectorAll(".stake-btn")  
-  .forEach(  
-   item=>  
-    item.classList.remove("selected")  
-  );  
-  
-  
- if(button){  
-  
-  button.classList.add("selected");  
-  
- }  
-  
-  
- haptic();  
-  
- updateAllDisplays();  
   
 }  
   
