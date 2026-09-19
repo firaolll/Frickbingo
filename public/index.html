@@ -3633,66 +3633,114 @@ function createCardElement(cardNumber){
    GAME STATS  
 ================================================== */  
   
-function updateGameStats(){  
-  
-    const players =  
-        document.getElementById(  
-            "gamePlayers"  
-        );  
-  
-    const stake =  
-        document.getElementById(  
-            "gameStake"  
-        );  
-  
-    const pot =  
-        document.getElementById(  
-            "gamePot"  
-        );  
-  
-    const players2 =  
-        document.getElementById(  
-            "playerCount2"  
-        );  
-  
-  
-    if(players){  
-  
-        players.textContent =  
-            fakePlayers;  
-  
-    }  
-  
-  
-    if(stake){  
-  
-        stake.textContent =  
-            selectedStake +  
-            " ETB";  
-  
-    }  
-  
-  
-    if(pot){  
-  
-        pot.textContent =  
-            money(  
-                selectedStake *  
-                fakePlayers  
-            ) +  
-            " ETB";  
-  
-    }  
-  
-  
-    if(players2){  
-  
-        players2.textContent =  
-            fakePlayers;  
-  
-    }  
-  
-}  
+function updateGameStats(){
+
+    const players =
+        document.getElementById(
+            "gamePlayers"
+        );
+
+    const stake =
+        document.getElementById(
+            "gameStake"
+        );
+
+    const players2 =
+        document.getElementById(
+            "playerCount2"
+        );
+
+    const derash =
+        document.getElementById(
+            "derashDisplay"
+        );
+
+    const winnerPotential =
+        document.getElementById(
+            "winnerPotential"
+        );
+
+
+    /* =========================
+       PLAYER COUNT
+       ========================= */
+
+    const playerCount =
+        Math.max(
+            1,
+            Number(fakePlayers || 1)
+        );
+
+
+    if(players){
+
+        players.textContent =
+            playerCount;
+
+    }
+
+
+    if(players2){
+
+        players2.textContent =
+            playerCount;
+
+    }
+
+
+    /* =========================
+       STAKE
+       ========================= */
+
+    if(stake){
+
+        stake.textContent =
+            selectedStake +
+            " ETB";
+
+    }
+
+
+    /* =========================
+       DERASH
+       Stake × Cards × 85%
+       ========================= */
+
+    const cardCount =
+        Math.max(
+            1,
+            Number(selectedCards.length || 1)
+        );
+
+
+    const derashAmount =
+        Number(selectedStake || 0) *
+        cardCount *
+        0.85;
+
+
+    if(derash){
+
+        derash.textContent =
+            money(derashAmount) +
+            " ETB";
+
+    }
+
+
+    /* =========================
+       WINNER POTENTIAL
+       ========================= */
+
+    if(winnerPotential){
+
+        winnerPotential.textContent =
+            money(derashAmount) +
+            " ETB";
+
+    }
+
+}
   
   
 /* ==================================================  
@@ -6126,104 +6174,41 @@ function range(
    SHUFFLE  
 ===================================================== */  
   
-function shuffle(  
- array,  
- random  
-){  
-  
- for(  
-  let i=array.length-1;  
-  i>0;  
-  i--  
- ){  
-  
-  const j =  
-   Math.floor(  
-    random() *  
-    (i+1)  
-   );  
-  
-  
-  [  
-   array[i],  
-   array[j]  
-  ] =  
-  [  
-   array[j],  
-   array[i]  
-  ];  
-  
- }  
-  
-}  
+function shuffle(array){
+
+    for(
+        let i = array.length - 1;
+        i > 0;
+        i--
+    ){
+
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
+
+        [
+            array[i],
+            array[j]
+        ] = [
+            array[j],
+            array[i]
+        ];
+    }
+
+    return array;
+}
   
   
 /* =====================================================  
    BINGO CARD  
 ===================================================== */  
   
-function generateBingoCard(seed){  
-  
- const columns = [  
-  
-  range(1,15),  
-  range(16,30),  
-  range(31,45),  
-  range(46,60),  
-  range(61,75)  
-  
- ];  
-  
-  
- const random =  
-  seededRandom(seed);  
-  
-  
- const card =  
-  Array.from(  
-   {length:5},  
-   ()=>Array(5)  
-  );  
-  
-  
- for(  
-  let column=0;  
-  column<5;  
-  column++  
- ){  
-  
-  const numbers =  
-   [...columns[column]];  
-  
-  
-  shuffle(  
-   numbers,  
-   random  
-  );  
-  
-  
-  for(  
-   let row=0;  
-   row<5;  
-   row++  
-  ){  
-  
-   card[row][column] =  
-    numbers[row];  
-  
-  }  
-  
- }  
-  
-  
- card[2][2] =  
-  "FREE";  
-  
-  
- return card;  
-  
-}  
-  
+function generateBingoCard(cardNumber){
+
+    return generateBingoNumbers(cardNumber);
+
+}
 /* =====================================================  
    CREATE CARD  
 ===================================================== */  
