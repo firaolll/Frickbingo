@@ -3414,7 +3414,7 @@ ${sms}
 // ======================================================
 
 bot.onText(  
-    /^(\/withdraw|💸 Withdraw$/,
+    /^(\/withdraw|💸 Withdraw)$/,
     async msg => {  
 
         await sendBotMessage(  
