@@ -2772,7 +2772,7 @@ return db.prepare(`
 if (bot) {
 
 bot.onText(  
-    /^\/start$/,  
+    /^(\/start|⭐ Start)$/, 
     async msg => {  
 
         const chatId =  
@@ -2899,6 +2899,7 @@ bot.onText(
         try {  
 
             const user =  
+
                 getOrCreateUser(  
                     msg.from  
                 );  
@@ -2947,7 +2948,7 @@ ${num(user.play_balance)} ETB`
 // ======================================================
 
 bot.onText(  
-    /^(\/balance |💰 Balance)$/,  
+    /^(\/balance|💰 Balance)$/,  
     async msg => {  
 
         try {  
@@ -3213,7 +3214,7 @@ the prize is divided equally among them.
 // ======================================================
 
 bot.onText(
-    /^(\/deposit |➕ Deposit)$/,
+    /^(\/deposit|➕ Deposit)$/,
     async msg => {
 
         const chatId = msg.chat.id;
@@ -3413,7 +3414,7 @@ ${sms}
 // ======================================================
 
 bot.onText(  
-    /^\/withdraw$/,  
+    /^(\/withdraw|💸 Withdraw$/,
     async msg => {  
 
         await sendBotMessage(  
