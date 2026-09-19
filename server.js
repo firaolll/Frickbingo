@@ -2813,7 +2813,9 @@ if (WEB_APP_URL) {
         [
             {
                 text: "🎮 Play",
-                callback_data: "play"  
+                 web_app: {  
+                    url: WEB_APP_URL  
+                    }   
             },
             {
                 text: "💰 Balance",
@@ -2863,9 +2865,9 @@ ${num(user.play_balance)} ETB
 Choose an option below.`,
 
 {  
-                    reply_markup: {  
-                        keyboard,  
-                        resize_keyboard: true  
+                    reply_markup: {   
+                         inline_keyboard: keyboard
+
                     }  
                 }  
             );  
@@ -3034,8 +3036,7 @@ bot.onText(
                                 text:  
                                     "🎮 PLAY FRICK BINGO",  
                                 web_app: {  
-                                    url:  
-                                        WEB_APP_URL  
+                                    url: WEB_APP_URL  
                                 }  
                             }  
                         ]  
