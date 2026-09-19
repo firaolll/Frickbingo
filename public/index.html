@@ -3437,110 +3437,55 @@ function seededRandom(seed){
 }  
   
   
-function generateBingoNumbers(cardNumber){  
-  
-    const result = [];  
-  
-    const ranges = [  
-  
-        [1,15],  
-        [16,30],  
-        [31,45],  
-        [46,60],  
-        [61,75]  
-  
-    ];  
-  
-  
-    for(  
-        let column=0;  
-        column<5;  
-        column++  
-    ){  
-  
-        const [min,max] =  
-            ranges[column];  
-  
-        const numbers = [];  
-  
-        for(  
-            let n=min;  
-            n<=max;  
-            n++  
-        ){  
-  
-            numbers.push(n);  
-  
-        }  
-  
-  
-        let seed =  
-            Number(cardNumber) *  
-            100 +  
-            column *  
-            31;  
-  
-  
-        for(  
-            let i=numbers.length-1;  
-            i>0;  
-            i--  
-        ){  
-  
-            const r =  
-                Math.floor(  
-                    seededRandom(  
-                        seed + i  
-                    ) *  
-                    (i+1)  
-                );  
-  
-            [  
-                numbers[i],  
-                numbers[r]  
-            ] =  
-            [  
-                numbers[r],  
-                numbers[i]  
-            ];  
-  
-        }  
-  
-  
-        result.push(  
-            numbers.slice(0,5)  
-        );  
-  
-    }  
-  
-  
-    const grid = [];  
-  
-    for(let row=0;row<5;row++){  
-  
-        for(let column=0;column<5;column++){  
-  
-            if(row === 2 && column === 2){  
-  
-                grid.push("FREE");  
-  
-            }else{  
-  
-                grid.push(  
-                    result[column][row]  
-                );  
-  
-            }  
-  
-        }  
-  
-    }  
-  
-    return grid;  
-  
-}  
-  
-  
+function generateBingoNumbers(cardNumber){
+
+    const ranges = [
+        [1, 15],
+        [16, 30],
+        [31, 45],
+        [46, 60],
+        [61, 75]
+    ];
+
+    const grid = [];
+
+    for(let row = 0; row < 5; row++){
+
+        for(let column = 0; column < 5; column++){
+
+            if(row === 2 && column === 2){
+
+                grid.push("FREE");
+
+                continue;
+            }
+
+            const [min, max] =
+                ranges[column];
+
+            const seed =
+                Number(cardNumber) * 1000 +
+                column * 100 +
+                row;
+
+            const value =
+                min +
+                (
+                    Math.abs(
+                        Math.sin(seed) * 100000
+                    ) %
+                    (max - min + 1)
+                );
+
+            grid.push(
+                Math.floor(value)
+            );
+
+        }
+    }
+
+    return grid;
+}
 /* ==================================================  
    CREATE CARD ELEMENT  
 ================================================== */  
