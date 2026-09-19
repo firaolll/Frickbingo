@@ -2809,12 +2809,6 @@ async function refreshBalance() {
 
         if (data.success) {
 
-            alert(
-    "BALANCE FROM SERVER\n" +
-    "Main: " + data.mainBalance + " ETB\n" +
-    "Play: " + data.playBalance + " ETB"
-);
-
             if (!currentUser) {
                 currentUser = {};
             }
@@ -5030,11 +5024,6 @@ function initializeTelegram() {
         console.log(
             "INIT DATA UNSAFE:",
             tg.initDataUnsafe
-        );
-
-        alert(
-            "INIT DATA LENGTH: " +
-            telegramInitData.length
         );
 
         console.log(
