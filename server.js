@@ -3009,7 +3009,7 @@ user.play_balance
 // ======================================================
 
 bot.onText(  
-    /^\/play$/,  
+    /^(\/play|🎮 Play)$/,  
     async msg => {  
 
         if (!WEB_APP_URL) {  
