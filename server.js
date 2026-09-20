@@ -1252,7 +1252,48 @@ if (!existingGame) {
     }
 
 }
+        const playerCount =
+            db.prepare(`
+                SELECT COUNT(*) AS count
+                FROM games
+                WHERE match_id = ?
+                  AND status = 'WAITING'
+            `).get(matchId).count;
 
+        const updatedMatch =
+            db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE id = ?
+            `).get(matchId);
+
+        return res.json({
+            success: true,
+            matchId: matchId,
+            gameId: matchId,
+            sharedGameId: matchId,
+            stake: num(updatedMatch.stake),
+            status: updatedMatch.status,
+            playerCount: playerCount,
+            minPlayers: MIN_PLAYERS,
+            countdown: getMatchCountdown(updatedMatch)
+        });
+
+    } catch (err) {
+
+        console.error(
+            "MATCH CREATE ERROR:",
+            err
+        );
+
+        return res.status(500).json({
+            success: false,
+            error: "Failed to create/join match"
+        });
+
+    }
+
+});
 app.get("/api/match/:matchId", auth, (req, res) => {
 
     try {
