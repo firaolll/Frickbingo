@@ -642,27 +642,29 @@ button{
         0 0 6px var(--purple);  
 }  
   
-.bingo-cell{  
-    aspect-ratio:1;  
-  
-    display:flex;  
-    align-items:center;  
-    justify-content:center;  
-  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #2b2347,  
-            #171129  
-        );  
-  
-    border:1px solid #3c315d;  
-  
-    border-radius:4px;  
-  
-    font-size:8px;  
-    font-weight:1000;  
-}  
+.bingo-cell{
+    aspect-ratio:1;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #2b2347,
+            #171129
+        );
+
+    border:1px solid #3c315d;
+
+    border-radius:4px;
+
+    font-size:8px;
+    font-weight:1000;
+
+    color:#fff;
+}
   
 .bingo-cell.free{  
     background:  
@@ -2598,7 +2600,8 @@ let actualGameStarted = false;
 let selectionSeconds = 30;
 let selectionTimer = null; 
 let autoInterval = null;
-let selectionTimerInterval = null; 
+let autoMode = false; 
+let selectionTimerInterval = null;
 let profileData = {};
 let winnerShown = false;  
 
@@ -3486,93 +3489,6 @@ function generateBingoNumbers(cardNumber){
 
     return grid;
 }
-/* ==================================================  
-   CREATE CARD ELEMENT  
-================================================== */  
-  
-function createCardElement(cardNumber){  
-  
-    const wrapper =  
-        document.createElement("div");  
-  
-    wrapper.className =  
-        "bingo-card";  
-  
-    wrapper.dataset.cardNumber =  
-        cardNumber;  
-  
-  
-    const header =  
-        document.createElement("div");  
-  
-    header.className =  
-        "bingo-header";  
-  
-  
-    ["B","I","N","G","O"]  
-        .forEach(letter=>{  
-  
-            const div =  
-                document.createElement("div");  
-  
-            div.textContent =  
-                letter;  
-  
-            header.appendChild(div);  
-  
-        });  
-  
-  
-    wrapper.appendChild(header);  
-  
-  
-    const grid =  
-        document.createElement("div");  
-  
-    grid.className =  
-        "bingo-grid";  
-  
-  
-    const numbers =  
-        generateBingoNumbers(  
-            cardNumber  
-        );  
-  
-  
-    numbers.forEach(value=>{  
-  
-        const cell =  
-            document.createElement("div");  
-  
-        cell.className =  
-            "bingo-cell";  
-  
-        cell.dataset.number =  
-            value;  
-  
-        cell.textContent =  
-            value === "FREE"  
-                ? "★"  
-                : value;  
-  
-        if(value === "FREE"){  
-  
-            cell.classList.add(  
-                "free"  
-            );  
-  
-        }  
-  
-        grid.appendChild(cell);  
-  
-    });  
-  
-  
-    wrapper.appendChild(grid);  
-  
-    return wrapper;  
-  
-}  
 
 /* ==================================================  
    GAME STATS  
@@ -3875,39 +3791,6 @@ function updateLastCalled(number){
             number;  
   
     }  
-  
-}  
-  
-  
-/* ==================================================  
-   MARK PLAYER CARDS  
-================================================== */  
-  
-function renderPlayingPage(){  
-  
-    const container =  
-        document.getElementById(  
-            "playingCards"  
-        );  
-  
-    if(!container) return;  
-  
-    container.innerHTML = "";  
-  
-  
-    selectedCards.forEach(cardNumber=>{  
-  
-        const card =  
-            createCardElement(  
-                cardNumber  
-            );  
-  
-        container.appendChild(card);  
-  
-    });  
-  
-  
-    markPlayerCards();  
   
 }  
   
@@ -6158,122 +6041,96 @@ function generateBingoCard(cardNumber){
    CREATE CARD  
 ===================================================== */  
   
-function createCardElement(number){  
-  
- const card =  
-  generateBingoCard(number);  
-  
-  
- const wrapper =  
-  document.createElement("div");  
-  
-  
- wrapper.className =  
-  "bingo-card";  
-  
-  
- const header =  
-  document.createElement("div");  
-  
-  
- header.className =  
-  "bingo-header";  
-  
-  
- [  
-  "B",  
-  "I",  
-  "N",  
-  "G",  
-  "O"  
- ]  
- .forEach(  
-  letter=>{  
-  
-   const element =  
-    document.createElement("div");  
-  
-   element.textContent =  
-    letter;  
-  
-   header.appendChild(  
-    element  
-   );  
-  
-  }  
- );  
-  
-  
- wrapper.appendChild(  
-  header  
- );  
-  
-  
- const grid =  
-  document.createElement("div");  
-  
-  
- grid.className =  
-  "bingo-grid";  
-  
-  
- for(  
-  let row=0;  
-  row<5;  
-  row++  
- ){  
-  
-  for(  
-   let column=0;  
-   column<5;  
-   column++  
-  ){  
-  
-   const cell =  
-    document.createElement("div");  
-  
-  
-   cell.className =  
-    "bingo-cell";  
-  
-  
-   const value =  
-    card[row][column];  
-  
-  
-   cell.textContent =  
-    String(value);  
-  
-  
-   cell.dataset.value =  
-    String(value);  
-  
-  
-   if(value === "FREE"){  
-  
-    cell.classList.add("free");  
-  
-   }  
-  
-  
-   grid.appendChild(  
-    cell  
-   );  
-  
-  }  
-  
- }  
-  
-  
- wrapper.appendChild(  
-  grid  
- );  
-  
-  
- return wrapper;  
-  
-}  
-  
+function createCardElement(cardNumber){
+
+    const numbers =
+        generateBingoNumbers(cardNumber);
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        "bingo-card";
+
+    wrapper.dataset.cardNumber =
+        cardNumber;
+
+
+    const header =
+        document.createElement("div");
+
+    header.className =
+        "bingo-header";
+
+    [
+        "B",
+        "I",
+        "N",
+        "G",
+        "O"
+    ].forEach(letter => {
+
+        const element =
+            document.createElement("div");
+
+        element.textContent =
+            letter;
+
+        header.appendChild(
+            element
+        );
+
+    });
+
+    wrapper.appendChild(
+        header
+    );
+
+
+    const grid =
+        document.createElement("div");
+
+    grid.className =
+        "bingo-grid";
+
+
+    numbers.forEach(value => {
+
+        const cell =
+            document.createElement("div");
+
+        cell.className =
+            "bingo-cell";
+
+        cell.textContent =
+            value === "FREE"
+                ? "★"
+                : String(value);
+
+        cell.dataset.value =
+            String(value);
+
+        if(value === "FREE"){
+
+            cell.classList.add(
+                "free"
+            );
+
+        }
+
+        grid.appendChild(
+            cell
+        );
+
+    });
+
+
+    wrapper.appendChild(
+        grid
+    );
+
+    return wrapper;
+}
   
 /* =====================================================  
    BINGO LETTER  
