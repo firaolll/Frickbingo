@@ -4119,36 +4119,6 @@ async function finishGame(playerWon=false){
    WINNER  
 ================================================== */  
   
-function showWinner(  
-    name,  
-    prize  
-){  
-  
-    document  
-        .getElementById(  
-            "winnerName"  
-        )  
-        .textContent =  
-            name;  
-  
-    document  
-        .getElementById(  
-            "winnerPrize"  
-        )  
-        .textContent =  
-            money(prize) +  
-            " ETB";  
-  
-  
-    document  
-        .getElementById(  
-            "winnerOverlay"  
-        )  
-        .classList.add("show");  
-  
-}  
-  
-  
 function closeWinner(){  
   
     document  
@@ -7084,34 +7054,9 @@ async function showWinner(
     "GAME FINISH:",  
     data  
    );  
-  
-  
-   if(  
-    data.mainBalance !== undefined  
-   ){  
-  
-    mainBalance =  
-     Number(  
-      data.mainBalance  
-     );  
-  
-   }  
-  
-  
-   if(  
-    data.playBalance !== undefined  
-   ){  
-  
-    playBalance =  
-     Number(  
-      data.playBalance  
-     );  
-  
-   }  
-  
-  
-   updateAllDisplays();  
-  
+await refreshBalance();
+
+updateAllDisplays();
   }  
   
  }catch(error){  
@@ -7196,7 +7141,7 @@ function showLoserScreen(){
     stopAutoCalling();
 
     actualGameStarted = false;
-
+    refreshBalance();
     const overlay =
         document.getElementById(
             "winnerOverlay"
