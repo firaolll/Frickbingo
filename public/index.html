@@ -933,8 +933,8 @@ button{
 }
 
 .game-board-panel{
-    height:calc(100vh - 105px);
-    min-height:350px;
+    height:calc(100vh - 145px);
+    min-height:390px;
     padding:7px;
     display:flex;
     flex-direction:column;
@@ -991,8 +991,11 @@ button{
     flex:1;
 
     display:grid;
+
     grid-template-columns:repeat(5,minmax(0,1fr));
     grid-template-rows:repeat(15,minmax(0,1fr));
+
+    grid-auto-flow:column;
 
     gap:4px;
     min-height:0;
@@ -1051,7 +1054,7 @@ button{
 .called-count-card,
 .controls-card,
 .your-card-section{
-    padding:6px;
+    padding:5px;
     margin-bottom:0;
 
     background:linear-gradient(145deg,#1b1237,#08050f);
@@ -1337,7 +1340,7 @@ button{
     }
 
     .game-board-panel{
-        height:calc(100vh - 100px);
+        height:calc(100vh - 135px);
         min-height:350px;
     }
 
@@ -1386,7 +1389,7 @@ button{
     }
 
     .game-board-panel{
-        height:calc(100vh - 95px);
+        height:calc(100vh - 130px);
         padding:5px;
     }
 
