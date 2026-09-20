@@ -4702,70 +4702,68 @@ CLOSE
    HAPTIC  
 ===================================================== */  
   
-function haptic(type="light"){  
-  
- try{  
-  
-  if(  
-   tg &&  
-   tg.HapticFeedback  
-  ){  
-  
-   if(type === "success"){  
-  
-    tg.HapticFeedback.notificationOccurred("success");  
-  
-   }else if(type === "error"){  
-  
-    tg.HapticFeedback.notificationOccurred("error");  
-  
-   }else{  
-  
-    tg.HapticFeedback.impactOccurred("light");  
-  
-   }  
-  
-  }  
-  
- }catch(e){}  
-  
-}  
-  
+function haptic(type = "light") {
+
+    try {
+
+        if (
+            tg &&
+            tg.HapticFeedback
+        ) {
+
+            if (type === "success") {
+
+                tg.HapticFeedback
+                    .notificationOccurred("success");
+
+            } else if (type === "error") {
+
+                tg.HapticFeedback
+                    .notificationOccurred("error");
+
+            } else {
+
+                tg.HapticFeedback
+                    .impactOccurred("light");
+
+            }
+
+        }
+
+    } catch (e) {}
+
+}
   
 /* =====================================================  
    TOAST  
-===================================================== */  
-  
-let toastTimer = null;  
-  
-function showToast(message){  
-  
- const toast =  
-  document.getElementById("toast");  
-  
- if(!toast){  
-  
-  return;  
-  
- }  
-  
- toast.textContent =  
-  String(message || "");  
-  
- toast.classList.add("show");  
-  
- clearTimeout(toastTimer);  
-  
- toastTimer =  
-  setTimeout(  
-   ()=>{  
-    toast.classList.remove("show");  
-   },  
-   2600  
-  );  
-  
-}  
-  
+===================================================== */   
+let toastTimer = null;
+
+function showToast(message) {
+
+    const toast =
+        document.getElementById("toast");
+
+    if (!toast) {
+        return;
+    }
+
+    toast.textContent =
+        String(message || "");
+
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer =
+        setTimeout(
+            () => {
+                toast.classList.remove("show");
+            },
+            2600
+        );
+
+}
   
 /* =====================================================  
    TELEGRAM INITIALIZATION  
