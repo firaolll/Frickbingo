@@ -756,378 +756,711 @@ button{
     font-size:9px;  
 }  
   
-/* =========================  
-   PAGE 3 GAME  
-========================= */  
-  
-.game-page{  
-    padding:7px;  
-}  
-  
-.game-stats{  
-    display:grid;  
-  
-    grid-template-columns:  
-        repeat(4,1fr);  
-  
-    gap:4px;  
-  
-    margin-bottom:6px;  
-}  
-  
-.game-stat{  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #20183a,  
-            #100c20  
-        );  
-  
-    border:1px solid #382858;  
-  
-    border-radius:8px;  
-  
-    padding:6px 2px;  
-  
-    text-align:center;  
-}  
-  
-.game-stat-label{  
-    color:var(--muted);  
-    font-size:7px;  
-}  
-  
-.game-stat-value{  
-    margin-top:2px;  
-  
-    font-size:10px;  
-    font-weight:1000;  
-}  
-  
-/* =========================  
-   GAME BOARD  
-========================= */  
-  
-.game-board-panel{  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #1a1235,  
-            #090611  
-        );  
-  
-    border:1px solid rgba(124,60,255,.45);  
-  
-    border-radius:14px;  
-  
-    padding:7px;  
-  
-    box-shadow:  
-        0 0 15px rgba(124,60,255,.17);  
-  
-    height:273px;  
-  
-    overflow:hidden;  
-}  
-  
-.panel-title{  
-    display:flex;  
-    justify-content:space-between;  
-    align-items:center;  
-  
-    margin-bottom:4px;  
-  
-    font-size:10px;  
-    font-weight:1000;  
-}  
-  
-.panel-title span:last-child{  
-    color:var(--muted);  
-    font-size:8px;  
-}  
-  
-.big-board-header,  
-.big-board{  
-    display:grid;  
-  
-    grid-template-columns:  
-        repeat(5,1fr);  
-  
-    gap:3px;  
-}  
-  
-.big-board-header{  
-    margin-bottom:3px;  
-}  
-  
-.big-board-header div{  
-    text-align:center;  
-  
-    color:var(--purple3);  
-  
-    font-size:11px;  
-    font-weight:1000;  
-  
-    padding:3px;  
-  
-    border-radius:5px;  
-  
-    background:  
-        rgba(124,60,255,.13);  
-  
-    text-shadow:  
-        0 0 7px var(--purple);  
-}  
-  
-.big-board{  
-    height:229px;  
-  
-    overflow:hidden;  
-}  
-  
-.board-number{  
-    aspect-ratio:1;  
-  
-    display:flex;  
-    align-items:center;  
-    justify-content:center;  
-  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #27203f,  
-            #151027  
-        );  
-  
-    border:1px solid #3b3156;  
-  
-    border-radius:4px;  
-  
-    font-size:9px;  
-    font-weight:1000;  
-  
-    color:#fff;  
-}  
-  
-.board-number.called{  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #6531c7,  
-            #351276  
-        );  
-  
-    border-color:#a66eff;  
-  
-    color:#fff;  
-  
-    box-shadow:  
-        0 0 5px rgba(124,60,255,.35);  
-}  
-  
-.board-number.last-called{  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #35e59a,  
-            #0b7750  
-        );  
-  
-    border-color:#65ffc0;  
-  
-    color:#fff;  
-  
-    box-shadow:  
-        0 0 9px rgba(53,229,154,.65);  
-  
-    transform:scale(1.08);  
-  
-    z-index:2;  
-}  
-  
-/* =========================  
-   LIVE CONTROLS  
-========================= */  
-  
-.live-controls{  
-    display:grid;  
-  
-    grid-template-columns:  
-        1.4fr 1fr 1fr;  
-  
-    gap:5px;  
-  
-    margin-top:6px;  
-}  
-  
-.live-control{  
-    min-height:34px;  
-  
-    display:flex;  
-    align-items:center;  
-    justify-content:center;  
-  
-    gap:4px;  
-  
-    border-radius:8px;  
-  
-    background:#171029;  
-  
-    border:1px solid #382858;  
-  
-    color:#fff;  
-  
-    font-size:8px;  
-    font-weight:1000;  
-}  
-  
-.live-control strong{  
-    color:var(--purple3);  
-}  
-  
-.switch{  
-    width:24px;  
-    height:13px;  
-  
-    border-radius:20px;  
-  
-    background:#382e50;  
-  
-    position:relative;  
-}  
-  
-.switch::after{  
-    content:"";  
-  
-    position:absolute;  
-  
-    top:2px;  
-    left:2px;  
-  
-    width:9px;  
-    height:9px;  
-  
-    border-radius:50%;  
-  
-    background:#999;  
-  
-    transition:.2s;  
-}  
-  
-.switch.on{  
-    background:var(--purple);  
-}  
-  
-.switch.on::after{  
-    left:13px;  
-    background:#fff;  
-}  
-  
-/* =========================  
-   CALL BUTTON  
-========================= */  
-  
-.call-button{  
-    width:100%;  
-    height:38px;  
-  
-    margin-top:6px;  
-  
-    border-radius:9px;  
-  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #35c989,  
-            #13714e  
-        );  
-  
-    border:1px solid #68ffc1;  
-  
-    color:#fff;  
-  
-    font-size:11px;  
-    font-weight:1000;  
-  
-    box-shadow:  
-        0 0 12px rgba(53,229,154,.3);  
-}  
-  
-.call-button:disabled{  
-    opacity:.4;  
-    box-shadow:none;  
-}  
-  
-/* =========================  
-   YOUR CARD  
-========================= */  
-  
-.your-card-section{  
-    margin-top:6px;  
-  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #1a1235,  
-            #090611  
-        );  
-  
-    border:1px solid rgba(124,60,255,.45);  
-  
-    border-radius:14px;  
-  
-    padding:7px;  
-  
-    box-shadow:  
-        0 0 15px rgba(124,60,255,.17);  
-}  
-  
-.your-card-title{  
-    display:flex;  
-    justify-content:space-between;  
-    align-items:center;  
-  
-    margin-bottom:5px;  
-  
-    font-size:10px;  
-    font-weight:1000;  
-}  
-  
-.your-card-title span:last-child{  
-    color:var(--muted);  
-    font-size:8px;  
-}  
-  
-.playing-cards{  
-    display:flex;  
-    gap:6px;  
-  
-    overflow-x:auto;  
-  
-    scrollbar-width:none;  
-}  
-  
-.playing-cards::-webkit-scrollbar{  
-    display:none;  
-}  
-  
-.playing-cards .bingo-card{  
-    flex:0 0 110px;  
-}  
-  
-/* =========================  
-   LAST CALLED  
-========================= */  
-  
-.last-called-box{  
-    position:relative;  
-}  
-  
-.last-ball{  
-    color:var(--green)!important;  
-    font-size:10px!important;  
-}  
-  
+```css
+/* =========================================================
+   FRICK BINGO — PAGE 3 GAME UI
+   ========================================================= */
+
+#page3.game-page {
+    padding-bottom: 25px;
+}
+
+
+/* =========================
+   LIVE HEADER
+   ========================= */
+
+#page3 .game-live-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#page3 .live-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 15px;
+    font-weight: 1000;
+    color: #ffffff;
+    letter-spacing: .5px;
+}
+
+#page3 .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff3b5f;
+    box-shadow: 0 0 12px rgba(255,59,95,.9);
+}
+
+
+/* =========================
+   TOP STATS
+   ========================= */
+
+#page3 .game-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 10px 0 12px;
+}
+
+#page3 .game-stat {
+    min-height: 58px;
+    padding: 8px 6px;
+    border-radius: 14px;
+    text-align: center;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(40,31,72,.96),
+            rgba(18,13,36,.96)
+        );
+
+    border: 1px solid rgba(164,120,255,.20);
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.25),
+        inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+#page3 .game-stat-label {
+    font-size: 9px;
+    font-weight: 900;
+    color: #9890b4;
+    letter-spacing: .8px;
+}
+
+#page3 .game-stat-value {
+    margin-top: 4px;
+    font-size: 18px;
+    font-weight: 1000;
+    color: #ffffff;
+}
+
+
+/* =========================
+   MAIN SPLIT LAYOUT
+   ========================= */
+
+#page3 .bingo-game-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(230px, .8fr);
+    gap: 12px;
+    align-items: start;
+}
+
+
+/* =========================
+   LEFT — BINGO BOARD
+   ========================= */
+
+#page3 .bingo-board-side {
+    min-width: 0;
+}
+
+#page3 .game-board-panel {
+    padding: 12px;
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30,22,55,.98),
+            rgba(10,8,24,.98)
+        );
+
+    border: 1px solid rgba(164,120,255,.25);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+#page3 .panel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    font-size: 12px;
+    font-weight: 1000;
+    letter-spacing: .7px;
+    color: #ffffff;
+}
+
+#page3 .board-live-status {
+    padding: 4px 8px;
+    border-radius: 20px;
+
+    color: #62f7a5;
+    background: rgba(48,211,123,.10);
+    border: 1px solid rgba(48,211,123,.25);
+
+    font-size: 9px;
+}
+
+
+/* B I N G O HEADERS */
+
+#page3 .big-board-header {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+#page3 .big-board-header div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 32px;
+    border-radius: 9px;
+
+    background: rgba(104,75,180,.24);
+    border: 1px solid rgba(164,120,255,.18);
+
+    color: #d9caff;
+    font-size: 14px;
+    font-weight: 1000;
+}
+
+
+/* BIG NUMBER BOARD */
+
+#page3 .big-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+}
+
+
+/*
+   These rules make the board cells visually strong
+   without changing the existing JS-generated cells.
+*/
+
+#page3 .big-board .bingo-cell {
+    aspect-ratio: 1 / 1;
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #211943,
+            #15102c
+        );
+
+    border: 1px solid rgba(150,115,235,.24);
+
+    color: #f5f1ff;
+    font-size: clamp(13px, 3vw, 19px);
+    font-weight: 1000;
+
+    transition:
+        transform .15s ease,
+        background .15s ease,
+        border-color .15s ease,
+        box-shadow .15s ease;
+}
+
+#page3 .big-board .bingo-cell.marked,
+#page3 .big-board .bingo-cell.called,
+#page3 .big-board .bingo-cell.active {
+    background:
+        linear-gradient(
+            145deg,
+            #6545b5,
+            #39236f
+        );
+
+    border-color: rgba(190,157,255,.75);
+
+    box-shadow:
+        0 0 12px rgba(130,88,255,.28);
+
+    transform: scale(.96);
+}
+
+
+/* WINNING CELL */
+
+#page3 .big-board .bingo-cell.winner,
+#page3 .big-board .bingo-cell.winning,
+#page3 .big-board .bingo-cell.win {
+    background:
+        linear-gradient(
+            145deg,
+            #19c978,
+            #087d48
+        ) !important;
+
+    border-color: #72ffb2 !important;
+
+    color: #ffffff !important;
+
+    box-shadow:
+        0 0 18px rgba(35,230,130,.65) !important;
+}
+
+
+/* =========================
+   RIGHT SIDE
+   ========================= */
+
+#page3 .game-control-side {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+
+/* CURRENT BALL */
+
+#page3 .current-ball-card {
+    position: relative;
+    overflow: hidden;
+
+    min-height: 145px;
+    padding: 15px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 20px;
+
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(125,79,255,.30),
+            transparent 55%
+        ),
+        linear-gradient(
+            145deg,
+            #241750,
+            #100b22
+        );
+
+    border: 1px solid rgba(165,125,255,.35);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.35);
+}
+
+#page3 .current-ball-label {
+    position: relative;
+    z-index: 2;
+
+    font-size: 9px;
+    font-weight: 1000;
+    letter-spacing: 1.2px;
+    color: #aaa1c4;
+}
+
+#page3 .current-ball {
+    position: relative;
+    z-index: 2;
+
+    margin-top: 5px;
+
+    font-size: clamp(36px, 7vw, 58px);
+    line-height: 1;
+    font-weight: 1000;
+
+    color: #ffffff;
+
+    text-shadow:
+        0 0 20px rgba(164,120,255,.65);
+}
+
+#page3 .ball-ring {
+    position: absolute;
+
+    width: 110px;
+    height: 110px;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(173,133,255,.12);
+    box-shadow:
+        0 0 35px rgba(119,78,255,.15);
+}
+
+
+/* CALLED COUNT */
+
+#page3 .called-count-card {
+    padding: 13px 14px;
+    border-radius: 17px;
+
+    background: rgba(24,18,45,.95);
+    border: 1px solid rgba(164,120,255,.20);
+}
+
+#page3 .called-count-label {
+    font-size: 9px;
+    font-weight: 900;
+    color: #938aa9;
+    letter-spacing: .8px;
+}
+
+#page3 .called-count-value {
+    margin-top: 3px;
+
+    font-size: 25px;
+    font-weight: 1000;
+    color: #ffffff;
+}
+
+#page3 .called-divider {
+    color: #776d8e;
+    margin: 0 2px;
+}
+
+#page3 .called-progress {
+    height: 5px;
+    margin-top: 8px;
+
+    overflow: hidden;
+    border-radius: 10px;
+
+    background: rgba(255,255,255,.07);
+}
+
+#page3 .called-progress-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+
+    background: linear-gradient(
+        90deg,
+        #754cff,
+        #ad7cff
+    );
+}
+
+#page3 .last-called-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-top: 9px;
+
+    font-size: 10px;
+    color: #817892;
+}
+
+#page3 .last-called-line strong {
+    color: #ffffff;
+    font-size: 12px;
+}
+
+
+/* =========================
+   CONTROLS
+   ========================= */
+
+#page3 .controls-card {
+    padding: 11px;
+    border-radius: 17px;
+
+    background: rgba(24,18,45,.95);
+    border: 1px solid rgba(164,120,255,.20);
+}
+
+#page3 .control-title {
+    margin: 2px 3px 7px;
+
+    font-size: 9px;
+    font-weight: 1000;
+    letter-spacing: 1px;
+    color: #938aa9;
+}
+
+#page3 .game-control-row {
+    width: 100%;
+    min-height: 47px;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 7px 8px;
+    margin-bottom: 5px;
+
+    border: 1px solid rgba(164,120,255,.12);
+    border-radius: 12px;
+
+    background: rgba(255,255,255,.025);
+    color: #ffffff;
+
+    cursor: pointer;
+}
+
+#page3 .control-icon {
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: rgba(119,78,255,.15);
+}
+
+#page3 .control-text {
+    flex: 1;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#page3 .control-text strong {
+    font-size: 11px;
+}
+
+#page3 .control-text small {
+    margin-top: 2px;
+    font-size: 8px;
+    color: #817892;
+}
+
+
+/* CALL BUTTON */
+
+#page3 .call-button {
+    width: 100%;
+    min-height: 49px;
+
+    margin-top: 5px;
+
+    border: 0;
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8054ff,
+            #5a31c9
+        );
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 1000;
+    letter-spacing: .5px;
+
+    box-shadow:
+        0 8px 20px rgba(105,63,235,.30);
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   PLAYER CARDS
+   ========================= */
+
+#page3 .your-card-section {
+    padding: 11px;
+
+    border-radius: 17px;
+
+    background: rgba(24,18,45,.95);
+    border: 1px solid rgba(164,120,255,.20);
+}
+
+#page3 .your-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 9px;
+
+    font-size: 10px;
+    font-weight: 1000;
+    color: #ffffff;
+}
+
+#page3 .auto-mark-badge {
+    padding: 4px 7px;
+
+    border-radius: 20px;
+
+    color: #63f5a6;
+    background: rgba(45,205,120,.09);
+    border: 1px solid rgba(45,205,120,.20);
+
+    font-size: 8px;
+}
+
+
+/*
+   Two selected cards become a clean vertical stack
+   on the right side.
+*/
+
+#page3 .playing-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+#page3 .playing-cards > * {
+    width: 100%;
+}
+
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width: 700px) {
+
+    #page3 .bingo-game-layout {
+        grid-template-columns: minmax(0, 1.25fr) minmax(150px, .75fr);
+        gap: 8px;
+    }
+
+    #page3 .game-stat {
+        min-height: 53px;
+    }
+
+    #page3 .game-stat-value {
+        font-size: 16px;
+    }
+
+    #page3 .game-board-panel {
+        padding: 8px;
+        border-radius: 16px;
+    }
+
+    #page3 .big-board {
+        gap: 3px;
+    }
+
+    #page3 .big-board-header {
+        gap: 3px;
+    }
+
+    #page3 .big-board-header div {
+        height: 27px;
+        font-size: 11px;
+    }
+
+    #page3 .big-board .bingo-cell {
+        min-height: 34px;
+        border-radius: 6px;
+        font-size: 12px;
+    }
+
+    #page3 .current-ball-card {
+        min-height: 112px;
+        border-radius: 15px;
+    }
+
+    #page3 .current-ball {
+        font-size: 35px;
+    }
+
+    #page3 .called-count-value {
+        font-size: 20px;
+    }
+
+    #page3 .controls-card,
+    #page3 .your-card-section,
+    #page3 .called-count-card {
+        border-radius: 14px;
+    }
+
+}
+
+
+/* VERY SMALL PHONES */
+
+@media (max-width: 430px) {
+
+    #page3 .game-stats {
+        gap: 4px;
+    }
+
+    #page3 .game-stat {
+        padding: 6px 3px;
+        border-radius: 10px;
+    }
+
+    #page3 .game-stat-label {
+        font-size: 7px;
+    }
+
+    #page3 .game-stat-value {
+        font-size: 14px;
+    }
+
+    #page3 .bingo-game-layout {
+        grid-template-columns: minmax(0, 1.18fr) minmax(135px, .82fr);
+        gap: 6px;
+    }
+
+    #page3 .game-control-side {
+        gap: 6px;
+    }
+
+    #page3 .current-ball-card {
+        min-height: 100px;
+        padding: 8px;
+    }
+
+    #page3 .current-ball {
+        font-size: 30px;
+    }
+
+    #page3 .current-ball-label {
+        font-size: 7px;
+    }
+
+    #page3 .called-count-card,
+    #page3 .controls-card,
+    #page3 .your-card-section {
+        padding: 8px;
+    }
+
+    #page3 .control-text small {
+        display: none;
+    }
+
+    #page3 .game-control-row {
+        min-height: 39px;
+        padding: 5px;
+    }
+
+    #page3 .control-icon {
+        width: 25px;
+        height: 25px;
+    }
+
+    #page3 .call-button {
+        min-height: 42px;
+        font-size: 9px;
+    }
+
+}
+
 /* =========================  
    BOTTOM NAV  
 ========================= */  
