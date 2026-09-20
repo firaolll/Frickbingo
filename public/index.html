@@ -2596,6 +2596,7 @@ let playerReady = false
 let fakePlayers = 1;  
 let mainBalance = 0;
 let playBalance = 0;
+let telegramInitData = "";
 let actualGameStarted = false;
 let selectionSeconds = 30;
 let selectionTimer = null; 
@@ -2612,10 +2613,6 @@ let winnerShown = false;
 ===================================================== */  
   
 const SERVER_URL = "https://frickbingo.onrender.com";
-
-let telegramInitData = "";
-
-
 if (tg) {
 
     tg.ready();
