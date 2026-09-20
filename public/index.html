@@ -3134,18 +3134,19 @@ async function selectCard(number){
 
     selectedCards.push(number);
 
-    if(selectedCards.length === 1){
+console.log(
+    "SELECTED CARDS:",
+    selectedCards
+);
 
-    console.log(
-        "FIRST CARD SELECTED"
-    );
-
-    await joinSharedMatch();
+if(selectedCards.length === 1){
+    console.log("FIRST CARD SELECTED");
+    
 }
+await joinSharedMatch();
 
-    haptic();
-
-    updateSelectedCards();
+haptic();
+updateSelectedCards();
 }
 
 
