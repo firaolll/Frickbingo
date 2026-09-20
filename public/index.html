@@ -2600,7 +2600,8 @@ let actualGameStarted = false;
 let selectionSeconds = 30;
 let selectionTimer = null; 
 let autoInterval = null;
-let autoMode = false; 
+let autoMode = false;
+let winnerResetInterval = null; 
 let selectionTimerInterval = null;
 let profileData = {};
 let winnerShown = false;  
@@ -3157,6 +3158,7 @@ async function joinSharedMatch(){
 
         console.log(
             "🌐 Joining shared match..."
+            await refreshBalance();
         );
 
         if(!selectedStake){

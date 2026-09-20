@@ -968,39 +968,174 @@ app.post("/api/match/create", auth, (req, res) => {
         ================================================
         */
 
-        if (!existingGame) {
+       if (!existingGame) {
 
-            db.prepare(`
-                INSERT INTO games (
-                    match_id,
-                    user_id,
+    // -----------------------------------------------
+    // GET FRESH USER BALANCE
+    // -----------------------------------------------
+
+    const user =
+        db.prepare(`
+            SELECT
+                balance,
+                play_balance
+            FROM users
+            WHERE id = ?
+        `).get(
+            userId
+        );
+
+    if (!user) {
+
+        return res.status(404).json({
+            success: false,
+            error: "User not found"
+        });
+
+    }
+
+    // -----------------------------------------------
+    // TOTAL GAME COST
+    // -----------------------------------------------
+
+    const cost =
+        num(
+            stake * cards
+        );
+
+    // -----------------------------------------------
+    // CHECK COMBINED BALANCE
+    // -----------------------------------------------
+
+    const totalBalance =
+        num(
+            Number(user.balance || 0) +
+            Number(user.play_balance || 0)
+        );
+
+    if (
+        totalBalance < cost
+    ) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            error:
+                "Insufficient balance",
+
+            required:
+                cost,
+
+            mainBalance:
+                num(user.balance),
+
+            playBalance:
+                num(user.play_balance)
+
+        });
+
+    }
+
+    // -----------------------------------------------
+    // PLAY BALANCE FIRST
+    // -----------------------------------------------
+
+    const playSpent =
+        Math.min(
+            Number(user.play_balance || 0),
+            cost
+        );
+
+    const mainSpent =
+        num(
+            cost -
+            playSpent
+        );
+
+    // -----------------------------------------------
+    // DEDUCT + CREATE GAME ATOMICALLY
+    // -----------------------------------------------
+
+    const transaction =
+        db.transaction(() => {
+
+            const updateBalance =
+                db.prepare(`
+                    UPDATE users
+
+                    SET
+                        balance =
+                            balance - ?,
+
+                        play_balance =
+                            play_balance - ?
+
+                    WHERE id = ?
+
+                    AND balance >= ?
+
+                    AND play_balance >= ?
+                `).run(
+                    mainSpent,
+                    playSpent,
+                    userId,
+                    mainSpent,
+                    playSpent
+                );
+
+            if (
+                updateBalance.changes !== 1
+            ) {
+
+                throw new Error(
+                    "Balance changed. Please try again."
+                );
+
+            }
+
+            const gameResult =
+                db.prepare(`
+                    INSERT INTO games (
+                        match_id,
+                        user_id,
+                        stake,
+                        cards,
+                        result,
+                        prize,
+                        status,
+                        play_spent,
+                        main_spent
+                    )
+                    VALUES (
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        'WAITING',
+                        0,
+                        'WAITING',
+                        ?,
+                        ?
+                    )
+                `).run(
+                    matchId,
+                    userId,
                     stake,
                     cards,
-                    result,
-                    prize,
-                    status,
-                    play_spent,
-                    main_spent
-                )
-                VALUES (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    'WAITING',
-                    0,
-                    'WAITING',
-                    0,
-                    0
-                )
-            `).run(
-                matchId,
-                userId,
-                stake,
-                cards
+                    playSpent,
+                    mainSpent
+                );
+
+            return Number(
+                gameResult.lastInsertRowid
             );
 
-        }
+        });
+
+    transaction();
+
+}
 
         /*
         ================================================
