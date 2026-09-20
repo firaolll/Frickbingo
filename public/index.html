@@ -6215,16 +6215,57 @@ async function callNumber(){
                 }
             );
 
+        if(!data){
+            return;
+        }
+
+        // ------------------------------------------------
+        // SHARED MATCH ALREADY FINISHED
+        // ------------------------------------------------
+
         if(
-            !data ||
-            !data.success
+            String(
+                data.matchStatus || ""
+            ).toUpperCase() ===
+            "FINISHED"
         ){
+
+            console.log(
+                "🏁 MATCH FINISHED"
+            );
+
+            stopAutoCalling();
+
+            actualGameStarted = false;
+
+            /*
+             * If this player has not already
+             * shown the winner screen,
+             * they are the loser.
+             */
+
+            if(!winnerShown){
+
+                showLoserScreen();
+
+            }
+
+            return;
+        }
+
+        if(!data.success){
+
             console.error(
                 "❌ CALL NUMBER ERROR:",
                 data
             );
+
             return;
         }
+
+        // ------------------------------------------------
+        // UPDATE SHARED NUMBERS
+        // ------------------------------------------------
 
         const number =
             Number(
@@ -6232,26 +6273,32 @@ async function callNumber(){
             );
 
         if(
+            Array.isArray(
+                data.calledBalls
+            )
+        ){
+
+            calledNumbers =
+                data.calledBalls.map(
+                    Number
+                );
+
+        }
+
+        if(
             !Number.isInteger(number) ||
             number < 1 ||
             number > 75
         ){
+
             return;
+
         }
 
-        /*
-         * Use the server's shared
-         * called-number list.
-         */
-        calledNumbers =
-            Array.isArray(
-                data.calledBalls
-            )
-                ? data.calledBalls.map(Number)
-                : [];
-
         const letter =
-            getBingoLetter(number);
+            getBingoLetter(
+                number
+            );
 
         const display =
             document.getElementById(
@@ -6675,154 +6722,181 @@ function isMarked(value){
 /* =====================================================  
    WINNING CARD  
 ===================================================== */  
-  
-function isWinningCard(card){  
-  
- /* ROWS */  
-  
- for(  
-  let row=0;  
-  row<5;  
-  row++  
- ){  
-  
-  if(  
-   card[row].every(  
-    isMarked  
-   )  
-  ){  
-  
-   return true;  
-  
-  }  
-  
- }  
-  
-  
- /* COLUMNS */  
-  
- for(  
-  let column=0;  
-  column<5;  
-  column++  
- ){  
-  
-  let complete = true;  
-  
-  
-  for(  
-   let row=0;  
-   row<5;  
-   row++  
-  ){  
-  
-   if(  
-    !isMarked(  
-     card[row][column]  
-    )  
-   ){  
-  
-    complete = false;  
-  
-    break;  
-  
-   }  
-  
-  }  
-  
-  
-  if(complete){  
-  
-   return true;  
-  
-  }  
-  
- }  
-  
-  
- /* DIAGONAL 1 */  
-  
- if(  
-  [0,1,2,3,4].every(  
-   index=>  
-    isMarked(  
-     card[index][index]  
-    )  
-  )  
- ){  
-  
-  return true;  
-  
- }  
-  
-  
- /* DIAGONAL 2 */  
-  
- if(  
-  [0,1,2,3,4].every(  
-   index=>  
-    isMarked(  
-     card[index][4-index]  
-    )  
-  )  
- ){  
-  
-  return true;  
-  
- }  
-  
-  
- /* FOUR CORNERS */  
-  
- return (  
-  isMarked(card[0][0]) &&  
-  isMarked(card[0][4]) &&  
-  isMarked(card[4][0]) &&  
-  isMarked(card[4][4])  
- );  
-  
-}  
-  
+function isWinningCard(card){
+
+    if(!Array.isArray(card)){
+        return false;
+    }
+
+    /*
+     * Convert flat 25-cell card
+     * into a 5 x 5 grid if necessary.
+     */
+    let grid = card;
+
+    if(
+        card.length === 25 &&
+        !Array.isArray(card[0])
+    ){
+
+        grid = [];
+
+        for(let row = 0; row < 5; row++){
+
+            grid.push(
+                card.slice(
+                    row * 5,
+                    row * 5 + 5
+                )
+            );
+
+        }
+
+    }
+
+    if(
+        !Array.isArray(grid) ||
+        grid.length !== 5
+    ){
+        return false;
+    }
+
+
+    /* ROWS */
+
+    for(
+        let row = 0;
+        row < 5;
+        row++
+    ){
+
+        if(
+            grid[row].every(
+                isMarked
+            )
+        ){
+
+            return true;
+
+        }
+
+    }
+
+
+    /* COLUMNS */
+
+    for(
+        let column = 0;
+        column < 5;
+        column++
+    ){
+
+        let complete = true;
+
+        for(
+            let row = 0;
+            row < 5;
+            row++
+        ){
+
+            if(
+                !isMarked(
+                    grid[row][column]
+                )
+            ){
+
+                complete = false;
+                break;
+
+            }
+
+        }
+
+        if(complete){
+            return true;
+        }
+
+    }
+
+
+    /* DIAGONAL 1 */
+
+    if(
+        [0,1,2,3,4].every(
+            index =>
+                isMarked(
+                    grid[index][index]
+                )
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    /* DIAGONAL 2 */
+
+    if(
+        [0,1,2,3,4].every(
+            index =>
+                isMarked(
+                    grid[index][4 - index]
+                )
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    /* FOUR CORNERS */
+
+    return (
+        isMarked(grid[0][0]) &&
+        isMarked(grid[0][4]) &&
+        isMarked(grid[4][0]) &&
+        isMarked(grid[4][4])
+    );
+
+}
   
 /* =====================================================  
    CHECK WINNER  
 ===================================================== */  
   
-function checkWinner(){  
-  
- if(winnerShown){  
-  
-  return;  
-  
- }  
-  
-  
- for(  
-  const number of selectedCards  
- ){  
-  
-  const card =  
-   generateBingoCard(number);  
-  
-  
-  if(  
-   isWinningCard(card)  
-  ){  
-  
-   showWinner(  
-    number,  
-    card  
-   );  
-  
-   return;  
-  
-  }  
-  
- }  
-  
-}  
-  
-  
+function checkWinner(){
+
+    if(winnerShown){
+        return;
+    }
+
+    for(
+        const number of selectedCards
+    ){
+
+        const card =
+            generateBingoNumbers(
+                number
+            );
+
+        if(
+            isWinningCard(card)
+        ){
+
+            showWinner(
+                number,
+                card
+            );
+
+            return;
+
+        }
+
+    }
+
+}
 /* =====================================================  
    SHOW WINNER  
 ===================================================== */  
@@ -7113,8 +7187,124 @@ async function showWinner(
   );  
   
 }  
-  
-  
+
+
+function showLoserScreen(){
+
+    winnerShown = true;
+
+    stopAutoCalling();
+
+    actualGameStarted = false;
+
+    const overlay =
+        document.getElementById(
+            "winnerOverlay"
+        );
+
+    const winnerName =
+        document.getElementById(
+            "winnerName"
+        );
+
+    const winnerNumber =
+        document.getElementById(
+            "winnerCardNumber"
+        );
+
+    const winnerPrize =
+        document.getElementById(
+            "winnerPrize"
+        );
+
+    if(winnerName){
+
+        winnerName.textContent =
+            "GAME OVER";
+
+    }
+
+    if(winnerNumber){
+
+        winnerNumber.textContent =
+            "Another player got BINGO";
+
+    }
+
+    if(winnerPrize){
+
+        winnerPrize.textContent =
+            "You Lose";
+
+    }
+
+    if(overlay){
+
+        overlay.classList.add(
+            "show"
+        );
+
+    }
+
+    haptic("error");
+
+    let seconds = 5;
+
+    const countdown =
+        document.getElementById(
+            "winnerCountdown"
+        );
+
+    if(countdown){
+
+        countdown.textContent =
+            String(seconds);
+
+    }
+
+    clearInterval(
+        winnerResetInterval
+    );
+
+    winnerResetInterval =
+        setInterval(
+            ()=>{
+
+                seconds--;
+
+                if(countdown){
+
+                    countdown.textContent =
+                        String(
+                            Math.max(
+                                0,
+                                seconds
+                            )
+                        );
+
+                }
+
+                if(seconds <= 0){
+
+                    clearInterval(
+                        winnerResetInterval
+                    );
+
+                    winnerResetInterval =
+                        null;
+
+                    resetAfterWinner();
+
+                }
+
+            },
+            1000
+        );
+
+}
+
+
+
 /* =====================================================  
    RESET AFTER WIN  
 ===================================================== */  

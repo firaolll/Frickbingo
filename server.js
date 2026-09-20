@@ -1251,10 +1251,12 @@ app.post("/api/match/:matchId/call", auth, (req, res) => {
             !Number.isInteger(matchId) ||
             matchId <= 0
         ) {
+
             return res.status(400).json({
                 success: false,
                 error: "Invalid match ID"
             });
+
         }
 
         const match =
@@ -1262,69 +1264,157 @@ app.post("/api/match/:matchId/call", auth, (req, res) => {
                 SELECT *
                 FROM matches
                 WHERE id = ?
-            `).get(matchId);
+            `).get(
+                matchId
+            );
 
         if (!match) {
+
             return res.status(404).json({
                 success: false,
                 error: "Match not found"
             });
+
         }
+
+        // ------------------------------------------------
+        // MATCH ALREADY FINISHED
+        // ------------------------------------------------
+
+        if (
+            String(match.status).toUpperCase() ===
+            "FINISHED"
+        ) {
+
+            let calledBalls = [];
+
+            try {
+
+                calledBalls =
+                    match.called_balls
+                        ? JSON.parse(
+                            match.called_balls
+                        )
+                        : [];
+
+            } catch (error) {
+
+                calledBalls = [];
+
+            }
+
+            if (!Array.isArray(calledBalls)) {
+                calledBalls = [];
+            }
+
+            return res.json({
+
+                success: true,
+
+                matchStatus:
+                    "FINISHED",
+
+                currentBall:
+                    match.current_ball
+                        ? Number(
+                            match.current_ball
+                        )
+                        : null,
+
+                calledBalls,
+
+                winnerCount:
+                    Number(
+                        match.winner_count || 0
+                    ),
+
+                paid:
+                    Boolean(match.paid)
+
+            });
+
+        }
+
+        // ------------------------------------------------
+        // MATCH MUST BE PLAYING
+        // ------------------------------------------------
 
         if (
             String(match.status).toUpperCase() !==
             "PLAYING"
         ) {
+
             return res.status(400).json({
+
                 success: false,
-                error: "Match is not playing"
+
+                error:
+                    "Match is not playing",
+
+                matchStatus:
+                    match.status
+
             });
+
         }
+
+        // ------------------------------------------------
+        // READ EXISTING CALLED NUMBERS
+        // ------------------------------------------------
 
         let calledBalls = [];
 
-        if (match.called_balls) {
-            try {
-                calledBalls =
-                    JSON.parse(
+        try {
+
+            calledBalls =
+                match.called_balls
+                    ? JSON.parse(
                         match.called_balls
-                    );
-            } catch (e) {
-                calledBalls = [];
-            }
+                    )
+                    : [];
+
+        } catch (error) {
+
+            calledBalls = [];
+
         }
 
         if (!Array.isArray(calledBalls)) {
             calledBalls = [];
         }
 
-        /*
-         * If another player already called
-         * a number, return that shared state.
-         */
+        calledBalls =
+            calledBalls.map(
+                Number
+            );
+
+        // ------------------------------------------------
+        // ALL 75 NUMBERS CALLED
+        // ------------------------------------------------
+
         if (
-            match.current_ball &&
-            calledBalls.length > 0
+            calledBalls.length >= 75
         ) {
 
             return res.json({
+
                 success: true,
+
+                matchStatus:
+                    "PLAYING",
+
                 currentBall:
-                    Number(match.current_ball),
+                    null,
+
                 calledBalls
+
             });
 
         }
 
-        if (calledBalls.length >= 75) {
-
-            return res.json({
-                success: true,
-                currentBall: null,
-                calledBalls
-            });
-
-        }
+        // ------------------------------------------------
+        // FIND AVAILABLE NUMBERS
+        // ------------------------------------------------
 
         const available = [];
 
@@ -1335,49 +1425,96 @@ app.post("/api/match/:matchId/call", auth, (req, res) => {
         ) {
 
             if (
-                !calledBalls.includes(number)
+                !calledBalls.includes(
+                    number
+                )
             ) {
-                available.push(number);
+
+                available.push(
+                    number
+                );
+
             }
 
         }
 
-        if (!available.length) {
+        if (
+            available.length === 0
+        ) {
 
             return res.json({
+
                 success: true,
-                currentBall: null,
+
+                matchStatus:
+                    "PLAYING",
+
+                currentBall:
+                    null,
+
                 calledBalls
+
             });
 
         }
 
-        const number =
-            available[
-                Math.floor(
-                    Math.random() *
-                    available.length
-                )
-            ];
+        // ------------------------------------------------
+        // SELECT NEXT SHARED NUMBER
+        // ------------------------------------------------
 
-        calledBalls.push(number);
+        const index =
+            Math.floor(
+                Math.random() *
+                available.length
+            );
+
+        const number =
+            available[index];
+
+        calledBalls.push(
+            number
+        );
+
+        // ------------------------------------------------
+        // SAVE SHARED NUMBER
+        // ------------------------------------------------
 
         db.prepare(`
             UPDATE matches
+
             SET
                 called_balls = ?,
                 current_ball = ?
+
             WHERE id = ?
         `).run(
-            JSON.stringify(calledBalls),
+
+            JSON.stringify(
+                calledBalls
+            ),
+
             number,
+
             matchId
+
         );
 
+        // ------------------------------------------------
+        // RETURN SHARED STATE
+        // ------------------------------------------------
+
         return res.json({
+
             success: true,
-            currentBall: number,
+
+            matchStatus:
+                "PLAYING",
+
+            currentBall:
+                number,
+
             calledBalls
+
         });
 
     } catch (error) {
@@ -1388,16 +1525,17 @@ app.post("/api/match/:matchId/call", auth, (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
+
             error:
                 "Could not call Bingo number"
+
         });
 
     }
 
 });
-
-
 // ======================================================
 // JOIN / START GAME
 // ======================================================
@@ -1637,340 +1775,325 @@ return res.json({
 
 function finalizeMatchPayout(matchId) {
 
-const transaction =  
-    db.transaction(() => {  
-
-        // ------------------------------------------------  
-        // GET MATCH  
-        // ------------------------------------------------  
-
-        const match =  
-            db.prepare(`  
-                SELECT *  
-                FROM matches  
-                WHERE id = ?  
-            `).get(  
-                matchId  
-            );  
-
-        if (!match) {  
-
-            throw new Error(  
-                "Match not found"  
-            );  
-
-        }  
-
-        // ------------------------------------------------  
-        // ALREADY PAID  
-        // ------------------------------------------------  
-
-        if (  
-            Number(match.paid) === 1  
-        ) {  
-
-            return {  
-                complete: true,  
-                alreadyPaid: true,  
-                totalCost:  
-                    num(match.prize_pool / WIN_RATE),  
-                totalPrize:  
-                    num(match.prize_pool),  
-                winnerCount:  
-                    Number(  
-                        match.winner_count  
-                    )  
-            };  
-
-        }  
-
-        // ------------------------------------------------  
-        // ALL PLAYERS IN THIS GAME  
-        // ------------------------------------------------  
-
-        const games =  
-            db.prepare(`  
-                SELECT  
-                    *  
-                FROM games  
-                WHERE match_id = ?  
-                ORDER BY id ASC  
-            `).all(  
-                matchId  
-            );  
-
-        if (  
-            games.length === 0  
-        ) {  
-
-            return {  
-                complete: false,  
-                reason:  
-                    "No players"  
-            };  
-
-        }  
-
-        // ------------------------------------------------  
-        // WAIT UNTIL EVERY PLAYER FINISHES  
-        // ------------------------------------------------  
-
-        const unfinished =  
-            games.filter(  
-                game =>  
-                    game.status !==  
-                    "FINISHED"  
-            );  
-
-        if (  
-            unfinished.length > 0  
-        ) {  
-
-            return {  
-
-                complete: false,  
-
-                reason:  
-                    "Waiting for all players",  
-
-                playerCount:  
-                    games.length,  
-
-                finishedCount:  
-                    games.length -  
-                    unfinished.length  
+    const transaction =
+        db.transaction(() => {
 
-            };  
+            // ------------------------------------------------
+            // GET MATCH
+            // ------------------------------------------------
 
-        }  
+            const match =
+                db.prepare(`
+                    SELECT *
+                    FROM matches
+                    WHERE id = ?
+                `).get(
+                    matchId
+                );
 
-        // ------------------------------------------------  
-        // TOTAL COST OF ALL PLAYERS  
-        // ------------------------------------------------  
-
-        let totalPlayerCost = 0;  
+            if (!match) {
+
+                throw new Error(
+                    "Match not found"
+                );
 
-        for (  
-            const game of games  
-        ) {  
+            }
 
-            const playerCost =  
-                num(  
-                    Number(game.stake) *  
-                    Number(game.cards)  
-                );  
-
-            totalPlayerCost =  
-                num(  
-                    totalPlayerCost +  
-                    playerCost  
-                );  
-        }  
-
-        // ------------------------------------------------  
-        // TOTAL PRIZE = 85% OF TOTAL GAME COST  
-        // ------------------------------------------------  
-
-        const totalPrize =  
-            num(  
-                totalPlayerCost *  
-                WIN_RATE  
-            );  
-
-        // ------------------------------------------------  
-        // FIND WINNERS  
-        // ------------------------------------------------  
-
-        const winners =  
-            games.filter(  
-                game =>  
-                    String(  
-                        game.result  
-                    ).toUpperCase() ===  
-                    "WIN"  
-            );  
-
-        const winnerCount =  
-            winners.length;  
-
-        // ------------------------------------------------  
-        // NO WINNER  
-        // ------------------------------------------------  
-
-        if (  
-            winnerCount === 0  
-        ) {  
-
-            db.prepare(`  
-                UPDATE matches  
-
-                SET  
-                    prize_pool = ?,  
-                    winner_count = 0,  
-                    paid = 1,  
-                    status = 'FINISHED',  
-                    finished_at =  
-                        CURRENT_TIMESTAMP  
-
-                WHERE id = ?  
-            `).run(  
-                totalPrize,  
-                matchId  
-            );  
-
-            return {  
-
-                complete: true,  
-
-                alreadyPaid: false,  
-
-                totalCost:  
-                    totalPlayerCost,  
-
-                totalPrize,  
-
-                winnerCount: 0  
-
-            };  
-        }  
-
-        // ------------------------------------------------  
-        // CALCULATE EQUAL WINNER SHARE  
-        // ------------------------------------------------  
-
-        const prizeInCents =  
-            Math.round(  
-                totalPrize * 100  
-            );  
-
-        const baseShareCents =  
-            Math.floor(  
-                prizeInCents /  
-                winnerCount  
-            );  
-
-        const remainderCents =  
-            prizeInCents %  
-            winnerCount;  
-
-        // ------------------------------------------------  
-        // PAY EACH WINNER  
-        // ------------------------------------------------  
-
-        winners.forEach(  
-            (winner, index) => {  
-
-                let shareCents =  
-                    baseShareCents;  
-
-                // Any remaining cents are  
-                // distributed one by one.  
-                if (  
-                    index <  
-                    remainderCents  
-                ) {  
-                    shareCents += 1;  
-                }  
+            // ------------------------------------------------
+            // ALREADY PAID
+            // ------------------------------------------------
 
-                const winnerPrize =  
-                    num(  
-                        shareCents / 100  
-                    );  
+            if (
+                Number(match.paid) === 1
+            ) {
 
-                // ----------------------------------------  
-                // ADD PRIZE TO MAIN WALLET  
-                // ----------------------------------------  
+                return {
 
-                db.prepare(`  
-                    UPDATE users  
+                    complete: true,
 
-                    SET  
-                        balance =  
-                            balance + ?  
+                    alreadyPaid: true,
 
-                    WHERE id = ?  
-                `).run(  
-                    winnerPrize,  
-                    winner.user_id  
-                );  
+                    totalCost:
+                        num(
+                            match.prize_pool /
+                            WIN_RATE
+                        ),
 
-                // ----------------------------------------  
-                // SAVE PRIZE IN GAME RECORD  
-                // ----------------------------------------  
+                    totalPrize:
+                        num(
+                            match.prize_pool
+                        ),
 
-                db.prepare(`  
-                    UPDATE games  
+                    winnerCount:
+                        Number(
+                            match.winner_count
+                        )
 
-                    SET  
-                        prize = ?,  
-                        result = 'WIN'  
+                };
 
-                    WHERE id = ?  
-                `).run(  
-                    winnerPrize,  
-                    winner.id  
-                );  
-            }  
-        );  
+            }
 
-        // ------------------------------------------------  
-        // UPDATE LOSERS  
-        // ------------------------------------------------  
+            // ------------------------------------------------
+            // GET ALL PLAYERS
+            // ------------------------------------------------
 
-        db.prepare(`  
-            UPDATE games  
+            const games =
+                db.prepare(`
+                    SELECT *
+                    FROM games
+                    WHERE match_id = ?
+                    ORDER BY id ASC
+                `).all(
+                    matchId
+                );
 
-            SET prize = 0  
+            if (
+                games.length === 0
+            ) {
 
-            WHERE match_id = ?  
+                return {
 
-            AND result != 'WIN'  
-        `).run(  
-            matchId  
-        );  
+                    complete: false,
 
-        // ------------------------------------------------  
-        // FINISH MATCH  
-        // ------------------------------------------------  
+                    reason:
+                        "No players"
 
-        db.prepare(`  
-            UPDATE matches  
+                };
 
-            SET  
-                prize_pool = ?,  
-                winner_count = ?,  
-                paid = 1,  
-                status = 'FINISHED',  
-                finished_at =  
-                    CURRENT_TIMESTAMP  
+            }
 
-            WHERE id = ?  
-        `).run(  
-            totalPrize,  
-            winnerCount,  
-            matchId  
-        );  
+            // ------------------------------------------------
+            // FIND WINNERS
+            // ------------------------------------------------
 
-        return {  
+            const winners =
+                games.filter(
+                    game =>
+                        String(
+                            game.result || ""
+                        ).toUpperCase() ===
+                        "WIN"
+                );
 
-            complete: true,  
+            const winnerCount =
+                winners.length;
 
-            alreadyPaid: false,  
+            // ------------------------------------------------
+            // NO WINNER YET
+            // ------------------------------------------------
 
-            totalCost:  
-                totalPlayerCost,  
+            /*
+             * Do NOT finish the match just because
+             * one player sent LOSE.
+             *
+             * We wait until somebody actually wins.
+             */
 
-            totalPrize,  
+            if (
+                winnerCount === 0
+            ) {
 
-            winnerCount  
+                return {
 
-        };  
-    });  
+                    complete: false,
 
-return transaction();
+                    reason:
+                        "No winner yet",
+
+                    playerCount:
+                        games.length
+
+                };
+
+            }
+
+            // ------------------------------------------------
+            // TOTAL COST OF ALL PLAYERS
+            // ------------------------------------------------
+
+            let totalPlayerCost = 0;
+
+            for (
+                const game of games
+            ) {
+
+                const playerCost =
+                    num(
+                        Number(game.stake) *
+                        Number(game.cards)
+                    );
+
+                totalPlayerCost =
+                    num(
+                        totalPlayerCost +
+                        playerCost
+                    );
+
+            }
+
+            // ------------------------------------------------
+            // TOTAL PRIZE = 85%
+            // ------------------------------------------------
+
+            const totalPrize =
+                num(
+                    totalPlayerCost *
+                    WIN_RATE
+                );
+
+            // ------------------------------------------------
+            // CALCULATE WINNER SHARE
+            // ------------------------------------------------
+
+            const prizeInCents =
+                Math.round(
+                    totalPrize * 100
+                );
+
+            const baseShareCents =
+                Math.floor(
+                    prizeInCents /
+                    winnerCount
+                );
+
+            const remainderCents =
+                prizeInCents %
+                winnerCount;
+
+            // ------------------------------------------------
+            // PAY WINNERS
+            // ------------------------------------------------
+
+            winners.forEach(
+                (winner, index) => {
+
+                    let shareCents =
+                        baseShareCents;
+
+                    if (
+                        index <
+                        remainderCents
+                    ) {
+
+                        shareCents += 1;
+
+                    }
+
+                    const winnerPrize =
+                        num(
+                            shareCents / 100
+                        );
+
+                    // ----------------------------------------
+                    // ADD PRIZE TO MAIN BALANCE
+                    // ----------------------------------------
+
+                    db.prepare(`
+                        UPDATE users
+
+                        SET
+                            balance =
+                                balance + ?
+
+                        WHERE id = ?
+                    `).run(
+                        winnerPrize,
+                        winner.user_id
+                    );
+
+                    // ----------------------------------------
+                    // SAVE WINNER PRIZE
+                    // ----------------------------------------
+
+                    db.prepare(`
+                        UPDATE games
+
+                        SET
+                            prize = ?,
+                            result = 'WIN',
+                            status = 'FINISHED',
+                            finished_at =
+                                CURRENT_TIMESTAMP
+
+                        WHERE id = ?
+                    `).run(
+                        winnerPrize,
+                        winner.id
+                    );
+
+                }
+            );
+
+            // ------------------------------------------------
+            // MARK EVERY OTHER PLAYER AS LOSER
+            // ------------------------------------------------
+
+            db.prepare(`
+                UPDATE games
+
+                SET
+                    result = 'LOSE',
+                    prize = 0,
+                    status = 'FINISHED',
+                    finished_at =
+                        CURRENT_TIMESTAMP
+
+                WHERE match_id = ?
+
+                AND (
+                    result IS NULL
+                    OR result != 'WIN'
+                )
+            `).run(
+                matchId
+            );
+
+            // ------------------------------------------------
+            // FINISH SHARED MATCH
+            // ------------------------------------------------
+
+            db.prepare(`
+                UPDATE matches
+
+                SET
+                    prize_pool = ?,
+                    winner_count = ?,
+                    paid = 1,
+                    status = 'FINISHED',
+                    finished_at =
+                        CURRENT_TIMESTAMP
+
+                WHERE id = ?
+            `).run(
+                totalPrize,
+                winnerCount,
+                matchId
+            );
+
+            // ------------------------------------------------
+            // RETURN RESULT
+            // ------------------------------------------------
+
+            return {
+
+                complete: true,
+
+                alreadyPaid: false,
+
+                totalCost:
+                    totalPlayerCost,
+
+                totalPrize,
+
+                winnerCount
+
+            };
+
+        });
+
+    return transaction();
 
 }
-
 // ======================================================
 // FINISH GAME
 // ======================================================
