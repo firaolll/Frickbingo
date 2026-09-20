@@ -3673,93 +3673,105 @@ function renderBigBoard(){
    CALL NEXT NUMBER  
 ================================================== */  
   
-async function callNextNumber(){  
-  
-    if(!gameRunning){  
-  
-        return;  
-  
-    }  
-  
-  
-    if(calledNumbers.length >= 75){  
-  
-        finishGame();  
-  
-        return;  
-  
-    }  
-  
-  
-    let available = [];  
-  
-    for(  
-        let number=1;  
-        number<=75;  
-        number++  
-    ){  
-  
-        if(  
-            !calledNumbers.includes(number)  
-        ){  
-  
-            available.push(number);  
-  
-        }  
-  
-    }  
-  
-  
-    if(available.length === 0){  
-  
-        finishGame();  
-  
-        return;  
-  
-    }  
-  
-  
-    const index =  
-        Math.floor(  
-            Math.random() *  
-            available.length  
-        );  
-  
-  
-    const number =  
-        available[index];  
-  
-  
-    calledNumbers.push(number);  
-  
-    lastCalledNumber =  
-        number;  
-  
-  
-    renderBigBoard();  
-  
-    markPlayerCards();  
-  
-    updateLastCalled(number);  
-  
-    updateGameStats();  
-  
-    speakNumber(number);  
-  
-  
-    /* Demo winner check */  
-  
-    if(  
-        checkAnyBingo()  
-    ){  
-  
-        await finishGame(true);  
-  
-    }  
-  
-}  
-  
-  
+async function callNextNumber(){
+
+    if(!gameRunning){
+        return;
+    }
+
+    if(!currentGameId){
+        console.error(
+            "❌ No shared match ID"
+        );
+        return;
+    }
+
+    try{
+
+        const data =
+            await apiFetch(
+                "/api/match/" +
+                currentGameId +
+                "/call",
+                {
+                    method: "POST"
+                }
+            );
+
+        if(
+            !data ||
+            !data.success
+        ){
+            console.error(
+                "❌ Shared call failed:",
+                data
+            );
+            return;
+        }
+
+        const number =
+            Number(
+                data.currentBall
+            );
+
+        if(
+            !Number.isInteger(number) ||
+            number < 1 ||
+            number > 75
+        ){
+            return;
+        }
+
+        /*
+         * IMPORTANT:
+         * Use the server's shared list.
+         */
+        calledNumbers =
+            Array.isArray(
+                data.calledBalls
+            )
+                ? data.calledBalls.map(Number)
+                : [];
+
+        lastCalledNumber =
+            number;
+
+        renderBigBoard();
+
+        markPlayerCards();
+
+        updateLastCalled(
+            number
+        );
+
+        updateGameStats();
+
+        speakNumber(
+            number
+        );
+
+        /* Demo winner check */
+
+        if(
+            checkAnyBingo()
+        ){
+
+            await finishGame(
+                true
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "❌ SHARED BINGO CALL ERROR:",
+            error
+        );
+
+    }
+
+}
 /* ==================================================  
    LAST CALLED DISPLAY  
 ================================================== */  
@@ -4210,8 +4222,6 @@ function toggleAutomatic(){
             );  
   
         }  
-  
-  
         gameInterval =  
             setInterval(  
                 ()=>{  
@@ -5738,25 +5748,46 @@ if(timer){
 
             if(status === "PLAYING"){
 
-                console.log(
-                    "🟢 SHARED GAME STARTED:",
-                    matchId
-                );
+    console.log(
+        "🟢 SHARED GAME STARTED:",
+        matchId
+    );
 
+    currentGameId =
+        match.id ||
+        match.gameId ||
+        match.sharedGameId ||
+        matchId;
 
-                currentGameId =
-                    match.id ||
-                    match.gameId ||
-                    match.sharedGameId ||
-                    matchId;
+    // Sync Bingo numbers from the server
+    if(match.calledBalls){
+        calledNumbers =
+            Array.isArray(match.calledBalls)
+                ? match.calledBalls
+                : [];
+    }
 
+    if(match.currentBall){
+        const ball =
+            Number(match.currentBall);
 
-                beginActualGame();
-
-                return;
-
+        if(
+            Number.isInteger(ball) &&
+            ball >= 1 &&
+            ball <= 75
+        ){
+            if(
+                !calledNumbers.includes(ball)
+            ){
+                calledNumbers.push(ball);
             }
+        }
+    }
 
+    beginActualGame();
+
+    return;
+}
 
             /*
              * Match is still waiting.
@@ -6156,114 +6187,109 @@ function getAmharicLetter(letter){
 /* =====================================================  
    CALL NUMBER  
 ===================================================== */  
-  
-function callNumber(){  
-  
- if(  
-  !actualGameStarted ||  
-  winnerShown  
- ){  
-  
-  return;  
-  
- }  
-  
-  
- if(  
-  calledNumbers.length >= 75  
- ){  
-  
-  stopAutoCalling();  
-  
-  showToast(  
-   "All numbers have been called."  
-  );  
-  
-  return;  
-  
- }  
-  
-  
- const available = [];  
-  
-  
- for(  
-  let number=1;  
-  number<=75;  
-  number++  
- ){  
-  
-  if(  
-   !calledNumbers.includes(number)  
-  ){  
-  
-   available.push(number);  
-  
-  }  
-  
- }  
-  
-  
- if(!available.length){  
-  
-  stopAutoCalling();  
-  
-  return;  
-  
- }  
-  
-  
- const index =  
-  Math.floor(  
-   Math.random() *  
-   available.length  
-  );  
-  
-  
- const number =  
-  available[index];  
-  
-  
- calledNumbers.push(  
-  number  
- );  
-  
-  
- const letter =  
-  getBingoLetter(number);  
-  
-  
- const display =  
-  document.getElementById(  
-   "calledNumberDisplay"  
-  );  
-  
-  
- if(display){  
-  
-  display.textContent =  
-   `${letter}-${number}`;  
-  
- }  
-  
-  
- renderBigBoard();  
-  
- markPlayerCards();  
-  
- speakNumber(  
-  letter,  
-  number  
- );  
-  
- checkWinner();  
-  
- updateAllDisplays();  
-  
- haptic();  
-  
-}  
-  
+async function callNumber(){
+
+    if(
+        !actualGameStarted ||
+        winnerShown
+    ){
+        return;
+    }
+
+    if(!currentGameId){
+        console.error(
+            "❌ No current game ID"
+        );
+        return;
+    }
+
+    try{
+
+        const data =
+            await apiFetch(
+                "/api/match/" +
+                currentGameId +
+                "/call",
+                {
+                    method: "POST"
+                }
+            );
+
+        if(
+            !data ||
+            !data.success
+        ){
+            console.error(
+                "❌ CALL NUMBER ERROR:",
+                data
+            );
+            return;
+        }
+
+        const number =
+            Number(
+                data.currentBall
+            );
+
+        if(
+            !Number.isInteger(number) ||
+            number < 1 ||
+            number > 75
+        ){
+            return;
+        }
+
+        /*
+         * Use the server's shared
+         * called-number list.
+         */
+        calledNumbers =
+            Array.isArray(
+                data.calledBalls
+            )
+                ? data.calledBalls.map(Number)
+                : [];
+
+        const letter =
+            getBingoLetter(number);
+
+        const display =
+            document.getElementById(
+                "calledNumberDisplay"
+            );
+
+        if(display){
+
+            display.textContent =
+                `${letter}-${number}`;
+
+        }
+
+        renderBigBoard();
+
+        markPlayerCards();
+
+        speakNumber(
+            letter,
+            number
+        );
+
+        checkWinner();
+
+        updateAllDisplays();
+
+        haptic();
+
+    }catch(error){
+
+        console.error(
+            "❌ BINGO CALL ERROR:",
+            error
+        );
+
+    }
+
+}
   
 /* =====================================================  
    VOICE  

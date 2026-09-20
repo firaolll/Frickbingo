@@ -382,7 +382,7 @@ function processWaitingMatches() {
       AND status = 'WAITING'
 `).run(
     match.id
-);
+);s
 
 
                     console.log(
@@ -1201,8 +1201,15 @@ app.get("/api/match/:matchId", auth, (req, res) => {
                     match.started_at,
 
                 finishedAt:
-                    match.finished_at
+    match.finished_at,
 
+calledBalls:
+    match.called_balls
+        ? JSON.parse(match.called_balls)
+        : [],
+
+currentBall:
+    match.current_ball || null
             },
 
             players,
@@ -1230,6 +1237,167 @@ app.get("/api/match/:matchId", auth, (req, res) => {
     }
 
 });
+app.post("/api/match/:matchId/call", auth, (req, res) => {
+
+    try {
+
+        const matchId =
+            Number.parseInt(
+                req.params.matchId,
+                10
+            );
+
+        if (
+            !Number.isInteger(matchId) ||
+            matchId <= 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid match ID"
+            });
+        }
+
+        const match =
+            db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE id = ?
+            `).get(matchId);
+
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                error: "Match not found"
+            });
+        }
+
+        if (
+            String(match.status).toUpperCase() !==
+            "PLAYING"
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: "Match is not playing"
+            });
+        }
+
+        let calledBalls = [];
+
+        if (match.called_balls) {
+            try {
+                calledBalls =
+                    JSON.parse(
+                        match.called_balls
+                    );
+            } catch (e) {
+                calledBalls = [];
+            }
+        }
+
+        if (!Array.isArray(calledBalls)) {
+            calledBalls = [];
+        }
+
+        /*
+         * If another player already called
+         * a number, return that shared state.
+         */
+        if (
+            match.current_ball &&
+            calledBalls.length > 0
+        ) {
+
+            return res.json({
+                success: true,
+                currentBall:
+                    Number(match.current_ball),
+                calledBalls
+            });
+
+        }
+
+        if (calledBalls.length >= 75) {
+
+            return res.json({
+                success: true,
+                currentBall: null,
+                calledBalls
+            });
+
+        }
+
+        const available = [];
+
+        for (
+            let number = 1;
+            number <= 75;
+            number++
+        ) {
+
+            if (
+                !calledBalls.includes(number)
+            ) {
+                available.push(number);
+            }
+
+        }
+
+        if (!available.length) {
+
+            return res.json({
+                success: true,
+                currentBall: null,
+                calledBalls
+            });
+
+        }
+
+        const number =
+            available[
+                Math.floor(
+                    Math.random() *
+                    available.length
+                )
+            ];
+
+        calledBalls.push(number);
+
+        db.prepare(`
+            UPDATE matches
+            SET
+                called_balls = ?,
+                current_ball = ?
+            WHERE id = ?
+        `).run(
+            JSON.stringify(calledBalls),
+            number,
+            matchId
+        );
+
+        return res.json({
+            success: true,
+            currentBall: number,
+            calledBalls
+        });
+
+    } catch (error) {
+
+        console.error(
+            "CALL NUMBER ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            error:
+                "Could not call Bingo number"
+        });
+
+    }
+
+});
+
+
 // ======================================================
 // JOIN / START GAME
 // ======================================================
