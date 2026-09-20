@@ -1969,592 +1969,286 @@ button{
 </div>
 
 </section>  <!-- ==================================================  
-     PAGE 3 LIVE GAME  
-================================================== -->  <section id="page3" class="page game-page">  <header class="app-header">  
+     PAGE 3 LIVE GAME  ```html
+<section id="page3" class="page game-page">
+
+    <!-- GAME HEADER -->
+    <header class="app-header game-live-header">
 
-    <button  
-        class="header-btn"  
-        onclick="leaveGame()">  
-        ← Back  
-    </button>  
+        <button
+            class="header-btn"
+            onclick="leaveGame()">
+            ← Back
+        </button>
 
-    <div  
-        style="  
-            font-size:14px;  
-            font-weight:1000;  
-            color:#fff;  
-        ">  
-        LIVE BINGO  
-    </div>  
+        <div class="live-title">
+            <span class="live-dot"></span>
+            LIVE BINGO
+        </div>
 
-    <button  
-        class="header-btn"  
-        onclick="openRules()">  
-        Rule  
-    </button>  
+        <button
+            class="header-btn"
+            onclick="openRules()">
+            Rule
+        </button>
 
-</header>  
+    </header>
 
 
-<div class="game-stats">  
+    <!-- TOP GAME STATS -->
+    <div class="game-stats">
 
-    <div class="game-stat">  
+        <div class="game-stat">
+            <div class="game-stat-label">PLAY</div>
+            <div
+                class="game-stat-value"
+                id="gamePlay">
+                0
+            </div>
+        </div>
 
-        <div class="game-stat-label">  
-            STAKE  
-        </div>  
+        <div class="game-stat">
+            <div class="game-stat-label">PLAYERS</div>
+            <div
+                class="game-stat-value"
+                id="gamePlayers">
+                1
+            </div>
+        </div>
 
-        <div  
-            class="game-stat-value"  
-            id="gameStake">  
-            10  
-        </div>  
+        <div class="game-stat">
+            <div class="game-stat-label">DERASH</div>
+            <div
+                class="game-stat-value"
+                id="gamePot">
+                0
+            </div>
+        </div>
 
-    </div>  
+        <div class="game-stat">
+            <div class="game-stat-label">STAKE</div>
+            <div
+                class="game-stat-value"
+                id="gameStake">
+                10
+            </div>
+        </div>
 
-    <div class="game-stat">  
+    </div>
 
-        <div class="game-stat-label">  
-            PLAYERS  
-        </div>  
 
-        <div  
-            class="game-stat-value"  
-            id="gamePlayers">  
-            1  
-        </div>  
+    <!-- MAIN GAME AREA -->
+    <div class="bingo-game-layout">
 
-    </div>  
 
-    <div class="game-stat">  
+        <!-- ==========================================
+             LEFT SIDE — BIG BINGO BOARD
+        =========================================== -->
+        <div class="bingo-board-side">
 
-        <div class="game-stat-label">  
-            POT  
-        </div>  
+            <div class="game-board-panel">
 
-        <div  
-            class="game-stat-value"  
-            id="gamePot">  
-            0  
-        </div>  
+                <div class="panel-title">
 
-    </div>  
+                    <span>
+                        BINGO BOARD
+                    </span>
 
-    <div class="game-stat">  
+                    <span
+                        id="gameStatus"
+                        class="board-live-status">
+                        LIVE
+                    </span>
 
-        <div class="game-stat-label">  
-            BALL  
-        </div>  
+                </div>
 
-        <div  
-            class="game-stat-value"  
-            id="gameBall">  
-            -  
-        </div>  
 
-    </div>  
+                <div class="big-board-header">
 
-</div>  
+                    <div>B</div>
+                    <div>I</div>
+                    <div>N</div>
+                    <div>G</div>
+                    <div>O</div>
 
+                </div>
 
-<div class="game-board-panel">  
 
-    <div class="panel-title">  
+                <div
+                    id="bigBingoBoard"
+                    class="big-board">
+                </div>
 
-        <span>  
-            BINGO BOARD  
-        </span>  
+            </div>
 
-        <span id="gameStatus">  
-            LIVE  
-        </span>  
+        </div>
 
-    </div>  
 
-    <div class="big-board-header">  
+        <!-- ==========================================
+             RIGHT SIDE — GAME INFORMATION
+        =========================================== -->
+        <aside class="game-control-side">
 
-        <div>B</div>  
-        <div>I</div>  
-        <div>N</div>  
-        <div>G</div>  
-        <div>O</div>  
 
-    </div>  
+            <!-- CURRENT BALL -->
+            <div class="current-ball-card">
 
-    <div  
-        id="bigBingoBoard"  
-        class="big-board">  
-    </div>  
+                <div class="current-ball-label">
+                    CURRENT BALL
+                </div>
 
-</div>  
+                <div
+                    id="gameBall"
+                    class="current-ball">
+                    -
+                </div>
 
+                <div class="ball-ring"></div>
 
-<div class="live-controls">  
+            </div>
 
-    <div class="live-control last-called-box">  
 
-        <span>  
-            Last:  
-        </span>  
+            <!-- CALLED COUNT -->
+            <div class="called-count-card">
 
-        <strong  
-            id="lastCalled"  
-            class="last-ball">  
-            -  
-        </strong>  
+                <div class="called-count-label">
+                    CALLED NUMBERS
+                </div>
 
-    </div>  
+                <div class="called-count-value">
 
-    <button  
-        class="live-control"  
-        onclick="toggleAutomatic()">  
+                    <span id="calledCount">
+                        0
+                    </span>
 
-        <span>  
-            Auto  
-        </span>  
+                    <span class="called-divider">
+                        /
+                    </span>
 
-        <span  
-            id="autoSwitch"  
-            class="switch on">  
-        </span>  
+                    <span>
+                        75
+                    </span>
 
-    </button>  
+                </div>
 
-    <button  
-        class="live-control"  
-        onclick="toggleVoice()">  
+                <div class="called-progress">
 
-        <span>  
-            Voice  
-        </span>  
+                    <div
+                        id="calledProgress"
+                        class="called-progress-fill">
+                    </div>
 
-        <span  
-            id="voiceSwitch"  
-            class="switch on">  
-        </span>  
+                </div>
 
-    </button>  
+                <div class="last-called-line">
 
-</div>  
+                    <span>
+                        Last called
+                    </span>
 
+                    <strong id="lastCalled">
+                        -
+                    </strong>
 
-<button  
-    id="callBtn"  
-    class="call-button"  
-    onclick="callNextNumber()">  
-    CALL NEXT BALL  
-</button>  
+                </div>
 
+            </div>
 
-<div class="your-card-section">  
 
-    <div class="your-card-title">  
+            <!-- CONTROLS -->
+            <div class="controls-card">
 
-        <span>  
-            YOUR 5×5 BINGO CARD  
-        </span>  
+                <div class="control-title">
+                    GAME CONTROLS
+                </div>
 
-        <span>  
-            Auto Mark  
-        </span>  
 
-    </div>  
+                <button
+                    class="game-control-row"
+                    onclick="toggleAutomatic()">
 
-    <div  
-        id="playingCards"  
-        class="playing-cards">  
-    </div>  
+                    <span class="control-icon">
+                        ⚡
+                    </span>
 
-</div>
+                    <span class="control-text">
+                        <strong>Auto Call</strong>
+                        <small>Automatic number calling</small>
+                    </span>
 
-</section>  <!-- ==================================================  
-     HISTORY  
-================================================== -->  <section id="historyPage" class="page">  <header class="app-header">  
+                    <span
+                        id="autoSwitch"
+                        class="switch on">
+                    </span>
 
-    <div class="logo">  
-        History  
-    </div>  
+                </button>
 
-</header>  
 
-<div class="content-panel">  
+                <button
+                    class="game-control-row"
+                    onclick="toggleVoice()">
 
-    <div class="content-title">  
-        Game History  
-    </div>  
+                    <span class="control-icon">
+                        🔊
+                    </span>
 
-    <div  
-        id="historyList"  
-        class="empty-state">  
-        No games yet.  
-    </div>  
+                    <span class="control-text">
+                        <strong>Voice</strong>
+                        <small>Announce called numbers</small>
+                    </span>
 
-</div>
+                    <span
+                        id="voiceSwitch"
+                        class="switch on">
+                    </span>
 
-</section>  <!-- ==================================================  
-     SCORE  
-================================================== -->  <section id="scorePage" class="page">  <header class="app-header">  
+                </button>
 
-    <div class="logo">  
-        Score  
-    </div>  
 
-</header>  
+                <button
+                    id="callBtn"
+                    class="call-button"
+                    onclick="callNextNumber()">
 
-<div class="content-panel">  
+                    <span>🎯</span>
+                    CALL NEXT BALL
 
-    <div class="content-title">  
-        My Score  
-    </div>  
+                </button>
 
-    <div class="score-row">  
+            </div>
 
-        <span>  
-            Games  
-        </span>  
 
-        <strong  
-            id="scoreGames"  
-            class="value-purple">  
-            0  
-        </strong>  
+            <!-- PLAYER CARDS -->
+            <div class="your-card-section">
 
-    </div>  
+                <div class="your-card-title">
 
-    <div class="score-row">  
+                    <span>
+                        YOUR CARDS
+                    </span>
 
-        <span>  
-            Wins  
-        </span>  
+                    <span class="auto-mark-badge">
+                        ✓ AUTO MARK
+                    </span>
 
-        <strong  
-            id="scoreWins"  
-            class="value-green">  
-            0  
-        </strong>  
+                </div>
 
-    </div>  
 
-    <div class="score-row">  
+                <div
+                    id="playingCards"
+                    class="playing-cards">
+                </div>
 
-        <span>  
-            Win Rate  
-        </span>  
+            </div>
 
-        <strong  
-            id="scoreRate"  
-            class="value-purple">  
-            0%  
-        </strong>  
 
-    </div>  
+        </aside>
 
-    <div class="score-row">  
+    </div>
 
-        <span>  
-            Total Won  
-        </span>  
+</section>
+```
 
-        <strong  
-            id="scoreWon"  
-            class="value-green">  
-            0 ETB  
-        </strong>  
-
-    </div>  
-
-</div>
-
-</section>  <!-- ==================================================  
-     WALLET  
-================================================== --> 
- <section id="walletPage" class="page">  <header class="app-header">  
-
-    <div class="logo">  
-        Wallet  
-    </div>  
-
-</header>  
-
-<div class="content-panel">  
-
-    <div class="content-title">  
-        My Wallet  
-    </div>  
-
-    <div class="wallet-row">  
-
-        <span>  
-            Main Wallet  
-        </span>  
-
-        <strong  
-            id="walletMain"  
-            class="value-purple">  
-            0 ETB  
-        </strong>  
-
-    </div>  
-
-    <div class="wallet-row">  
-
-        <span>  
-            Play Wallet  
-        </span>  
-
-        <strong  
-            id="walletPlay"  
-            class="value-green">  
-            0 ETB  
-        </strong>  
-
-    </div>  
-
-</div>  
-
-
-
-</section>  <!-- ==================================================  
-     PROFILE  
-================================================== -->  <section id="profilePage" class="page">  <header class="app-header">  
-
-    <div class="logo">  
-        Profile  
-    </div>  
-
-</header>  
-
-<div class="content-panel">  
-
-    <div class="content-title">  
-        My Profile  
-    </div>  
-
-    <div class="profile-row">  
-
-        <span>  
-            Name  
-        </span>  
-
-        <strong id="profileName">  
-            -  
-        </strong>  
-
-    </div>  
-
-    <div class="profile-row">  
-
-        <span>  
-            Username  
-        </span>  
-
-        <strong id="profileUsername">  
-            -  
-        </strong>  
-
-    </div>  
-
-    <div class="profile-row">  
-
-        <span>  
-            Telegram ID  
-        </span>  
-
-        <strong id="profileTelegram">  
-            -  
-        </strong>  
-
-    </div>  
-
-</div>
-
-</section>  <!-- ==================================================  
-     BOTTOM NAV  
-================================================== -->  <nav class="bottom-nav">  <button  
-    class="nav-btn active"  
-    data-page="page1"  
-    onclick="navigateNav('page1',this)">  
-
-    <span class="nav-icon">⌂</span>  
-    Home  
-
-</button>  
-
-<button  
-    class="nav-btn"  
-    data-page="historyPage"  
-    onclick="navigateNav('historyPage',this)">  
-
-    <span class="nav-icon">◷</span>  
-    History  
-
-</button>  
-
-<button  
-    class="nav-btn"  
-    data-page="scorePage"  
-    onclick="navigateNav('scorePage',this)">  
-
-    <span class="nav-icon">★</span>  
-    Score  
-
-</button>  
-
-<button  
-    class="nav-btn"  
-    data-page="walletPage"  
-    onclick="navigateNav('walletPage',this)">  
-
-    <span class="nav-icon">◈</span>  
-    Wallet  
-
-</button>  
-
-<button  
-    class="nav-btn"  
-    data-page="profilePage"  
-    onclick="navigateNav('profilePage',this)">  
-
-    <span class="nav-icon">●</span>  
-    Profile  
-
-</button>
-
-</nav>  </div>  <!-- ==================================================  
-     RULE MODAL  
-================================================== -->  <div  
-    id="rulesModal"  
-    class="modal"  
-    onclick="closeRulesOutside(event)">  <div class="modal-box">  
-
-    <div class="modal-title">  
-        የቢንጎ ህግ  
-    </div>  
-
-    <div class="rule-text">  
-
-        <strong>  
-            የቢንጎ ጨዋታን ለመጫወት የሚከተሉትን ህጎች ይከተሉ።  
-        </strong>  
-
-        <br><br>  
-
-        <strong>1.</strong>  
-        የሚፈልጉትን የጨዋታ ዋጋ ይምረጡ፤  
-        ከዚያ Play የሚለውን ይጫኑ።  
-
-        <br>  
-
-        <strong>2.</strong>  
-        የሚፈልጉትን የቢንጎ ካርድ ቁጥር ይምረጡ።  
-
-        <br>  
-
-        <strong>3.</strong>  
-        እያንዳንዱ ተጫዋች  
-        ከፍተኛ 2 ካርዶችን መምረጥ ይችላል።  
-
-        <br>  
-
-        <strong>4.</strong>  
-        ጨዋታው ሲጀምር የሚጠሩትን ቁጥሮች  
-        በካርድዎ ላይ ያመልክቱ።  
-
-        <br>  
-
-        <strong>5.</strong>  
-        በመጀመሪያ ቢንጎ ያጠናቀቀ ተጫዋች  
-        አሸናፊ ይሆናል።  
-
-        <br>  
-
-        <strong>6.</strong>  
-        የአሸናፊው ሽልማት ከጨዋታው  
-        ገንዘብ 85% ይሆናል።  
-
-    </div>  
-
-    <button  
-        class="close-btn"  
-        onclick="closeRules()">  
-        CLOSE  
-    </button>  
-
-</div>
-
-</div>  <!-- ==================================================  
-     WINNER  
-================================================== -->  <div  
-    id="winnerOverlay"  
-    class="winner-overlay">  <div class="winner-box">  
-
-    <div class="winner-title">  
-        🎉 BINGO! 🎉  
-    </div>  
-
-    <div  
-        id="winnerName"  
-        class="winner-name">  
-        Winner  
-    </div>  
-
-    <div  
-        id="winnerPrize"  
-        class="winner-prize">  
-        0 ETB  
-    </div>  
-
-    <button  
-        class="close-btn"  
-        onclick="closeWinner()">  
-        CONTINUE  
-    </button>  
-
-</div>
-
-</div>  <!-- ==================================================  
-     TOAST  
-================================================== -->  <div  
-    id="toast"  
-    class="toast">  
-</div>  <!-- ==================================================  
-     LOADING  
-================================================== -->  <div  
-    id="loading"  
-    class="loading">  <div class="loading-box">  
-
-    <div class="spinner"></div>  
-
-    <div class="loading-text">  
-        Please wait...  
-    </div>  
-
-</div>
-
-</div>  <script>  
-  
-/* ==================================================  
-   TELEGRAM  
-================================================== */  
-  
-let tg =  
-    window.Telegram &&  
-    window.Telegram.WebApp  
-        ? window.Telegram.WebApp  
-        : null;  
-  
-if(tg){  
-  
-    tg.ready();  
-  
-    tg.expand();  
-  
-    try{  
-        tg.setHeaderColor("#080612");  
-        tg.setBackgroundColor("#080612");  
-    }catch(e){}  
-  
-}  
   
   
 /* ==================================================  
