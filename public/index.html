@@ -5912,59 +5912,41 @@ async function finishSelectionPeriod(){
    BEGIN GAME  
 ===================================================== */  
   
-function beginActualGame(){  
-  
- if(actualGameStarted){  
-  
-  return;  
-  
- }  
-  
-  
- if(!selectedCards.length){  
-  
-  return;  
-  
- }  
-  
-  
- actualGameStarted = true;  
-  
- stopSelectionTimer();  
-  
- stopAutoCalling();  
-  
-  
- showPage("page3");  
-  
-  
- const callButton =  
-  document.getElementById(  
-   "callBtn"  
-  );  
-  
-  
- if(callButton){  
-  
-  callButton.disabled = false;  
-  
- }  
-  
-  
- renderPlayingPage();  
-  
-  
- // Start automatic Bingo calling
-autoMode = true;
+function beginActualGame(){
 
-startAutoCalling();
-  
- }  
-  
-  
- haptic("success");  
-  
-}  
+    if(actualGameStarted){
+        return;
+    }
+
+    if(!selectedCards.length){
+        return;
+    }
+
+    actualGameStarted = true;
+
+    stopSelectionTimer();
+    stopAutoCalling();
+
+    showPage("page3");
+
+    const callButton =
+        document.getElementById(
+            "callBtn"
+        );
+
+    if(callButton){
+        callButton.disabled = false;
+    }
+
+    renderPlayingPage();
+
+    // Start automatic Bingo calling
+    autoMode = true;
+
+    startAutoCalling();
+
+    haptic("success");
+}
   
   
 /* =====================================================  
