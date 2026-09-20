@@ -852,544 +852,556 @@ button{
 }
 
 
+/* ==================================================
+   PAGE 3 — LIVE GAME
+================================================== */
+
+.game-page{
+    padding:6px;
+}
+
+.game-live-header{
+    margin-bottom:5px;
+}
+
+/* TOP TITLE */
+.live-title{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    color:#fff;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.live-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#35e59a;
+    box-shadow:0 0 8px rgba(53,229,154,.8);
+}
+
 /* =========================
-   LEFT — BINGO BOARD
-   ========================= */
+   TOP STATS — COMPACT
+========================= */
 
-#page3 .bingo-board-side {
-    min-width: 0;
+.game-stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:4px;
+    margin-bottom:5px;
 }
 
-#page3 .game-board-panel {
-    padding: 12px;
-    border-radius: 20px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(30,22,55,.98),
-            rgba(10,8,24,.98)
-        );
-
-    border: 1px solid rgba(164,120,255,.25);
-
-    box-shadow:
-        0 15px 35px rgba(0,0,0,.35),
-        inset 0 1px 0 rgba(255,255,255,.05);
+.game-stat{
+    min-width:0;
+    padding:5px 3px;
+    text-align:center;
+    background:linear-gradient(145deg,#21163b,#0d0818);
+    border:1px solid #432b62;
+    border-radius:7px;
 }
 
-#page3 .panel-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-
-    font-size: 12px;
-    font-weight: 1000;
-    letter-spacing: .7px;
-    color: #ffffff;
+.game-stat-label{
+    color:var(--muted);
+    font-size:6px;
+    font-weight:900;
 }
 
-#page3 .board-live-status {
-    padding: 4px 8px;
-    border-radius: 20px;
-
-    color: #62f7a5;
-    background: rgba(48,211,123,.10);
-    border: 1px solid rgba(48,211,123,.25);
-
-    font-size: 9px;
+.game-stat-value{
+    margin-top:2px;
+    color:#fff;
+    font-size:10px;
+    font-weight:1000;
 }
 
+/* =========================
+   MAIN GAME LAYOUT
+========================= */
 
-/* B I N G O HEADERS */
-
-#page3 .big-board-header {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
-    margin-bottom: 5px;
+.bingo-game-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.75fr) minmax(145px,.55fr);
+    gap:6px;
+    align-items:stretch;
 }
 
-#page3 .big-board-header div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    height: 32px;
-    border-radius: 9px;
-
-    background: rgba(104,75,180,.24);
-    border: 1px solid rgba(164,120,255,.18);
-
-    color: #d9caff;
-    font-size: 14px;
-    font-weight: 1000;
+/* LEFT BOARD */
+.bingo-board-side{
+    min-width:0;
 }
 
+.game-board-panel{
+    height:calc(100vh - 105px);
+    min-height:390px;
+    padding:7px;
+    display:flex;
+    flex-direction:column;
 
-/* BIG NUMBER BOARD */
+    background:linear-gradient(145deg,#1b1237,#08050f);
+    border:1px solid rgba(124,60,255,.55);
+    border-radius:12px;
+    box-shadow:0 0 16px rgba(124,60,255,.18);
 
-#page3 .big-board {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
+    box-sizing:border-box;
 }
 
+.panel-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:5px;
+    color:#fff;
+    font-size:9px;
+    font-weight:1000;
+}
 
-/*
-   These rules make the board cells visually strong
-   without changing the existing JS-generated cells.
-*/
+.board-live-status{
+    color:#35e59a !important;
+    font-size:7px;
+}
 
-#page3 .big-board .bingo-cell {
-    aspect-ratio: 1 / 1;
-    min-height: 42px;
+/* =========================
+   BIG BINGO BOARD
+========================= */
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.big-board-header{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:4px;
+    margin-bottom:4px;
+}
 
-    border-radius: 9px;
+.big-board-header div{
+    padding:4px 2px;
+    text-align:center;
+    background:rgba(124,60,255,.17);
+    border:1px solid #51377a;
+    border-radius:5px;
 
-    background:
-        linear-gradient(
-            145deg,
-            #211943,
-            #15102c
-        );
+    color:#c69cff;
+    font-size:11px;
+    font-weight:1000;
 
-    border: 1px solid rgba(150,115,235,.24);
+    text-shadow:0 0 7px rgba(124,60,255,.8);
+}
 
-    color: #f5f1ff;
-    font-size: clamp(13px, 3vw, 19px);
-    font-weight: 1000;
+.big-board{
+    flex:1;
+
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    grid-template-rows:repeat(15,minmax(0,1fr));
+
+    gap:4px;
+    min-height:0;
+}
+
+.board-number{
+    min-width:0;
+    min-height:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:linear-gradient(145deg,#29203f,#151027);
+    border:1px solid #4a3b65;
+    border-radius:5px;
+
+    color:#fff;
+    font-size:11px;
+    font-weight:1000;
 
     transition:
-        transform .15s ease,
-        background .15s ease,
-        border-color .15s ease,
-        box-shadow .15s ease;
+        background .2s,
+        transform .15s,
+        box-shadow .2s;
 }
 
-#page3 .big-board .bingo-cell.marked,
-#page3 .big-board .bingo-cell.called,
-#page3 .big-board .bingo-cell.active {
-    background:
-        linear-gradient(
-            145deg,
-            #6545b5,
-            #39236f
-        );
-
-    border-color: rgba(190,157,255,.75);
-
-    box-shadow:
-        0 0 12px rgba(130,88,255,.28);
-
-    transform: scale(.96);
+.board-number.called{
+    background:linear-gradient(145deg,#6d35d5,#32106f);
+    border-color:#ad78ff;
+    box-shadow:0 0 7px rgba(124,60,255,.45);
 }
 
-
-/* WINNING CELL */
-
-#page3 .big-board .bingo-cell.winner,
-#page3 .big-board .bingo-cell.winning,
-#page3 .big-board .bingo-cell.win {
-    background:
-        linear-gradient(
-            145deg,
-            #19c978,
-            #087d48
-        ) !important;
-
-    border-color: #72ffb2 !important;
-
-    color: #ffffff !important;
-
-    box-shadow:
-        0 0 18px rgba(35,230,130,.65) !important;
+.board-number.last-called{
+    background:linear-gradient(145deg,#35e59a,#08754d);
+    border-color:#72ffd0;
+    box-shadow:0 0 12px rgba(53,229,154,.7);
+    color:#fff;
+    transform:scale(1.05);
+    z-index:2;
 }
-
 
 /* =========================
-   RIGHT SIDE
-   ========================= */
+   RIGHT SIDE — COMPACT
+========================= */
 
-#page3 .game-control-side {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
+.game-control-side{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
 }
 
+/* ALL RIGHT CARDS */
+.current-ball-card,
+.called-count-card,
+.controls-card,
+.your-card-section{
+    padding:6px;
+    margin-bottom:0;
 
-/* CURRENT BALL */
+    background:linear-gradient(145deg,#1b1237,#08050f);
+    border:1px solid rgba(124,60,255,.45);
+    border-radius:9px;
 
-#page3 .current-ball-card {
-    position: relative;
-    overflow: hidden;
-
-    min-height: 145px;
-    padding: 15px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 20px;
-
-    background:
-        radial-gradient(
-            circle at 50% 35%,
-            rgba(125,79,255,.30),
-            transparent 55%
-        ),
-        linear-gradient(
-            145deg,
-            #241750,
-            #100b22
-        );
-
-    border: 1px solid rgba(165,125,255,.35);
-
-    box-shadow:
-        0 15px 35px rgba(0,0,0,.35);
+    box-shadow:0 0 10px rgba(124,60,255,.12);
 }
 
-#page3 .current-ball-label {
-    position: relative;
-    z-index: 2;
+/* =========================
+   CURRENT BALL
+========================= */
 
-    font-size: 9px;
-    font-weight: 1000;
-    letter-spacing: 1.2px;
-    color: #aaa1c4;
+.current-ball-card{
+    position:relative;
+    min-height:75px;
+    text-align:center;
+    overflow:hidden;
 }
 
-#page3 .current-ball {
-    position: relative;
-    z-index: 2;
-
-    margin-top: 5px;
-
-    font-size: clamp(36px, 7vw, 58px);
-    line-height: 1;
-    font-weight: 1000;
-
-    color: #ffffff;
-
-    text-shadow:
-        0 0 20px rgba(164,120,255,.65);
+.current-ball-label{
+    color:var(--muted);
+    font-size:6px;
+    font-weight:1000;
+    letter-spacing:.7px;
 }
 
-#page3 .ball-ring {
-    position: absolute;
+.current-ball{
+    position:relative;
+    z-index:2;
 
-    width: 110px;
-    height: 110px;
+    margin-top:2px;
 
-    border-radius: 50%;
+    color:#fff;
+    font-size:25px;
+    line-height:30px;
+    font-weight:1000;
 
-    border: 1px solid rgba(173,133,255,.12);
-    box-shadow:
-        0 0 35px rgba(119,78,255,.15);
+    text-shadow:0 0 12px rgba(166,110,255,.8);
 }
 
+.ball-ring{
+    position:absolute;
 
-/* CALLED COUNT */
+    width:55px;
+    height:55px;
 
-#page3 .called-count-card {
-    padding: 13px 14px;
-    border-radius: 17px;
+    left:50%;
+    top:31px;
 
-    background: rgba(24,18,45,.95);
-    border: 1px solid rgba(164,120,255,.20);
+    transform:translateX(-50%);
+
+    border:1px solid rgba(166,110,255,.2);
+    border-radius:50%;
 }
 
-#page3 .called-count-label {
-    font-size: 9px;
-    font-weight: 900;
-    color: #938aa9;
-    letter-spacing: .8px;
+/* =========================
+   CALLED COUNT
+========================= */
+
+.called-count-card{
+    text-align:center;
 }
 
-#page3 .called-count-value {
-    margin-top: 3px;
-
-    font-size: 25px;
-    font-weight: 1000;
-    color: #ffffff;
+.called-count-label{
+    color:var(--muted);
+    font-size:6px;
+    font-weight:1000;
 }
 
-#page3 .called-divider {
-    color: #776d8e;
-    margin: 0 2px;
+.called-count-value{
+    margin-top:2px;
+    color:#fff;
+    font-size:14px;
+    font-weight:1000;
 }
 
-#page3 .called-progress {
-    height: 5px;
-    margin-top: 8px;
-
-    overflow: hidden;
-    border-radius: 10px;
-
-    background: rgba(255,255,255,.07);
+.called-divider{
+    color:var(--muted);
+    margin:0 1px;
 }
 
-#page3 .called-progress-fill {
-    width: 0%;
-    height: 100%;
-    border-radius: inherit;
+.called-progress{
+    width:100%;
+    height:4px;
+    margin-top:4px;
 
-    background: linear-gradient(
+    background:#251c38;
+    border-radius:8px;
+    overflow:hidden;
+}
+
+.called-progress-fill{
+    width:0%;
+    height:100%;
+
+    background:linear-gradient(
         90deg,
-        #754cff,
-        #ad7cff
+        #7c3cff,
+        #b77aff
     );
+
+    border-radius:8px;
 }
 
-#page3 .last-called-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.last-called-line{
+    display:flex;
+    justify-content:space-between;
 
-    margin-top: 9px;
+    margin-top:5px;
 
-    font-size: 10px;
-    color: #817892;
+    font-size:6px;
+    color:var(--muted);
 }
 
-#page3 .last-called-line strong {
-    color: #ffffff;
-    font-size: 12px;
+.last-called-line strong{
+    color:#35e59a;
+    font-size:9px;
 }
-
 
 /* =========================
-   CONTROLS
-   ========================= */
+   CONTROLS — SMALL
+========================= */
 
-#page3 .controls-card {
-    padding: 11px;
-    border-radius: 17px;
+.control-title{
+    margin-bottom:4px;
 
-    background: rgba(24,18,45,.95);
-    border: 1px solid rgba(164,120,255,.20);
+    color:#fff;
+    font-size:7px;
+    font-weight:1000;
 }
 
-#page3 .control-title {
-    margin: 2px 3px 7px;
+.game-control-row{
+    width:100%;
+    min-height:34px;
 
-    font-size: 9px;
-    font-weight: 1000;
-    letter-spacing: 1px;
-    color: #938aa9;
+    display:flex;
+    align-items:center;
+    gap:5px;
+
+    margin-bottom:3px;
+    padding:4px 5px;
+
+    background:#171029;
+    border:1px solid #49316d;
+    border-radius:7px;
+
+    color:#fff;
+    text-align:left;
+
+    box-sizing:border-box;
 }
 
-#page3 .game-control-row {
-    width: 100%;
-    min-height: 47px;
-
-    display: flex;
-    align-items: center;
-    gap: 9px;
-
-    padding: 7px 8px;
-    margin-bottom: 5px;
-
-    border: 1px solid rgba(164,120,255,.12);
-    border-radius: 12px;
-
-    background: rgba(255,255,255,.025);
-    color: #ffffff;
-
-    cursor: pointer;
+.control-icon{
+    font-size:12px;
 }
 
-#page3 .control-icon {
-    width: 30px;
-    height: 30px;
+.control-text{
+    flex:1;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 9px;
-
-    background: rgba(119,78,255,.15);
+    display:flex;
+    flex-direction:column;
+    gap:1px;
 }
 
-#page3 .control-text {
-    flex: 1;
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+.control-text strong{
+    font-size:7px;
+    font-weight:1000;
 }
 
-#page3 .control-text strong {
-    font-size: 11px;
+.control-text small{
+    color:var(--muted);
+    font-size:5.5px;
 }
 
-#page3 .control-text small {
-    margin-top: 2px;
-    font-size: 8px;
-    color: #817892;
+.switch{
+    flex:0 0 auto;
+
+    width:23px;
+    height:13px;
+
+    position:relative;
+
+    border-radius:20px;
+    background:#3a3150;
 }
 
+.switch::after{
+    content:"";
 
-/* CALL BUTTON */
+    position:absolute;
 
-#page3 .call-button {
-    width: 100%;
-    min-height: 49px;
+    width:9px;
+    height:9px;
 
-    margin-top: 5px;
+    top:2px;
+    left:2px;
 
-    border: 0;
-    border-radius: 13px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #8054ff,
-            #5a31c9
-        );
-
-    color: #ffffff;
-
-    font-size: 11px;
-    font-weight: 1000;
-    letter-spacing: .5px;
-
-    box-shadow:
-        0 8px 20px rgba(105,63,235,.30);
-
-    cursor: pointer;
+    border-radius:50%;
+    background:#999;
 }
 
+.switch.on{
+    background:#7c3cff;
+}
+
+.switch.on::after{
+    left:12px;
+    background:#fff;
+}
+
+.call-button{
+    width:100%;
+    min-height:35px;
+
+    margin-top:2px;
+
+    border-radius:8px;
+
+    background:linear-gradient(
+        145deg,
+        #35d995,
+        #08754d
+    );
+
+    border:1px solid #6affc4;
+
+    color:#fff;
+
+    font-size:8px;
+    font-weight:1000;
+
+    box-shadow:0 0 10px rgba(53,229,154,.25);
+}
 
 /* =========================
-   PLAYER CARDS
-   ========================= */
+   YOUR CARDS — COMPACT
+========================= */
 
-#page3 .your-card-section {
-    padding: 11px;
+.your-card-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 
-    border-radius: 17px;
+    margin-bottom:4px;
 
-    background: rgba(24,18,45,.95);
-    border: 1px solid rgba(164,120,255,.20);
+    color:#fff;
+    font-size:7px;
+    font-weight:1000;
 }
 
-#page3 .your-card-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    margin-bottom: 9px;
-
-    font-size: 10px;
-    font-weight: 1000;
-    color: #ffffff;
+.auto-mark-badge{
+    color:#35e59a;
+    font-size:5.5px;
+    font-weight:1000;
 }
 
-#page3 .auto-mark-badge {
-    padding: 4px 7px;
+.playing-cards{
+    display:flex;
+    gap:5px;
 
-    border-radius: 20px;
-
-    color: #63f5a6;
-    background: rgba(45,205,120,.09);
-    border: 1px solid rgba(45,205,120,.20);
-
-    font-size: 8px;
+    overflow-x:auto;
+    scrollbar-width:none;
 }
 
-
-/*
-   Two selected cards become a clean vertical stack
-   on the right side.
-*/
-
-#page3 .playing-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
+.playing-cards::-webkit-scrollbar{
+    display:none;
 }
 
-#page3 .playing-cards > * {
-    width: 100%;
+.playing-cards .bingo-card{
+    flex:0 0 95px;
 }
-
 
 /* =========================
    MOBILE
-   ========================= */
+========================= */
 
-@media (max-width: 700px) {
+@media(max-width:700px){
 
-    #page3 .bingo-game-layout {
-        grid-template-columns: minmax(0, 1.25fr) minmax(150px, .75fr);
-        gap: 8px;
+    .bingo-game-layout{
+        grid-template-columns:minmax(0,1.7fr) minmax(125px,.55fr);
+        gap:4px;
     }
 
-    #page3 .game-stat {
-        min-height: 53px;
+    .game-board-panel{
+        height:calc(100vh - 100px);
+        min-height:350px;
     }
 
-    #page3 .game-stat-value {
-        font-size: 16px;
+    .big-board{
+        gap:3px;
     }
 
-    #page3 .game-board-panel {
-        padding: 8px;
-        border-radius: 16px;
+    .board-number{
+        font-size:10px;
     }
 
-    #page3 .big-board {
-        gap: 3px;
+    .game-control-side{
+        gap:4px;
     }
 
-    #page3 .big-board-header {
-        gap: 3px;
+    .current-ball{
+        font-size:22px;
     }
-
-    #page3 .big-board-header div {
-        height: 27px;
-        font-size: 11px;
-    }
-
-    #page3 .big-board .bingo-cell {
-        min-height: 34px;
-        border-radius: 6px;
-        font-size: 12px;
-    }
-
-    #page3 .current-ball-card {
-        min-height: 112px;
-        border-radius: 15px;
-    }
-
-    #page3 .current-ball {
-        font-size: 35px;
-    }
-
-    #page3 .called-count-value {
-        font-size: 20px;
-    }
-
-    #page3 .controls-card,
-    #page3 .your-card-section,
-    #page3 .called-count-card {
-        border-radius: 14px;
-    }
-
 }
 
+/* VERY SMALL SCREEN */
+@media(max-width:380px){
+
+    .game-page{
+        padding:4px;
+    }
+
+    .game-stats{
+        gap:2px;
+    }
+
+    .game-stat{
+        padding:5px 2px;
+    }
+
+    .game-stat-label{
+        font-size:5.5px;
+    }
+
+    .game-stat-value{
+        font-size:9px;
+    }
+
+    .bingo-game-layout{
+        grid-template-columns:minmax(0,1.65fr) minmax(112px,.55fr);
+    }
+
+    .game-board-panel{
+        height:calc(100vh - 95px);
+        padding:5px;
+    }
+
+    .big-board{
+        gap:2px;
+    }
+
+    .board-number{
+        font-size:8px;
+    }
+
+    .playing-cards .bingo-card{
+        flex-basis:82px;
+    }
+}
 
 /* VERY SMALL PHONES */
 
