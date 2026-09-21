@@ -679,20 +679,30 @@ button{
     box-shadow:  
         0 0 6px rgba(124,60,255,.5);  
 }  
-  
-.bingo-cell.marked{  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #25c983,  
-            #0d6947  
-        );  
-  
-    border-color:#54f2ad;  
-  
-    box-shadow:  
-        0 0 8px rgba(53,229,154,.45);  
-}  
+#page3 .board-number.called{
+    background:linear-gradient(135deg,#00ff88,#00c853);
+    color:#07140d;
+    border-color:#00ff88;
+
+    box-shadow:
+        0 0 8px rgba(0,255,136,.8),
+        0 0 18px rgba(0,255,136,.45);
+
+    font-weight:900;
+    transform:scale(.94);
+}
+
+#page3 .bingo-cell.marked{
+    background:linear-gradient(135deg,#00ff88,#00c853) !important;
+    color:#06140d !important;
+    border-color:#00ff88 !important;
+
+    box-shadow:
+        0 0 7px rgba(0,255,136,.8),
+        inset 0 0 8px rgba(255,255,255,.15);
+
+    font-weight:900;
+}
   
 /* =========================  
    READY BUTTON  
@@ -2180,7 +2190,64 @@ button{
         font-size:7px;  
     }  
 }  
-  
+  /* ==================================================
+   PAGE 3 — NO SCROLL / FIT SCREEN
+================================================== */
+
+#page3{
+    height:100dvh;
+    max-height:100dvh;
+    overflow:hidden !important;
+    box-sizing:border-box;
+}
+
+#page3 .game-live-header{
+    flex:0 0 auto;
+}
+
+#page3 .game-stats{
+    flex:0 0 auto;
+}
+
+#page3 .bingo-game-layout{
+    height:calc(100dvh - 145px);
+    max-height:calc(100dvh - 145px);
+    min-height:0;
+    overflow:hidden;
+}
+
+#page3 .bingo-board-side,
+#page3 .game-control-side{
+    min-height:0;
+    overflow:hidden;
+}
+
+#page3 .game-board-panel{
+    height:100%;
+    max-height:100%;
+    min-height:0;
+    overflow:hidden;
+}
+
+#page3 .big-board{
+    min-height:0;
+    height:100%;
+    overflow:hidden;
+}
+/* CALLED NUMBER ON BIG BOARD */
+
+#page3 .board-number.called{
+    background:linear-gradient(135deg,#00ff88,#00c853);
+    color:#07140d;
+    border-color:#00ff88;
+
+    box-shadow:
+        0 0 8px rgba(0,255,136,.8),
+        0 0 18px rgba(0,255,136,.45);
+
+    font-weight:900;
+    transform:scale(.94);
+}
 </style>  </head>  <body>  <div class="app">  <!-- ==================================================  
      PAGE 1  
 ================================================== -->  <section id="page1" class="page active">  <header class="app-header">  
@@ -4359,43 +4426,28 @@ function updateLastCalled(number){
 /* ==================================================  
    MARK CALLED NUMBERS  
 ================================================== */  
-  
-function markPlayerCards(){  
-  
-    document  
-        .querySelectorAll(  
-            "#playingCards .bingo-cell"  
-        )  
-        .forEach(cell=>{  
-  
-            const value =  
-                cell.dataset.number;  
-  
-            if(  
-                value === "FREE"  
-            ){  
-  
-                return;  
-  
-            }  
-  
-  
-            if(  
-                calledNumbers.includes(  
-                    Number(value)  
-                )  
-            ){  
-  
-                cell.classList.add(  
-                    "marked"  
-                );  
-  
-            }  
-  
-        });  
-  
-}  
-  
+function markPlayerCards(){
+
+    const cards = document.querySelectorAll(
+        "#playingCards .bingo-cell"
+    );
+
+    cards.forEach(cell => {
+
+        const value = Number(cell.dataset.number);
+
+        if(!Number.isInteger(value)){
+            return;
+        }
+
+        if(calledNumbers.includes(value)){
+            cell.classList.add("marked");
+        }else{
+            cell.classList.remove("marked");
+        }
+
+    });
+}
   
 /* ==================================================  
    BINGO CHECK  
@@ -6818,18 +6870,29 @@ async function callNumber(){
             getBingoLetter(
                 number
             );
+const display =
+    document.getElementById(
+        "gameBall"
+    );
 
-        const display =
-            document.getElementById(
-                "calledNumberDisplay"
-            );
+if(display){
 
-        if(display){
+    display.textContent =
+        `${letter}-${number}`;
 
-            display.textContent =
-                `${letter}-${number}`;
+}
 
-        }
+const lastCalled =
+    document.getElementById(
+        "lastCalled"
+    );
+
+if(lastCalled){
+
+    lastCalled.textContent =
+        `${letter}-${number}`;
+
+}
 
         renderBigBoard();
 
@@ -7062,80 +7125,70 @@ function toggleVoice(){
   
 }  
   
-  
-/* =====================================================  
-   BOARD  
-===================================================== */  
-  
-function renderBigBoard(){  
-  
- const board =  
-  document.getElementById(  
-   "bigBingoBoard"  
-  );  
-  
-  
- if(!board){  
-  
-  return;  
-  
- }  
-  
-  
- board.innerHTML = "";  
-  
-  
- const last =  
-  calledNumbers[  
-   calledNumbers.length-1  
-  ];  
-  
-  
- for(  
-  let number=1;  
-  number<=75;  
-  number++  
- ){  
-  
-  const cell =  
-   document.createElement("div");  
-  
-  
-  cell.className =  
-   "board-number";  
-  
-  
-  cell.textContent =  
-   String(number);  
-  
-  
-  if(  
-   calledNumbers.includes(number)  
-  ){  
-  
-   cell.classList.add(  
-    "called"  
-   );  
-  
-  }  
-  
-  
-  if(last === number){  
-  
-   cell.classList.add(  
-    "last-called"  
-   );  
-  
-  }  
-  
-  
-  board.appendChild(  
-   cell  
-  );  
-  
- }  
-  
-}  
+  function renderBigBoard(){
+
+    const board =
+        document.getElementById(
+            "bigBingoBoard"
+        );
+
+    if(!board){
+        return;
+    }
+
+    board.innerHTML = "";
+
+    const last =
+        calledNumbers[
+            calledNumbers.length - 1
+        ];
+
+    for(
+        let number = 1;
+        number <= 75;
+        number++
+    ){
+
+        const cell =
+            document.createElement("div");
+
+        cell.className =
+            "board-number";
+
+        cell.textContent =
+            number;
+
+        /* Mark every called number */
+        if(
+            calledNumbers.includes(
+                Number(number)
+            )
+        ){
+
+            cell.classList.add(
+                "called"
+            );
+
+        }
+
+        /* Highlight the newest number */
+        if(
+            last === number
+        ){
+
+            cell.classList.add(
+                "last-called"
+            );
+
+        }
+
+        board.appendChild(
+            cell
+        );
+
+    }
+
+}
   
   
 /* =====================================================  
@@ -7178,50 +7231,62 @@ function renderPlayingPage(){
  updateAllDisplays();  
   
 }  
-  
-  
-/* =====================================================  
-   MARK CARDS  
-===================================================== */  
-  
-function markPlayerCards(){  
-  
- document  
-  .querySelectorAll(  
-   "#playingCards .bingo-cell"  
-  )  
-  .forEach(  
-   cell=>{  
-  
-    const value =  
-     cell.dataset.value;  
-  
-  
-    if(value === "FREE"){  
-  
-     cell.classList.remove("called");  
-     cell.classList.add("free");  
-  
-     return;  
-  
-    }  
-  
-  
-    const number =  
-     Number(value);  
-  
-  
-    cell.classList.toggle(  
-     "called",  
-     calledNumbers.includes(number)  
-    );  
-  
-   }  
-  );  
-  
-}  
-  
-  
+ 
+  function markPlayerCards(){
+
+    const cells =
+        document.querySelectorAll(
+            "#playingCards .bingo-cell"
+        );
+
+    cells.forEach(
+        cell => {
+
+            const value =
+                cell.dataset.value ??
+                cell.dataset.number ??
+                cell.textContent.trim();
+
+            if(
+                value === "FREE"
+            ){
+
+                cell.classList.add(
+                    "marked"
+                );
+
+                return;
+
+            }
+
+            const number =
+                Number(value);
+
+            if(
+                calledNumbers.includes(
+                    number
+                )
+            ){
+
+                cell.classList.add(
+                    "marked"
+                );
+
+            }else{
+
+                cell.classList.remove(
+                    "marked"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+
 /* =====================================================  
    MARKED  
 ===================================================== */  
