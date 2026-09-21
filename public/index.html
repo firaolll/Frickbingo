@@ -1327,153 +1327,276 @@ button{
 .playing-cards .bingo-card{
     flex:0 0 95px;
 }
-
-/* =========================
-   MOBILE
-========================= */
+/* ==================================================
+   PAGE 3 — FIXED COMPACT MOBILE LAYOUT
+================================================== */
 
 @media(max-width:700px){
 
-    .bingo-game-layout{
-        grid-template-columns:minmax(0,1.7fr) minmax(125px,.55fr);
-        gap:4px;
+    #page3{
+        overflow:hidden;
     }
 
-    .game-board-panel{
-        height:calc(100vh - 135px);
-        min-height:350px;
+    #page3 .bingo-game-layout{
+        grid-template-columns:minmax(0,1.45fr) minmax(195px,.75fr);
+        gap:5px;
+
+        height:calc(100vh - 145px);
+        min-height:0;
     }
 
-    .big-board{
+    #page3 .bingo-board-side{
+        min-width:0;
+        min-height:0;
+    }
+
+    #page3 .game-board-panel{
+        height:100%;
+        min-height:0;
+        padding:5px;
+        box-sizing:border-box;
+    }
+
+    #page3 .big-board{
         gap:3px;
     }
 
-    .board-number{
-        font-size:10px;
-    }
-
-    .game-control-side{
-        gap:4px;
-    }
-
-    .current-ball{
-        font-size:22px;
-    }
-}
-
-/* VERY SMALL SCREEN */
-@media(max-width:380px){
-
-    .game-page{
-        padding:4px;
-    }
-
-    .game-stats{
-        gap:2px;
-    }
-
-    .game-stat{
-        padding:5px 2px;
-    }
-
-    .game-stat-label{
-        font-size:5.5px;
-    }
-
-    .game-stat-value{
+    #page3 .board-number{
         font-size:9px;
     }
 
-    .bingo-game-layout{
-        grid-template-columns:minmax(0,1.65fr) minmax(112px,.55fr);
+    /* RIGHT SIDE */
+    #page3 .game-control-side{
+        height:100%;
+        min-height:0;
+
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+
+        overflow:hidden;
     }
 
-    .game-board-panel{
-        height:calc(100vh - 130px);
-        padding:5px;
+    /* CURRENT BALL */
+    #page3 .current-ball-card{
+        min-height:58px;
+        height:58px;
+        padding:4px;
+        flex:0 0 58px;
     }
 
-    .big-board{
-        gap:2px;
+    #page3 .current-ball-label{
+        font-size:6px;
     }
 
-    .board-number{
+    #page3 .current-ball{
+        margin-top:1px;
+        font-size:22px;
+        line-height:25px;
+    }
+
+    #page3 .ball-ring{
+        width:45px;
+        height:45px;
+        top:25px;
+    }
+
+    /* CALLED NUMBERS */
+    #page3 .called-count-card{
+        min-height:48px;
+        height:48px;
+        padding:4px;
+
+        flex:0 0 48px;
+    }
+
+    #page3 .called-count-label{
+        font-size:6px;
+    }
+
+    #page3 .called-count-value{
+        margin-top:1px;
+        font-size:13px;
+    }
+
+    #page3 .called-progress{
+        height:3px;
+        margin-top:3px;
+    }
+
+    #page3 .last-called-line{
+        margin-top:2px;
+        font-size:5.5px;
+    }
+
+    #page3 .last-called-line strong{
         font-size:8px;
     }
 
-    .playing-cards .bingo-card{
-        flex-basis:82px;
+    /* CONTROLS */
+    #page3 .controls-card{
+        padding:4px;
+
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:3px;
+
+        flex:0 0 auto;
+    }
+
+    #page3 .control-title{
+        grid-column:1 / -1;
+        margin-bottom:1px;
+        font-size:6px;
+    }
+
+    #page3 .game-control-row{
+        min-height:28px;
+        height:28px;
+
+        padding:3px;
+        gap:3px;
+        margin:0;
+    }
+
+    #page3 .control-icon{
+        font-size:10px;
+    }
+
+    #page3 .control-text strong{
+        font-size:6.5px;
+    }
+
+    #page3 .control-text small{
+        display:none;
+    }
+
+    #page3 .switch{
+        width:20px;
+        height:11px;
+    }
+
+    #page3 .switch::after{
+        width:7px;
+        height:7px;
+        top:2px;
+        left:2px;
+    }
+
+    #page3 .switch.on::after{
+        left:11px;
+    }
+
+    #page3 .call-button{
+        grid-column:1 / -1;
+
+        min-height:28px;
+        height:28px;
+
+        margin:0;
+
+        font-size:7px;
+    }
+
+    /* YOUR CARDS TAKE REMAINING SPACE */
+    #page3 .your-card-section{
+        flex:1;
+        min-height:0;
+
+        padding:4px;
+        margin:0;
+
+        overflow:hidden;
+    }
+
+    #page3 .your-card-title{
+        height:14px;
+        margin-bottom:3px;
+
+        font-size:6.5px;
+    }
+
+    #page3 .auto-mark-badge{
+        font-size:5px;
+    }
+
+    #page3 .playing-cards{
+        height:calc(100% - 17px);
+
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+
+        gap:3px;
+
+        overflow:hidden;
+        min-height:0;
+    }
+
+    #page3 .playing-cards .bingo-card{
+        width:100%;
+        height:100%;
+
+        min-width:0;
+        min-height:0;
+
+        overflow:hidden;
+    }
+
+    #page3 .playing-cards .bingo-cell{
+        min-width:0;
+        min-height:0;
+
+        padding:0;
+
+        font-size:clamp(6px,1.5vw,9px);
     }
 }
 
-/* VERY SMALL PHONES */
 
-@media (max-width: 430px) {
+/* ==================================================
+   VERY SMALL PHONES
+================================================== */
 
-    #page3 .game-stats {
-        gap: 4px;
+@media(max-width:380px){
+
+    #page3 .bingo-game-layout{
+        grid-template-columns:minmax(0,1.4fr) minmax(175px,.8fr);
+        gap:4px;
     }
 
-    #page3 .game-stat {
-        padding: 6px 3px;
-        border-radius: 10px;
+    #page3 .game-board-panel{
+        padding:4px;
     }
 
-    #page3 .game-stat-label {
-        font-size: 7px;
+    #page3 .big-board{
+        gap:2px;
     }
 
-    #page3 .game-stat-value {
-        font-size: 14px;
+    #page3 .board-number{
+        font-size:8px;
     }
 
-    #page3 .bingo-game-layout {
-        grid-template-columns: minmax(0, 1.18fr) minmax(135px, .82fr);
-        gap: 6px;
+    #page3 .current-ball-card{
+        min-height:54px;
+        height:54px;
+        flex-basis:54px;
     }
 
-    #page3 .game-control-side {
-        gap: 6px;
+    #page3 .called-count-card{
+        min-height:44px;
+        height:44px;
+        flex-basis:44px;
     }
 
-    #page3 .current-ball-card {
-        min-height: 100px;
-        padding: 8px;
+    #page3 .game-control-row{
+        min-height:26px;
+        height:26px;
     }
 
-    #page3 .current-ball {
-        font-size: 30px;
+    #page3 .call-button{
+        min-height:26px;
+        height:26px;
     }
-
-    #page3 .current-ball-label {
-        font-size: 7px;
-    }
-
-    #page3 .called-count-card,
-    #page3 .controls-card,
-    #page3 .your-card-section {
-        padding: 8px;
-    }
-
-    #page3 .control-text small {
-        display: none;
-    }
-
-    #page3 .game-control-row {
-        min-height: 39px;
-        padding: 5px;
-    }
-
-    #page3 .control-icon {
-        width: 25px;
-        height: 25px;
-    }
-
-    #page3 .call-button {
-        min-height: 42px;
-        font-size: 9px;
-    }
-
 }
 
 /* =========================  
