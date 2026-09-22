@@ -2193,60 +2193,129 @@ button{
   /* ==================================================
    PAGE 3 — NO SCROLL / FIT SCREEN
 ================================================== */
-
-#page3{
-    height:100dvh;
-    max-height:100dvh;
-    overflow:hidden !important;
-    box-sizing:border-box;
-}
-
-#page3 .game-live-header{
-    flex:0 0 auto;
-}
-
-#page3 .game-stats{
-    flex:0 0 auto;
-}
+/* ==================================================
+   PAGE 3 — LEFT BINGO BOARD / RIGHT GAME PANEL
+================================================== */
 
 #page3 .bingo-game-layout{
-    height:calc(100dvh - 145px);
-    max-height:calc(100dvh - 145px);
+    display:grid !important;
+
+    /* LEFT = big board
+       RIGHT = controls + cards */
+    grid-template-columns:
+        minmax(0, 1.55fr)
+        minmax(190px, .75fr) !important;
+
+    gap:6px;
+
+    height:calc(100dvh - 125px);
+    max-height:calc(100dvh - 125px);
+
     min-height:0;
     overflow:hidden;
 }
 
-#page3 .bingo-board-side,
-#page3 .game-control-side{
+/* =========================
+   LEFT — BINGO BOARD
+========================= */
+
+#page3 .bingo-board-side{
+    grid-column:1 !important;
+    grid-row:1 !important;
+
+    width:100%;
+    height:100%;
+
+    min-width:0;
     min-height:0;
+
     overflow:hidden;
 }
 
 #page3 .game-board-panel{
+    width:100%;
     height:100%;
-    max-height:100%;
+
+    min-width:0;
     min-height:0;
+
+    padding:4px;
+    box-sizing:border-box;
+
     overflow:hidden;
 }
 
 #page3 .big-board{
-    min-height:0;
+    width:100%;
     height:100%;
+
+    min-width:0;
+    min-height:0;
+
+    display:grid;
+
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    grid-template-rows:repeat(15,minmax(0,1fr));
+
+    grid-auto-flow:column;
+
+    gap:3px;
+
     overflow:hidden;
 }
-/* CALLED NUMBER ON BIG BOARD */
 
-#page3 .board-number.called{
-    background:linear-gradient(135deg,#00ff88,#00c853);
-    color:#07140d;
-    border-color:#00ff88;
+/* =========================
+   RIGHT — GAME PANEL
+========================= */
 
-    box-shadow:
-        0 0 8px rgba(0,255,136,.8),
-        0 0 18px rgba(0,255,136,.45);
+#page3 .game-control-side{
+    grid-column:2 !important;
+    grid-row:1 !important;
 
-    font-weight:900;
-    transform:scale(.94);
+    width:100%;
+    height:100%;
+
+    min-width:0;
+    min-height:0;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:4px;
+
+    overflow:hidden;
+}
+
+/* =========================
+   YOUR CARDS
+   2 ROWS × 1 COLUMN
+========================= */
+
+#page3 .playing-cards{
+    display:grid !important;
+
+    grid-template-columns:1fr !important;
+    grid-template-rows:
+        repeat(2,minmax(0,1fr)) !important;
+
+    gap:4px;
+
+    width:100%;
+    height:calc(100% - 17px);
+
+    min-height:0;
+
+    overflow:hidden;
+}
+
+#page3 .playing-cards .bingo-card{
+    width:100%;
+    height:100%;
+
+    min-width:0;
+    min-height:0;
+
+    overflow:hidden;
 }
 </style>  </head>  <body>  <div class="app">  <!-- ==================================================  
      PAGE 1  
