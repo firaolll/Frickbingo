@@ -1357,7 +1357,15 @@ app.get("/api/match/:matchId", auth, (req, res) => {
                     Number(player.user_id) ===
                     Number(req.user.id)
             ) || null;
+const callerUserId =
+    players.length > 0
+        ? Number(players[0].user_id)
+        : null;
 
+const isCaller =
+    callerUserId !== null &&
+    Number(req.user.id) ===
+    callerUserId;
         return res.json({
 
             success: true,
@@ -1393,7 +1401,8 @@ app.get("/api/match/:matchId", auth, (req, res) => {
 
                 playerCount:
                     players.length,
-
+                isCaller:
+                    isCaller,
                 minPlayers:
                     MIN_PLAYERS,
 
@@ -1479,7 +1488,21 @@ app.post("/api/match/:matchId/call", auth, (req, res) => {
             });
 
         }
+// ==================================================
+// ONLY FIRST PLAYER CAN CALL NUMBERS
+// ==================================================
 
+const caller = db.prepare(`
+    SELECT user_id
+    FROM games
+    WHERE match_id = ?
+    ORDER BY id ASC
+    LIMIT 1
+`).get(matchId);
+
+const isCaller =
+    caller &&
+    Number(req.user.id) === Number(caller.user_id);
         // ------------------------------------------------
         // MATCH ALREADY FINISHED
         // ------------------------------------------------
@@ -1590,7 +1613,41 @@ app.post("/api/match/:matchId/call", auth, (req, res) => {
             calledBalls.map(
                 Number
             );
+const calledCount =
+    document.getElementById(
+        "calledCount"
+    );
 
+if(calledCount){
+
+    calledCount.textContent =
+        calledNumbers.length;
+
+}
+
+const calledProgress =
+    document.getElementById(
+        "calledProgress"
+    );
+
+if(calledProgress){
+
+    calledProgress.style.width =
+        (
+            calledNumbers.length / 75 * 100
+        ) + "%";
+
+}
+// Non-caller players NEVER generate a new ball.
+// They only receive the current shared state.
+if(!isCaller){
+    return res.json({
+        success:true,
+        matchStatus:match.status,
+        currentBall:match.current_ball || null,
+        calledBalls
+    });
+}
         // ------------------------------------------------
         // ALL 75 NUMBERS CALLED
         // ------------------------------------------------

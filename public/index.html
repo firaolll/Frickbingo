@@ -1508,50 +1508,69 @@ button{
         font-size:7px;
     }
 
-    /* YOUR CARDS TAKE REMAINING SPACE */
-    #page3 .your-card-section{
-        flex:1;
-        min-height:0;
+    /* ==================================================
+   PAGE 3 — FIT 5×5 CARDS COMPLETELY
+================================================== */
 
-        padding:4px;
-        margin:0;
+/* Give player-card area the space used by Call button */
+#page3 .your-card-section{
+    flex:1;
+    min-height:0;
+    overflow:hidden;
+}
 
-        overflow:hidden;
-    }
+/* Two cards stacked vertically */
+#page3 .playing-cards{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:repeat(2,minmax(0,1fr)) !important;
 
-    #page3 .your-card-title{
-        height:14px;
-        margin-bottom:3px;
+    gap:4px;
 
-        font-size:6.5px;
-    }
+    height:calc(100% - 17px);
+    min-height:0;
 
-    #page3 .auto-mark-badge{
-        font-size:5px;
-    }
+    overflow:hidden;
+}
 
-    #page3 .playing-cards{
-        height:calc(100% - 17px);
+/* Each card must stay completely inside its box */
+#page3 .playing-cards .bingo-card{
+    width:100% !important;
+    height:100% !important;
 
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
+    min-width:0;
+    min-height:0;
 
-        gap:3px;
+    box-sizing:border-box;
 
-        overflow:hidden;
-        min-height:0;
-    }
+    display:grid !important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    grid-template-rows:repeat(5,minmax(0,1fr));
 
-    #page3 .playing-cards .bingo-card{
-        width:100%;
-        height:100%;
+    overflow:hidden;
+}
 
-        min-width:0;
-        min-height:0;
+/* Every cell must fit inside the 5×5 card */
+#page3 .playing-cards .bingo-cell{
+    min-width:0 !important;
+    min-height:0 !important;
 
-        overflow:hidden;
-    }
+    width:auto !important;
+    height:auto !important;
 
+    box-sizing:border-box;
+
+    padding:0 !important;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:clamp(6px,1.5vw,10px);
+    line-height:1;
+
+    overflow:hidden;
+}
     #page3 .playing-cards .bingo-cell{
         min-width:0;
         min-height:0;
@@ -2809,17 +2828,6 @@ button{
                         id="voiceSwitch"
                         class="switch on">
                     </span>
-
-                </button>
-
-
-                <button
-                    id="callBtn"
-                    class="call-button"
-                    onclick="callNextNumber()">
-
-                    <span>🎯</span>
-                    CALL NEXT BALL
 
                 </button>
 
@@ -6293,6 +6301,234 @@ async function readyForGame(){
 
 }
 
+/* ==================================================
+   SYNC SHARED BINGO STATE
+================================================== */
+
+let sharedSyncInterval = null;
+
+async function syncSharedGameState(){
+
+    if(
+        !currentGameId ||
+        !actualGameStarted ||
+        winnerShown
+    ){
+        return;
+    }
+
+    try{
+
+        const data =
+            await apiFetch(
+                "/api/match/" +
+                currentGameId
+            );
+
+        if(!data){
+            return;
+        }
+
+        const match =
+            data.match ||
+            data;
+
+        /* ------------------------------
+           SYNC CALLED NUMBERS
+        ------------------------------ */
+
+        let serverCalled =
+            match.calledBalls ??
+            match.called_balls ??
+            data.calledBalls ??
+            data.called_balls ??
+            [];
+
+        if(
+            typeof serverCalled === "string"
+        ){
+
+            try{
+
+                serverCalled =
+                    JSON.parse(
+                        serverCalled
+                    );
+
+            }catch(error){
+
+                serverCalled = [];
+
+            }
+
+        }
+
+        if(
+            Array.isArray(serverCalled)
+        ){
+
+            calledNumbers =
+                serverCalled
+                    .map(Number)
+                    .filter(
+                        number =>
+                            Number.isInteger(number) &&
+                            number >= 1 &&
+                            number <= 75
+                    );
+
+        }
+
+        /* ------------------------------
+           SYNC CURRENT BALL
+        ------------------------------ */
+
+        const serverBall =
+            Number(
+                match.currentBall ??
+                match.current_ball ??
+                data.currentBall ??
+                data.current_ball
+            );
+
+        if(
+            Number.isInteger(serverBall) &&
+            serverBall >= 1 &&
+            serverBall <= 75
+        ){
+
+            const letter =
+                getBingoLetter(
+                    serverBall
+                );
+
+            const display =
+                document.getElementById(
+                    "gameBall"
+                );
+
+            if(display){
+
+                display.textContent =
+                    `${letter}-${serverBall}`;
+
+            }
+
+            const lastCalled =
+                document.getElementById(
+                    "lastCalled"
+                );
+
+            if(lastCalled){
+
+                lastCalled.textContent =
+                    `${letter}-${serverBall}`;
+
+            }
+
+        }
+
+        /* ------------------------------
+           CALLED COUNT
+        ------------------------------ */
+
+        const calledCount =
+            document.getElementById(
+                "calledCount"
+            );
+
+        if(calledCount){
+
+            calledCount.textContent =
+                calledNumbers.length;
+
+        }
+
+        const calledProgress =
+            document.getElementById(
+                "calledProgress"
+            );
+
+        if(calledProgress){
+
+            calledProgress.style.width =
+                (
+                    calledNumbers.length /
+                    75 *
+                    100
+                ) + "%";
+
+        }
+
+        /* ------------------------------
+           REDRAW EVERYTHING
+        ------------------------------ */
+
+        renderBigBoard();
+
+        markPlayerCards();
+
+        updateAllDisplays();
+
+    }catch(error){
+
+        console.error(
+            "❌ SHARED SYNC ERROR:",
+            error
+        );
+
+    }
+
+}
+
+/* ==================================================
+   START SHARED STATE SYNC
+================================================== */
+
+function startSharedGameSync(){
+
+    if(sharedSyncInterval){
+
+        clearInterval(
+            sharedSyncInterval
+        );
+
+    }
+
+    syncSharedGameState();
+
+    sharedSyncInterval =
+        setInterval(
+            syncSharedGameState,
+            500
+        );
+
+}
+
+
+/* ==================================================
+   STOP SHARED STATE SYNC
+================================================== */
+
+function stopSharedGameSync(){
+
+    if(sharedSyncInterval){
+
+        clearInterval(
+            sharedSyncInterval
+        );
+
+        sharedSyncInterval = null;
+
+    }
+
+}
+
+
+
+
+
+
 async function waitForSharedGameStart(matchId){
 
     console.log(
@@ -6401,6 +6637,17 @@ if(timer){
         match.gameId ||
         match.sharedGameId ||
         matchId;
+    const isCaller = Boolean(
+    match.isCaller ?? data.isCaller
+);
+
+console.log(
+    "🎯 THIS PLAYER IS CALLER:",
+    isCaller
+);
+
+window.isSharedCaller = isCaller;
+
 
     // Sync Bingo numbers from the server
     if(match.calledBalls){
@@ -6612,14 +6859,23 @@ function beginActualGame(){
         callButton.disabled = false;
     }
 
-    renderPlayingPage();
+   renderPlayingPage();
 
-    // Start automatic Bingo calling
+startSharedGameSync();
+
+// Only the server-designated caller generates balls
+if(window.isSharedCaller){
     autoMode = true;
-
     startAutoCalling();
 
-    haptic("success");
+    console.log("🎯 CALLER: Automatic ball calling started");
+}else{
+    autoMode = false;
+
+    console.log("👀 PLAYER: Waiting for shared balls");
+}
+
+haptic("success");
 }
   
   
@@ -7095,43 +7351,52 @@ function toggleAuto(){
 /* =====================================================  
    AUTO START  
 ===================================================== */  
-  
-function startAutoCalling(){  
-  
- stopAutoCalling();  
-  
-  
- if(  
-  !autoMode ||  
-  !actualGameStarted ||  
-  winnerShown  
- ){  
-  
-  return;  
-  
- }  
-  
-  
- autoInterval =  
-  setInterval(  
-   ()=>{  
-  
-    if(  
-     actualGameStarted &&  
-     !winnerShown  
-    ){  
-  
-     callNumber();  
-  
-    }  
-  
-   },  
-   3000  
-  );  
-  
-}  
-  
-  
+function startAutoCalling(){
+
+    stopAutoCalling();
+
+    if(
+        !autoMode ||
+        !actualGameStarted ||
+        winnerShown ||
+        !currentGameId
+    ){
+        return;
+    }
+
+    /*
+     * Only the first player acts as the
+     * automatic caller.
+     *
+     * Other players only synchronize
+     * the shared server state.
+     */
+
+    if(
+        Number(fakePlayers || 1) !== 1
+    ){
+        return;
+    }
+
+    autoInterval =
+        setInterval(
+            async () => {
+
+                if(
+                    !actualGameStarted ||
+                    winnerShown ||
+                    !currentGameId
+                ){
+                    return;
+                }
+
+                await callNumber();
+
+            },
+            3000
+        );
+
+}
 /* =====================================================  
    AUTO STOP  
 ===================================================== */  
