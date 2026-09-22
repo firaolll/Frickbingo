@@ -7354,7 +7354,11 @@ function toggleAuto(){
 function startAutoCalling(){
 
     stopAutoCalling();
-
+    console.log("🚀 START AUTO CALLING");
+    console.log("autoMode:", autoMode);
+    console.log("actualGameStarted:", actualGameStarted);
+    console.log("winnerShown:", winnerShown);
+    console.log("isCaller:", window.isSharedCaller);
     if(
         !autoMode ||
         !actualGameStarted ||
