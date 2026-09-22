@@ -1294,6 +1294,8 @@ if (!existingGame) {
     }
 
 });
+
+
 app.get("/api/match/:matchId", auth, (req, res) => {
 
     try {
@@ -1366,6 +1368,18 @@ const isCaller =
     callerUserId !== null &&
     Number(req.user.id) ===
     callerUserId;
+
+    console.log(
+    "🎯 CALLER USER ID:",
+    callerUserId
+);
+
+console.log(
+    "👤 CURRENT USER ID:",
+    req.user.id,
+    "IS CALLER:",
+    isCaller
+);
         return res.json({
 
             success: true,
