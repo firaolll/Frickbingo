@@ -7354,52 +7354,48 @@ function toggleAuto(){
 function startAutoCalling(){
 
     stopAutoCalling();
+
     console.log("🚀 START AUTO CALLING");
     console.log("autoMode:", autoMode);
     console.log("actualGameStarted:", actualGameStarted);
     console.log("winnerShown:", winnerShown);
     console.log("isCaller:", window.isSharedCaller);
+    console.log("currentGameId:", currentGameId);
+
     if(
-        !autoMode ||
+        !window.isSharedCaller ||
         !actualGameStarted ||
         winnerShown ||
         !currentGameId
     ){
+        console.log("⛔ AUTO CALLING NOT STARTED");
         return;
     }
 
-    /*
-     * Only the first player acts as the
-     * automatic caller.
-     *
-     * Other players only synchronize
-     * the shared server state.
-     */
+    autoMode = true;
 
-    if(
-        Number(fakePlayers || 1) !== 1
-    ){
-        return;
-    }
+    autoInterval = setInterval(
+        async () => {
 
-    autoInterval =
-        setInterval(
-            async () => {
+            if(
+                !window.isSharedCaller ||
+                !actualGameStarted ||
+                winnerShown ||
+                !currentGameId
+            ){
+                return;
+            }
 
-                if(
-                    !actualGameStarted ||
-                    winnerShown ||
-                    !currentGameId
-                ){
-                    return;
-                }
+            console.log("⏱️ AUTO CALL TICK");
+            console.log("🎯 CALLING NEXT BALL");
 
-                await callNumber();
+            await callNumber();
 
-            },
-            3000
-        );
+        },
+        3000
+    );
 
+    console.log("✅ AUTO CALLING INTERVAL STARTED");
 }
 /* =====================================================  
    AUTO STOP  
