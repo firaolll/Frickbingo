@@ -1464,7 +1464,12 @@ currentBall:
 
 });
 app.post("/api/match/:matchId/call", auth, (req, res) => {
-
+console.log(
+    "📞 CALL ENDPOINT HIT — MATCH:",
+    req.params.matchId,
+    "USER:",
+    req.user?.id
+);
     try {
 
         const matchId =
