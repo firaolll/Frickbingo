@@ -1632,31 +1632,7 @@ const isCaller =
             calledBalls.map(
                 Number
             );
-const calledCount =
-    document.getElementById(
-        "calledCount"
-    );
 
-if(calledCount){
-
-    calledCount.textContent =
-        calledNumbers.length;
-
-}
-
-const calledProgress =
-    document.getElementById(
-        "calledProgress"
-    );
-
-if(calledProgress){
-
-    calledProgress.style.width =
-        (
-            calledNumbers.length / 75 * 100
-        ) + "%";
-
-}
 // Non-caller players NEVER generate a new ball.
 // They only receive the current shared state.
 if(!isCaller){
