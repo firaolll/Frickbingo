@@ -1797,23 +1797,16 @@ if(!isCaller){
         });
 
     } catch (error) {
+    console.error(
+        "CALL NUMBER ERROR:",
+        error
+    );
 
-        console.error(
-            "CALL NUMBER ERROR:",
-            error
-        );
-
-        return res.status(500).json({
-
-            success: false,
-
-            error:
-                "Could not call Bingo number"
-
-        });
-
-    }
-
+    return res.status(500).json({
+        success: false,
+        error: "Could not call Bingo number"
+    });
+}
 });
 // ======================================================
 // JOIN / START GAME
