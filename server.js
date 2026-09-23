@@ -1797,14 +1797,26 @@ if(!isCaller){
         });
 
     } catch (error) {
+
     console.error(
-        "CALL NUMBER ERROR:",
+        "❌ CALL NUMBER ERROR:",
         error
+    );
+
+    console.error(
+        "❌ ERROR MESSAGE:",
+        error?.message
+    );
+
+    console.error(
+        "❌ ERROR STACK:",
+        error?.stack
     );
 
     return res.status(500).json({
         success: false,
-        error: "Could not call Bingo number"
+        error: "Could not call Bingo number",
+        debug: error?.message || "Unknown server error"
     });
 }
 });
