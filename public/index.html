@@ -1561,6 +1561,32 @@ button{
 
     padding:3px !important;
 
+    display:flex !important;
+    flex-direction:column !important;
+
+    overflow:hidden !important;
+}
+#page3 .playing-cards .bingo-header{
+    flex:0 0 auto !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(5,1fr) !important;
+
+    width:100% !important;
+    height:18px !important;
+
+    margin-bottom:2px !important;
+}
+
+#page3 .playing-cards .bingo-grid{
+    flex:1 1 auto !important;
+
+    width:100% !important;
+    height:auto !important;
+
+    min-width:0 !important;
+    min-height:0 !important;
+
     display:grid !important;
     grid-template-columns:repeat(5,minmax(0,1fr)) !important;
     grid-template-rows:repeat(5,minmax(0,1fr)) !important;
@@ -1569,30 +1595,7 @@ button{
 
     overflow:hidden !important;
 }
-#page3 .playing-cards .bingo-cell{
-    width:100% !important;
-    height:100% !important;
 
-    min-width:0 !important;
-    min-height:0 !important;
-
-    box-sizing:border-box !important;
-
-    padding:0 !important;
-    margin:0 !important;
-
-    aspect-ratio:auto !important;
-
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-
-    font-size:18px !important;
-    font-weight:900 !important;
-    line-height:1 !important;
-
-    overflow:hidden !important;
-}
 /* ==================================================
    VERY SMALL PHONES
 ================================================== */
