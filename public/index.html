@@ -1546,56 +1546,52 @@ button{
 
     overflow:hidden;
 }
+/* ==================================================
+   PAGE 3 — PLAYER CARDS
+================================================== */
 
-/* Each card must stay completely inside its box */
 #page3 .playing-cards .bingo-card{
     width:100% !important;
     height:100% !important;
 
-    min-width:0;
-    min-height:0;
-
-    box-sizing:border-box;
-
-    display:grid !important;
-    grid-template-columns:repeat(5,minmax(0,1fr));
-    grid-template-rows:repeat(5,minmax(0,1fr));
-
-    overflow:hidden;
-}
-
-/* Every cell must fit inside the 5×5 card */
-#page3 .playing-cards .bingo-cell{
     min-width:0 !important;
     min-height:0 !important;
 
-    width:auto !important;
-    height:auto !important;
+    box-sizing:border-box !important;
 
-    box-sizing:border-box;
+    padding:3px !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+    grid-template-rows:repeat(5,minmax(0,1fr)) !important;
+
+    gap:2px !important;
+
+    overflow:hidden !important;
+}
+
+#page3 .playing-cards .bingo-cell{
+    width:100% !important;
+    height:100% !important;
+
+    min-width:0 !important;
+    min-height:0 !important;
+
+    box-sizing:border-box !important;
 
     padding:0 !important;
+    margin:0 !important;
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
 
-    font-size:clamp(6px,1.5vw,10px);
-    line-height:1;
+    font-size:14px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
 
-    overflow:hidden;
+    overflow:hidden !important;
 }
-    #page3 .playing-cards .bingo-cell{
-        min-width:0;
-        min-height:0;
-
-        padding:0;
-
-        font-size:clamp(6px,1.5vw,9px);
-    }
-}
-
-
 /* ==================================================
    VERY SMALL PHONES
 ================================================== */
