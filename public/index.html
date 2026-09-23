@@ -6346,7 +6346,32 @@ async function syncSharedGameState(){
         const match =
             data.match ||
             data;
+        const matchStatus =
+    String(
+        match.status ??
+        data.status ??
+        ""
+    ).toUpperCase();
 
+if(matchStatus === "FINISHED"){
+
+    console.log(
+        "🏁 SHARED MATCH FINISHED"
+    );
+
+    stopSharedGameSync();
+    stopAutoCalling();
+
+    actualGameStarted = false;
+
+    if(!winnerShown){
+
+        showLoserScreen();
+
+    }
+
+    return;
+}
         /* ------------------------------
            SYNC CALLED NUMBERS
         ------------------------------ */
