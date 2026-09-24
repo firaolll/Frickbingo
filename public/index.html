@@ -3939,13 +3939,19 @@ console.log("🔥 JOIN SHARED MATCH VERSION 2026-09-24-A");
                 {
                     method: "POST",
 
-                    body: JSON.stringify({
-                        stake:
-                            selectedStake,
+                   body: JSON.stringify({
+    stake:
+        selectedStake,
 
-                        cards:
-                            selectedCards.length
-                    })
+    cards:
+        selectedCards.length,
+
+    cardNumbers:
+        Array.from(
+            selectedCards,
+            Number
+        )
+})
                 }
             );
 
