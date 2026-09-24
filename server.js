@@ -191,7 +191,11 @@ addColumnIfMissing(
 "main_spent",
 "REAL NOT NULL DEFAULT 0"
 );
-
+addColumnIfMissing(
+    "games",
+    "card_numbers",
+    "TEXT NOT NULL DEFAULT '[]'"
+);
 addColumnIfMissing(
 "withdrawals",
 "telegram_id",
@@ -873,7 +877,25 @@ app.post("/api/match/create", auth, (req, res) => {
 
         const cards =
             Number(req.body.cards);
-
+            const cardNumbers =
+    Array.isArray(req.body.cardNumbers)
+        ? req.body.cardNumbers
+            .map(Number)
+            .filter(
+                n =>
+                    Number.isInteger(n) &&
+                    n >= 1 &&
+                    n <= 200
+            )
+        : [];
+        if (
+    cardNumbers.length !== cards
+) {
+    return res.status(400).json({
+        success: false,
+        error: "Invalid card selection"
+    });
+}
         if (!validStake(stake)) {
 
             return res.status(400).json({
@@ -1057,34 +1079,37 @@ if (!existingGame) {
 
             db.prepare(`
                 INSERT INTO games (
-                    match_id,
-                    user_id,
-                    stake,
-                    cards,
-                    result,
-                    prize,
-                    status,
-                    play_spent,
-                    main_spent
-                )
+    match_id,
+    user_id,
+    stake,
+    cards,
+    card_numbers,
+    result,
+    prize,
+    status,
+    play_spent,
+    main_spent
+)
                 VALUES (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    'WAITING',
-                    0,
-                    'WAITING',
-                    ?,
-                    ?
-                )
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    'WAITING',
+    0,
+    'WAITING',
+    ?,
+    ?
+)
             `).run(
                 matchId,
-                userId,
-                stake,
-                cards,
-                playSpent,
-                mainSpent
+userId,
+stake,
+cards,
+JSON.stringify(cardNumbers),
+playSpent,
+mainSpent
             );
 
         });
@@ -1221,7 +1246,7 @@ if (!existingGame) {
                     UPDATE games
                     SET
                         cards = ?,
-
+                         card_numbers = ?,
                         play_spent =
                             COALESCE(
                                 play_spent,
@@ -1238,12 +1263,13 @@ if (!existingGame) {
 
                     AND user_id = ?
                 `).run(
-                    newCards,
-                    additionalPlaySpent,
-                    additionalMainSpent,
-                    existingGame.id,
-                    userId
-                );
+    newCards,
+    JSON.stringify(cardNumbers),
+    additionalPlaySpent,
+    additionalMainSpent,
+    existingGame.id,
+    userId
+);
 
             });
 
@@ -1336,23 +1362,41 @@ app.get("/api/match/:matchId", auth, (req, res) => {
 
         }
 
-        const players =
-            db.prepare(`
-                SELECT
-                    g.id,
-                    g.user_id,
-                    g.stake,
-                    g.cards,
-                    g.status,
-                    g.result,
-                    g.prize
-                FROM games g
-                WHERE g.match_id = ?
-                ORDER BY g.id ASC
-            `).all(
-                matchId
+        const games =
+    db.prepare(`
+        SELECT
+            g.id,
+            g.user_id,
+            g.stake,
+            g.cards,
+            g.card_numbers,
+            g.status,
+            g.result,
+            g.prize
+        FROM games g
+        WHERE g.match_id = ?
+        ORDER BY g.id ASC
+    `).all(matchId);
+games.forEach(game => {
+
+    try {
+
+        game.cardNumbers =
+            JSON.parse(
+                game.card_numbers || "[]"
             );
 
+        if (!Array.isArray(game.cardNumbers)) {
+            game.cardNumbers = [];
+        }
+
+    } catch (error) {
+
+        game.cardNumbers = [];
+
+    }
+
+});
         const myGame =
             players.find(
                 player =>

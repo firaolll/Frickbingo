@@ -2592,7 +2592,15 @@ button{
 </div>  
 
 <div id="cardsPreview"></div>  
+<div class="shared-players-section">
+    <div class="shared-players-title">
+        PLAYERS' SELECTED CARDS
+    </div>
 
+    <div id="sharedPlayersCards"
+         class="shared-players-cards">
+    </div>
+</div>
 
 <button  
     id="readyButton"  
@@ -2607,7 +2615,49 @@ button{
     class="watch-message">  
     Watching the game...  
 </div>
+/* ==========================================
+   PAGE 2 — SHARED PLAYER CARDS
+========================================== */
 
+#page2 .shared-players-section{
+    width:100%;
+    margin-top:8px;
+}
+
+#page2 .shared-players-title{
+    font-size:11px;
+    font-weight:800;
+    color:#aaa;
+    margin-bottom:5px;
+    letter-spacing:.5px;
+}
+
+#page2 .shared-players-cards{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    width:100%;
+    max-height:130px;
+    overflow-y:auto;
+}
+
+#page2 .shared-player-card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:8px;
+    padding:5px 8px;
+    font-size:11px;
+    color:#fff;
+}
+
+#page2 .shared-player-card strong{
+    color:#00ff88;
+}
+
+#page2 .shared-player-card-numbers{
+    margin-top:2px;
+    color:#ccc;
+}
 </section>  <!-- ==================================================  
      PAGE 3 LIVE GAME  
 ================================================== -->
@@ -4135,7 +4185,75 @@ function updateSelectedCards(){
     updateAllDisplays();  
   
 }  
-  
+function renderSharedPlayerCards(players){
+
+    const container =
+        document.getElementById(
+            "sharedPlayersCards"
+        );
+
+    if(!container){
+        return;
+    }
+
+    container.innerHTML = "";
+
+    if(!Array.isArray(players) || !players.length){
+
+        container.innerHTML =
+            `<div class="shared-player-card">
+                Waiting for players...
+            </div>`;
+
+        return;
+    }
+
+    players.forEach((player,index)=>{
+
+        let cardNumbers =
+            player.cardNumbers ??
+            player.card_numbers ??
+            [];
+
+        if(typeof cardNumbers === "string"){
+
+            try{
+                cardNumbers =
+                    JSON.parse(cardNumbers);
+            }catch(error){
+                cardNumbers = [];
+            }
+
+        }
+
+        if(!Array.isArray(cardNumbers)){
+            cardNumbers = [];
+        }
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "shared-player-card";
+
+        card.innerHTML = `
+            <strong>Player ${index + 1}</strong>
+            <div class="shared-player-card-numbers">
+                ${
+                    cardNumbers.length
+                        ? cardNumbers
+                            .map(n => `Card ${n}`)
+                            .join(" • ")
+                        : "Selecting..."
+                }
+            </div>
+        `;
+
+        container.appendChild(card);
+
+    });
+
+}  
   
 /* ==================================================  
    CREATE BINGO CARD  
@@ -6149,13 +6267,11 @@ async function readyForGame(){
                 {
                     method:"POST",
 
-                    body:JSON.stringify({
-
-                        stake:selectedStake,
-
-                        cards:selectedCards.length
-
-                    })
+                   body:JSON.stringify({
+    stake:selectedStake,
+    cards:selectedCards.length,
+    cardNumbers:selectedCards
+})
                 }
             );
 
@@ -6562,12 +6678,6 @@ function stopSharedGameSync(){
     }
 
 }
-
-
-
-
-
-
 async function waitForSharedGameStart(matchId){
 
     console.log(
@@ -6604,6 +6714,11 @@ async function waitForSharedGameStart(matchId){
             const match =
                 data.match ||
                 data;
+            renderSharedPlayerCards(
+    data.players ||
+    match.players ||
+    []
+);    
             const countdown =
     Number(
         match.countdown ??
