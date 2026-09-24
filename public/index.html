@@ -3850,8 +3850,7 @@ function renderCardSelection(){
 /* ==================================================  
    SELECT CARD  
 ================================================== */  
-  
-async function selectCard(number){
+ async function selectCard(number){
 
     number = Number(number);
 
@@ -3888,20 +3887,31 @@ async function selectCard(number){
 
     selectedCards.push(number);
 
-console.log(
-    "SELECTED CARDS:",
-    selectedCards
-);
+    console.log(
+        "SELECTED CARDS:",
+        selectedCards
+    );
 
-if(selectedCards.length === 1){
-    console.log("FIRST CARD SELECTED");
-    
-}
-await joinSharedMatch();
-haptic();
-updateSelectedCards();
-}
+    /*
+    ==========================================
+    SHOW SELECTED STATE IMMEDIATELY
+    ==========================================
+    */
 
+    updateSelectedCards();
+
+    if(selectedCards.length === 1){
+
+        console.log(
+            "FIRST CARD SELECTED"
+        );
+
+    }
+
+    await joinSharedMatch();
+
+    haptic();
+}
 
 async function joinSharedMatch(){
 console.log("🔥 JOIN SHARED MATCH VERSION 2026-09-24-A");
