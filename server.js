@@ -888,6 +888,12 @@ app.post("/api/match/create", auth, (req, res) => {
                     n <= 200
             )
         : [];
+        console.log("🎴 MATCH CARD DEBUG:", {
+    bodyCards: req.body.cards,
+    bodyCardNumbers: req.body.cardNumbers,
+    parsedCards: cards,
+    parsedCardNumbers: cardNumbers
+});
         if (
     cardNumbers.length !== cards
 ) {
@@ -1377,26 +1383,7 @@ app.get("/api/match/:matchId", auth, (req, res) => {
         WHERE g.match_id = ?
         ORDER BY g.id ASC
     `).all(matchId);
-games.forEach(game => {
 
-    try {
-
-        game.cardNumbers =
-            JSON.parse(
-                game.card_numbers || "[]"
-            );
-
-        if (!Array.isArray(game.cardNumbers)) {
-            game.cardNumbers = [];
-        }
-
-    } catch (error) {
-
-        game.cardNumbers = [];
-
-    }
-
-});
         const myGame =
             players.find(
                 player =>
