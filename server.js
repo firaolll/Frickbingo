@@ -1367,7 +1367,46 @@ app.get("/api/match/:matchId", auth, (req, res) => {
             });
 
         }
+       const players =
+    db.prepare(`
+        SELECT
+            g.id,
+            g.user_id,
+            g.stake,
+            g.cards,
+            g.card_numbers,
+            g.result,
+            g.prize,
+            g.status,
+            u.username,
+            u.first_name
+        FROM games g
+        LEFT JOIN users u
+            ON u.id = g.user_id
+        WHERE g.match_id = ?
+        ORDER BY g.id ASC
+    `).all(matchId);
 
+players.forEach(game => {
+
+    try {
+
+        game.cardNumbers =
+            JSON.parse(
+                game.card_numbers || "[]"
+            );
+
+        if (!Array.isArray(game.cardNumbers)) {
+            game.cardNumbers = [];
+        }
+
+    } catch (error) {
+
+        game.cardNumbers = [];
+
+    }
+
+});
         const games =
     db.prepare(`
         SELECT
@@ -1891,7 +1930,7 @@ app.post("/api/game/start", auth, async (req, res) => {
     `).get(matchId, userId);  
 
     if (existingGame) {  
-      const players = db.prepare(`  
+       const players= db.prepare(`  
         SELECT COUNT(*) AS count FROM games WHERE match_id = ?  
       `).get(matchId);  
 
