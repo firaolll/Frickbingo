@@ -6256,17 +6256,21 @@ async function readyForGame(){
 
         }
 
-
+        console.log("🎴 SENDING MATCH DATA:", {
+    stake: selectedStake,
+    cards: selectedCards.length,
+    cardNumbers: Array.from(selectedCards).map(Number)
+});
         const data =
             await apiFetch(
                 "/api/game/start",
                 {
                     method:"POST",
 
-                   body:JSON.stringify({
+                  body:JSON.stringify({
     stake:selectedStake,
     cards:selectedCards.length,
-    cardNumbers:selectedCards
+    cardNumbers:Array.from(selectedCards).map(Number)
 })
                 }
             );
