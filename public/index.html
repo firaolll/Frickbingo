@@ -766,7 +766,6 @@ button{
     font-size:9px;  
 }  
   
-```css
 /* =========================================================
    FRICK BINGO — PAGE 3 GAME UI
    ========================================================= */
@@ -1545,6 +1544,45 @@ button{
     min-height:0;
 
     overflow:hidden;
+}
+.shared-players-section{
+    width:100%;
+    margin-top:8px;
+}
+
+.shared-players-title{
+    font-size:11px;
+    font-weight:800;
+    color:#aaa;
+    margin-bottom:5px;
+    letter-spacing:.5px;
+}
+
+.shared-players-cards{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    width:100%;
+    max-height:130px;
+    overflow-y:auto;
+}
+
+.shared-player-card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:8px;
+    padding:5px 8px;
+    font-size:11px;
+    color:#fff;
+}
+
+.shared-player-card strong{
+    color:#00ff88;
+}
+
+.shared-player-card-numbers{
+    margin-top:2px;
+    color:#ccc;
 }
 /* ==================================================
    PAGE 3 — PLAYER CARDS
@@ -2350,6 +2388,7 @@ button{
 
     overflow:hidden;
 }
+
 </style>  </head>  <body>  <div class="app">  <!-- ==================================================  
      PAGE 1  
 ================================================== -->  <section id="page1" class="page active">  <header class="app-header">  
@@ -2615,49 +2654,6 @@ button{
     class="watch-message">  
     Watching the game...  
 </div>
-/* ==========================================
-   PAGE 2 — SHARED PLAYER CARDS
-========================================== */
-
-#page2 .shared-players-section{
-    width:100%;
-    margin-top:8px;
-}
-
-#page2 .shared-players-title{
-    font-size:11px;
-    font-weight:800;
-    color:#aaa;
-    margin-bottom:5px;
-    letter-spacing:.5px;
-}
-
-#page2 .shared-players-cards{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-    width:100%;
-    max-height:130px;
-    overflow-y:auto;
-}
-
-#page2 .shared-player-card{
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:8px;
-    padding:5px 8px;
-    font-size:11px;
-    color:#fff;
-}
-
-#page2 .shared-player-card strong{
-    color:#00ff88;
-}
-
-#page2 .shared-player-card-numbers{
-    margin-top:2px;
-    color:#ccc;
-}
 </section>  <!-- ==================================================  
      PAGE 3 LIVE GAME  
 ================================================== -->
