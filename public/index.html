@@ -3330,7 +3330,7 @@ let currentUser = null;
 let selectedStake = 10;  
   
 let selectedCards = [];  
-  
+let otherPlayersSelectedCards = [];
 let currentGameId = null;  
   
 let calledNumbers = [];  
@@ -3871,7 +3871,16 @@ function renderCardSelection(){
 
         return;
     }
+if(otherPlayersSelectedCards.includes(number)){
 
+    showToast(
+        "This card is selected by another player."
+    );
+
+    haptic("error");
+
+    return;
+}
     if(
         selectedCards.length >= MAX_CARDS
     ){
@@ -3891,7 +3900,22 @@ function renderCardSelection(){
         "SELECTED CARDS:",
         selectedCards
     );
+.card-number.other-player-selected{
+    background:linear-gradient(
+        145deg,
+        #555,
+        #292929
+    );
 
+    border-color:#777;
+    color:#aaa;
+
+    box-shadow:
+        inset 0 0 5px rgba(255,255,255,.05);
+
+    cursor:not-allowed;
+    opacity:.65;
+}
     /*
     ==========================================
     SHOW SELECTED STATE IMMEDIATELY
@@ -4210,7 +4234,12 @@ function renderSharedPlayerCards(players){
 
     container.innerHTML = "";
 
-    if(!Array.isArray(players) || !players.length){
+    otherPlayersSelectedCards = [];
+
+    if(
+        !Array.isArray(players) ||
+        !players.length
+    ){
 
         container.innerHTML =
             `<div class="shared-player-card">
@@ -4242,6 +4271,37 @@ function renderSharedPlayerCards(players){
             cardNumbers = [];
         }
 
+        const playerId =
+            Number(
+                player.user_id ??
+                player.userId ??
+                0
+            );
+
+        /*
+        ==========================================
+        LOCK OTHER PLAYERS' CARDS
+        ==========================================
+        */
+
+        const currentTelegramUserId =
+    Number(
+        window.Telegram?.WebApp
+            ?.initDataUnsafe
+            ?.user
+            ?.id || 0
+    );
+
+if(
+    playerId !== currentTelegramUserId
+){
+
+            otherPlayersSelectedCards.push(
+                ...cardNumbers.map(Number)
+            );
+
+        }
+
         const card =
             document.createElement("div");
 
@@ -4249,12 +4309,18 @@ function renderSharedPlayerCards(players){
             "shared-player-card";
 
         card.innerHTML = `
-            <strong>Player ${index + 1}</strong>
+            <strong>
+                Player ${index + 1}
+            </strong>
+
             <div class="shared-player-card-numbers">
                 ${
                     cardNumbers.length
                         ? cardNumbers
-                            .map(n => `Card ${n}`)
+                            .map(
+                                n =>
+                                `Card ${n}`
+                            )
                             .join(" • ")
                         : "Selecting..."
                 }
@@ -4265,7 +4331,49 @@ function renderSharedPlayerCards(players){
 
     });
 
-}  
+    /*
+    ==========================================
+    UPDATE CARD SELECTION BOARD
+    ==========================================
+    */
+
+    document
+        .querySelectorAll(
+            "#page2 .card-number"
+        )
+        .forEach(button=>{
+
+            const number =
+                Number(
+                    button.dataset.number
+                );
+
+            const selectedByOther =
+                otherPlayersSelectedCards
+                    .includes(number);
+
+            const selectedByMe =
+                selectedCards
+                    .includes(number);
+
+            button.classList.toggle(
+                "selected",
+                selectedByMe
+            );
+
+            button.classList.toggle(
+                "other-player-selected",
+                selectedByOther &&
+                !selectedByMe
+            );
+
+            button.disabled =
+                selectedByOther &&
+                !selectedByMe;
+
+        });
+
+}
   
 /* ==================================================  
    CREATE BINGO CARD  
