@@ -484,7 +484,59 @@ button{
   
     transform:translateY(-1px);  
 }  
+.card-number{  
+    height:26px;  
+    min-width:0;  
   
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    border-radius:5px;  
+  
+    background:  
+        linear-gradient(  
+            145deg,  
+            #2b2347,  
+            #171129  
+        );  
+  
+    border:1px solid #3c315d;  
+  
+    color:#fff;  
+  
+    font-size:9px;  
+    font-weight:900;  
+  
+    transition:.12s;  
+}  
+  
+.card-number:hover{  
+    border-color:#8653d8;  
+}  
+  
+.card-number.selected{  
+    background:  
+        linear-gradient(  
+            145deg,  
+            #7c3cff,  
+            #4f1db5  
+        );  
+  
+    border-color:#c69dff;  
+  
+    color:#fff;  
+  
+    box-shadow:  
+        0 0 7px rgba(124,60,255,.8),  
+        inset 0 0 5px rgba(255,255,255,.08);  
+  
+    transform:translateY(-1px);  
+}  
+  
+.card-number:active{  
+    transform:scale(.94);  
+}   
 .card-number:active{  
     transform:scale(.94);  
 }  
@@ -3900,22 +3952,6 @@ if(otherPlayersSelectedCards.includes(number)){
         "SELECTED CARDS:",
         selectedCards
     );
-.card-number.other-player-selected{
-    background:linear-gradient(
-        145deg,
-        #555,
-        #292929
-    );
-
-    border-color:#777;
-    color:#aaa;
-
-    box-shadow:
-        inset 0 0 5px rgba(255,255,255,.05);
-
-    cursor:not-allowed;
-    opacity:.65;
-}
     /*
     ==========================================
     SHOW SELECTED STATE IMMEDIATELY
