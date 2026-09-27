@@ -8164,25 +8164,43 @@ function isWinningCard(card){
 /* =====================================================  
    CHECK WINNER  
 ===================================================== */  
-  
 function checkWinner(){
 
     if(winnerShown){
         return;
     }
 
-    for(
-        const number of selectedCards
-    ){
+    console.log(
+        "🏆 CHECK WINNER",
+        "Called numbers:",
+        calledNumbers
+    );
+
+    for(const number of selectedCards){
 
         const card =
-            generateBingoNumbers(
+            generateBingoNumbers(number);
+
+        console.log(
+            "🎫 CHECKING CARD:",
+            number,
+            card
+        );
+
+        const won =
+            isWinningCard(card);
+
+        console.log(
+            "🏆 WIN RESULT:",
+            won
+        );
+
+        if(won){
+
+            console.log(
+                "🎉 WIN DETECTED:",
                 number
             );
-
-        if(
-            isWinningCard(card)
-        ){
 
             showWinner(
                 number,
@@ -8190,11 +8208,12 @@ function checkWinner(){
             );
 
             return;
-
         }
-
     }
 
+    console.log(
+        "❌ NO WIN YET"
+    );
 }
 /* =====================================================  
    SHOW WINNER  
