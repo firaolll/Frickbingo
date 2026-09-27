@@ -1458,6 +1458,10 @@ button{
 .playing-cards .bingo-card{
     flex:0 0 95px;
 }
+/* Hide bottom navigation only during Bingo game */
+body:has(#page3.active) #bottomNav {
+    display: none !important;
+}
 /* ==================================================
    PAGE 3 — FIXED COMPACT MOBILE LAYOUT
 ================================================== */
@@ -5952,32 +5956,6 @@ setInterval(
  },  
  10000  
 );  
-function updateBottomNav(){
-
-    const bottomNav =
-        document.getElementById("bottomNav");
-
-    if(!bottomNav){
-        return;
-    }
-
-    if(
-        document
-            .getElementById("page3")
-            ?.classList.contains("active")
-    ){
-
-        bottomNav.classList.add(
-            "hidden-on-game"
-        );
-
-    }else{
-
-        bottomNav.classList.remove(
-            "hidden-on-game"
-        );
-    }
-}
   
 /* =====================================================  
    PAGE  
