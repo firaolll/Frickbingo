@@ -7031,27 +7031,34 @@ window.isSharedCaller = isCaller;
     }
 
     if(match.currentBall){
-        const ball =
-            Number(match.currentBall);
+
+    const ball =
+        Number(match.currentBall);
+
+    if(
+        Number.isInteger(ball) &&
+        ball >= 1 &&
+        ball <= 75
+    ){
 
         if(
-            Number.isInteger(ball) &&
-            ball >= 1 &&
-            ball <= 75
+            !calledNumbers.includes(ball)
         ){
-            if(
-                !calledNumbers.includes(ball)
-            ){
-                calledNumbers.push(ball);
-            }
+
+            calledNumbers.push(ball);
+
+            // Check winner immediately
+            checkWinner();
+
         }
+
     }
 
-    beginActualGame();
-
-    return;
 }
 
+beginActualGame();
+
+return;
             /*
              * Match is still waiting.
              */
