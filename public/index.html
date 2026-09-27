@@ -1859,9 +1859,7 @@ button{
     text-shadow:  
         0 0 7px var(--purple);  
 }  
-.bottom-nav.hide-on-page3{
-    display:none !important;
-}
+
 /* =========================  
    MODALS  
 ========================= */  
@@ -5616,47 +5614,7 @@ CALL NUMBER
   </div>    <div class="profile-row">  
    <span>Username</span>  
    <strong id="profileUsername">—</strong>  
-  </div>   </div>  </div>  <!-- NAV -->  <div class="bottom-nav">  <button  
-class="nav-btn active"  
-type="button"  
-onclick="navPage('page1',this)">
-<span class="nav-icon">🎮</span>
-Game
-</button>
-
-<button  
-class="nav-btn"  
-type="button"  
-onclick="navPage('historyPage',this)">
-<span class="nav-icon">📜</span>
-History
-</button>
-
-<button  
-class="nav-btn"  
-type="button"  
-onclick="navPage('scorePage',this)">
-<span class="nav-icon">🏆</span>
-Score
-</button>
-
-<button  
-class="nav-btn"  
-type="button"  
-onclick="navPage('walletPage',this)">
-<span class="nav-icon">💰</span>
-Wallet
-</button>
-
-<button  
-class="nav-btn"  
-type="button"  
-onclick="navPage('profilePage',this)">
-<span class="nav-icon">👤</span>
-Profile
-</button>
-
-</div>  </div>  <!-- RULES -->  <div  
+  </div>   </div>  </div>  <!-- NAV --> </div>  <!-- RULES -->  <div  
  id="rulesModal"  
  class="modal">   <div class="modal-box">    <div class="modal-title">  
    የቢንጎ ህግ  
@@ -7195,10 +7153,6 @@ function beginActualGame(){
     stopAutoCalling();
 
     showPage("page3");
-alert(
-    "NAV COUNT: " +
-    document.querySelectorAll(".bottom-nav").length
-);
 const callButton =
     document.getElementById(
         "callBtn"
