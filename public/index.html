@@ -1807,7 +1807,7 @@ button{
   
     height:61px;  
   
-   display:grid !important;
+   display:grid;
   
     grid-template-columns:  
         repeat(5,1fr);  
@@ -1828,7 +1828,9 @@ button{
   
     z-index:50;  
 }  
-  
+.bottom-nav.hide-on-page3{
+    display:none !important;
+}
 .nav-btn{  
     background:transparent;  
   
@@ -5981,6 +5983,17 @@ function showPage(id){
  }  
   
  updateAllDisplays();  
+
+ const bottomNav =
+    document.getElementById("bottomNav");
+
+if(bottomNav){
+
+    bottomNav.classList.toggle(
+        "hide-on-page3",
+        id === "page3"
+    );
+}
 }  
 /* =====================================================  
    NAVIGATION  
