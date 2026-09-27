@@ -33,35 +33,60 @@ content="width=device-width,initial-scale=1,viewport-fit=cover">
 }  
   
 html,  
-body{  
-    margin:0;  
-    padding:0;  
-    width:100%;  
-    min-height:100%;  
-    background:  
-        radial-gradient(circle at top,#20133f 0,#080612 48%,#05040b 100%);  
-    color:var(--text);  
-    font-family:  
-        Arial,  
-        "Noto Sans Ethiopic",  
-        sans-serif;  
-}  
-  
-body{  
-    overflow-x:hidden;  
-}  
-  
-button{  
-    font-family:inherit;  
-}  
-  
-.app{  
-    width:100%;  
-    max-width:430px;  
-    min-height:100vh;  
-    margin:auto;  
-    padding-bottom:70px;  
-}  
+body{
+    margin:0;
+    padding:0;
+
+    width:100%;
+    height:100%;
+    min-height:100%;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #20133f 0,
+            #080612 48%,
+            #05040b 100%
+        );
+
+    color:var(--text);
+
+    font-family:
+        Arial,
+        "Noto Sans Ethiopic",
+        sans-serif;
+
+    /* NO PAGE SCROLL */
+    overflow:hidden !important;
+
+    overscroll-behavior:none !important;
+    touch-action:manipulation;
+
+    position:fixed;
+    inset:0;
+}
+
+button{
+    font-family:inherit;
+}
+
+.app{
+    width:100%;
+    max-width:430px;
+
+    height:100dvh;
+    min-height:100dvh;
+    max-height:100dvh;
+
+    margin:auto;
+
+    /* REMOVE THE OLD 70px EXTRA HEIGHT */
+    padding-bottom:0;
+
+    overflow:hidden !important;
+
+    box-sizing:border-box;
+}
   
 /* =========================  
    COMMON  
@@ -5082,26 +5107,19 @@ async function finishGame(playerWon=false){
     }  
   
   
-    if(playerWon){  
-  
-        const prize =  
-            Number(  
-                result?.prize ||  
-                result?.winAmount ||  
-                (  
-                    selectedStake *  
-                    fakePlayers *  
-                    WIN_RATE  
-                )  
-            );  
-  
-  
-        showWinner(  
-            "You",  
-            prize  
-        );  
-  
-    }else{  
+    if(playerWon){
+
+    console.log(
+        "🏆 PLAYER WON - WINNER CARD ALREADY DISPLAYED"
+    );
+
+}else{
+
+    showToast(
+        "Game finished."
+    );
+
+}  
   
         showToast(  
             "Game finished."  
@@ -8166,17 +8184,28 @@ function checkWinner(){
 /* =====================================================  
    SHOW WINNER  
 ===================================================== */  
-  
-async function showWinner(  
- cardNumber,  
- card  
-){  
-  
- if(winnerShown){  
-  
-  return;  
-  
- }  
+async function showWinner(
+    cardNumber,
+    card
+){
+
+    /* ONLY SHOW A CARD BELONGING TO THIS PLAYER */
+    if(
+        !selectedCards.includes(
+            Number(cardNumber)
+        )
+    ){
+        console.warn(
+            "⚠️ Winner card does not belong to this player:",
+            cardNumber
+        );
+
+        return;
+    }
+
+    if(winnerShown){
+        return;
+    }
   
   
  winnerShown = true;  
@@ -8457,7 +8486,16 @@ function showLoserScreen(){
         document.getElementById(
             "winnerPrize"
         );
+    const winnerCardWrap =
+    document.getElementById(
+        "winnerCardWrap"
+    );
 
+if(winnerCardWrap){
+
+    winnerCardWrap.innerHTML = "";
+
+}
     if(winnerName){
 
         winnerName.textContent =
