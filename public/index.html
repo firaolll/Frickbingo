@@ -4790,17 +4790,11 @@ async function callNextNumber(){
             number
         );
 
-        /* Demo winner check */
+        /* ==================================================
+   CHECK PLAYER BINGO
+   ================================================== */
 
-        if(
-            checkAnyBingo()
-        ){
-
-            await finishGame(
-                true
-            );
-
-        }
+checkWinner();
 
     }catch(error){
 
