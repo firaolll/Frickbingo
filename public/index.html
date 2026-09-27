@@ -750,6 +750,10 @@ button{
         0 0 6px var(--purple);  
 }  
   
+/* =====================================================
+   BINGO CARD — PLAYER CARD
+===================================================== */
+
 .bingo-cell{
     aspect-ratio:1;
 
@@ -760,58 +764,99 @@ button{
     background:
         linear-gradient(
             145deg,
-            #2b2347,
-            #171129
+            #123b46,
+            #071d27
         );
 
-    border:1px solid #3c315d;
+    border:1px solid #1d6675;
 
-    border-radius:4px;
+    border-radius:5px;
 
     font-size:8px;
     font-weight:1000;
 
-    color:#fff;
+    color:#e8fcff;
+
+    transition:
+        background .2s ease,
+        box-shadow .2s ease,
+        transform .15s ease;
 }
-  
-.bingo-cell.free{  
-    background:  
-        linear-gradient(  
-            145deg,  
-            #7c3cff,  
-            #41158f  
-        );  
-  
-    color:#fff;  
-  
-    box-shadow:  
-        0 0 6px rgba(124,60,255,.5);  
-}  
-#page3 .board-number.called{
-    background:linear-gradient(135deg,#00ff88,#00c853);
-    color:#07140d;
-    border-color:#00ff88;
+
+
+/* FREE CENTER */
+
+.bingo-cell.free{
+    background:
+        linear-gradient(
+            145deg,
+            #7c3cff,
+            #41158f
+        );
+
+    color:#fff;
+
+    border-color:#a879ff;
 
     box-shadow:
-        0 0 8px rgba(0,255,136,.8),
-        0 0 18px rgba(0,255,136,.45);
+        0 0 7px rgba(124,60,255,.65),
+        inset 0 0 8px rgba(255,255,255,.08);
+}
 
-    font-weight:900;
+
+/* =====================================================
+   CALLED NUMBER — TOP NUMBER BOARD
+===================================================== */
+
+#page3 .board-number.called{
+
+    background:
+        linear-gradient(
+            135deg,
+            #287bff,
+            #1644c7
+        );
+
+    color:#ffffff;
+
+    border-color:#55aaff;
+
+    box-shadow:
+        0 0 8px rgba(50,140,255,.9),
+        0 0 18px rgba(50,110,255,.5);
+
+    font-weight:1000;
+
     transform:scale(.94);
 }
 
+
+/* =====================================================
+   CALLED NUMBER ON PLAYER BINGO CARD
+===================================================== */
+
 #page3 .bingo-cell.marked{
-    background:linear-gradient(135deg,#00ff88,#00c853) !important;
-    color:#06140d !important;
-    border-color:#00ff88 !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00d9c5,
+            #008f9c
+        ) !important;
+
+    color:#02191b !important;
+
+    border-color:#35fff0 !important;
 
     box-shadow:
-        0 0 7px rgba(0,255,136,.8),
-        inset 0 0 8px rgba(255,255,255,.15);
+        0 0 8px rgba(0,255,235,.85),
+        0 0 16px rgba(0,220,210,.4),
+        inset 0 0 8px rgba(255,255,255,.18);
 
-    font-weight:900;
+    font-weight:1000;
+
+    transform:scale(.94);
 }
-  
 /* =========================  
    READY BUTTON  
 ========================= */  
@@ -8725,10 +8770,10 @@ async function renderHistory(){
    );  
   
   
-  const games =  
-   Array.isArray(data.games)  
-    ? data.games  
-    : [];  
+ const games =
+   Array.isArray(data.history)
+    ? data.history
+    : []; 
   
   
   if(!games.length){  
@@ -8894,11 +8939,10 @@ async function renderScore(){
     "/api/history"  
    );  
   
-  
-  const games =  
-   Array.isArray(data.games)  
-    ? data.games  
-    : [];  
+  const games =
+   Array.isArray(data.history)
+    ? data.history
+    : [];
   
   
   const wins =  
