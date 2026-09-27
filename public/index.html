@@ -8195,6 +8195,7 @@ async function showWinner(
             Number(cardNumber)
         )
     ){
+
         console.warn(
             "⚠️ Winner card does not belong to this player:",
             cardNumber
@@ -8203,261 +8204,320 @@ async function showWinner(
         return;
     }
 
+
     if(winnerShown){
+
         return;
+
     }
-  
-  
- winnerShown = true;  
-  
- stopAutoCalling();  
-  
-  
- const callButton =  
-  document.getElementById(  
-   "callBtn"  
-  );  
-  
-  
- if(callButton){  
-  
-  callButton.disabled = true;  
-  
- }  
-  
-  
- const prize =  
-  selectedCards.length *  
-  selectedStake *  
-  .85;  
-  
-  
- const winnerName =  
-  document.getElementById(  
-   "winnerName"  
-  );  
-  
-  
- const winnerNumber =  
-  document.getElementById(  
-   "winnerCardNumber"  
-  );  
-  
-  
- const winnerPrize =  
-  document.getElementById(  
-   "winnerPrize"  
-  );  
-  
-  
- if(winnerName){  
-  
-  winnerName.textContent =  
-   profileData.name ||  
-   "Winner";  
-  
- }  
-  
-  
- if(winnerNumber){  
-  
-  winnerNumber.textContent =  
-   String(cardNumber);  
-  
- }  
-  
-  
- if(winnerPrize){  
-  
-  winnerPrize.textContent =  
-   prize.toFixed(2);  
-  
- }  
-  
-  
- const wrapper =  
-  document.getElementById(  
-   "winnerCardWrap"  
-  );  
-  
-  
- if(wrapper){  
-  
-  wrapper.innerHTML = "";  
-  
-  
-  const cardElement =  
-   createCardElement(cardNumber);  
-  
-  
-  wrapper.appendChild(  
-   cardElement  
-  );  
-  
-  
-  cardElement  
-   .querySelectorAll(  
-    ".bingo-cell"  
-   )  
-   .forEach(  
-    cell=>{  
-  
-     const value =  
-      cell.dataset.value;  
-  
-  
-     if(  
-      value !== "FREE" &&  
-      calledNumbers.includes(  
-       Number(value)  
-      )  
-     ){  
-  
-      cell.classList.add(  
-       "called"  
-      );  
-  
-     }  
-  
-    }  
-   );  
-  
- }  
-  
-  
- document  
-  .getElementById(  
-   "winnerOverlay"  
-  )  
-  ?.classList.add("show");  
-  
-  
- haptic("success");  
-  
-  
- /*  
-  Send result to backend.  
- */  
-  
- try{  
-  
-  if(!currentGameId){  
-  
-   console.warn(  
-    "No currentGameId available."  
-   );  
-  
-  }else{  
-  
-   const data =  
-    await apiFetch(  
-     "/api/game/finish",  
-     {  
-      method:"POST",  
-      body:JSON.stringify({  
-  
-       gameId:  
-        currentGameId,  
-  
-       result:  
-        "WIN",  
-  
-       prize:  
-        Number(  
-         prize.toFixed(2)  
-        ),  
-  
-       cardNumber:  
-        cardNumber  
-  
-      })  
-     }  
-    );  
-  
-  
-   console.log(  
-    "GAME FINISH:",  
-    data  
-   );  
-await refreshBalance();
 
-updateAllDisplays();
-  }  
-  
- }catch(error){  
-  
-  console.error(  
-   "Finish game error:",  
-   error  
-  );  
-  
-  showToast(  
-   "Winner saved locally. Server update failed."  
-  );  
-  
- }  
-  
-  
- let seconds = 5;  
-  
-  
- const countdown =  
-  document.getElementById(  
-   "winnerCountdown"  
-  );  
-  
-  
- if(countdown){  
-  
-  countdown.textContent =  
-   String(seconds);  
-  
- }  
-  
-  
- clearInterval(  
-  winnerResetInterval  
- );  
-  
-  
- winnerResetInterval =  
-  setInterval(  
-   ()=>{  
-  
-    seconds--;  
-  
-  
-    if(countdown){  
-  
-     countdown.textContent =  
-      String(  
-       Math.max(  
-        0,  
-        seconds  
-       )  
-      );  
-  
-    }  
-  
-  
-    if(seconds <= 0){  
-  
-     clearInterval(  
-      winnerResetInterval  
-     );  
-  
-     winnerResetInterval = null;  
-  
-     resetAfterWinner();  
-  
-    }  
-  
-   },  
-   1000  
-  );  
-  
-}  
 
+    /* ==================================================
+       SERVER MUST CONFIRM THE WIN FIRST
+       ================================================== */
+
+    if(!currentGameId){
+
+        console.warn(
+            "⚠️ No currentGameId available."
+        );
+
+        return;
+
+    }
+
+
+    let data;
+
+
+    try{
+
+        data =
+            await apiFetch(
+                "/api/game/finish",
+                {
+                    method:"POST",
+
+                    body:JSON.stringify({
+
+                        gameId:
+                            currentGameId,
+
+                        result:
+                            "WIN",
+
+                        cardNumber:
+                            Number(cardNumber)
+
+                    })
+                }
+            );
+
+
+        console.log(
+            "GAME FINISH:",
+            data
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "❌ Finish game error:",
+            error
+        );
+
+        showToast(
+            "Server could not verify the Bingo."
+        );
+
+        return;
+
+    }
+
+
+    /* ==================================================
+       SERVER REJECTED THE WIN
+       ================================================== */
+
+    if(
+        !data ||
+        data.success !== true
+    ){
+
+        console.warn(
+            "❌ Server rejected winner:",
+            data
+        );
+
+        showToast(
+            data?.error ||
+            "Bingo win was not verified."
+        );
+
+        return;
+
+    }
+
+
+    /* ==================================================
+       SERVER CONFIRMED WIN
+       ================================================== */
+
+    winnerShown = true;
+
+    stopAutoCalling();
+
+
+    const callButton =
+        document.getElementById(
+            "callBtn"
+        );
+
+
+    if(callButton){
+
+        callButton.disabled = true;
+
+    }
+
+
+    /* ==================================================
+       USE SERVER CONFIRMED PRIZE
+       ================================================== */
+
+    const prize =
+        Number(
+            data.prize || 0
+        );
+
+
+    const winnerName =
+        document.getElementById(
+            "winnerName"
+        );
+
+
+    const winnerNumber =
+        document.getElementById(
+            "winnerCardNumber"
+        );
+
+
+    const winnerPrize =
+        document.getElementById(
+            "winnerPrize"
+        );
+
+
+    if(winnerName){
+
+        winnerName.textContent =
+            profileData.name ||
+            "Winner";
+
+    }
+
+
+    if(winnerNumber){
+
+        winnerNumber.textContent =
+            String(cardNumber);
+
+    }
+
+
+    if(winnerPrize){
+
+        winnerPrize.textContent =
+            prize.toFixed(2);
+
+    }
+
+
+    /* ==================================================
+       DISPLAY WINNING CARD
+       ================================================== */
+
+    const wrapper =
+        document.getElementById(
+            "winnerCardWrap"
+        );
+
+
+    if(wrapper){
+
+        wrapper.innerHTML = "";
+
+
+        const cardElement =
+            createCardElement(
+                cardNumber
+            );
+
+
+        wrapper.appendChild(
+            cardElement
+        );
+
+
+        cardElement
+            .querySelectorAll(
+                ".bingo-cell"
+            )
+            .forEach(
+                cell => {
+
+                    const value =
+                        cell.dataset.value;
+
+
+                    if(
+                        value !== "FREE" &&
+                        calledNumbers.includes(
+                            Number(value)
+                        )
+                    ){
+
+                        cell.classList.add(
+                            "called"
+                        );
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    /* ==================================================
+       SHOW WINNER OVERLAY
+       ================================================== */
+
+    document
+        .getElementById(
+            "winnerOverlay"
+        )
+        ?.classList.add("show");
+
+
+    haptic("success");
+
+
+    /* ==================================================
+       REFRESH BALANCE
+       ================================================== */
+
+    await refreshBalance();
+
+    updateAllDisplays();
+
+
+    /* ==================================================
+       WINNER COUNTDOWN
+       ================================================== */
+
+    let seconds = 5;
+
+
+    const countdown =
+        document.getElementById(
+            "winnerCountdown"
+        );
+
+
+    if(countdown){
+
+        countdown.textContent =
+            String(seconds);
+
+    }
+
+
+    clearInterval(
+        winnerResetInterval
+    );
+
+
+    winnerResetInterval =
+        setInterval(
+            () => {
+
+                seconds--;
+
+
+                if(countdown){
+
+                    countdown.textContent =
+                        String(
+                            Math.max(
+                                0,
+                                seconds
+                            )
+                        );
+
+                }
+
+
+                if(seconds <= 0){
+
+                    clearInterval(
+                        winnerResetInterval
+                    );
+
+                    winnerResetInterval =
+                        null;
+
+                    resetAfterWinner();
+
+                }
+
+            },
+            1000
+        );
+
+}
 
 function showLoserScreen(){
 

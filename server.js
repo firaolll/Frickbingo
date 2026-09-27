@@ -2444,11 +2444,249 @@ function finalizeMatchPayout(matchId) {
 //
 // The server decides the final prize.
 // ======================================================
+/* ==================================================
+   SERVER BINGO CARD GENERATOR
+   Must match frontend generateBingoNumbers()
+   ================================================== */
 
-app.post(
-"/api/game/finish",
-auth,
-(req, res) => {
+function generateServerBingoNumbers(cardNumber){
+
+    const ranges = [
+        [1, 15],
+        [16, 30],
+        [31, 45],
+        [46, 60],
+        [61, 75]
+    ];
+
+    const grid = [];
+
+    for(let row = 0; row < 5; row++){
+
+        for(let column = 0; column < 5; column++){
+
+            if(row === 2 && column === 2){
+
+                grid.push("FREE");
+
+                continue;
+            }
+
+            const [min, max] =
+                ranges[column];
+
+            const seed =
+                Number(cardNumber) * 1000 +
+                column * 100 +
+                row;
+
+            const value =
+                min +
+                (
+                    Math.abs(
+                        Math.sin(seed) * 100000
+                    ) %
+                    (max - min + 1)
+                );
+
+            grid.push(
+                Math.floor(value)
+            );
+        }
+    }
+
+    return grid;
+}
+
+
+/* ==================================================
+   SERVER MARK CHECK
+   Must match frontend isMarked()
+   ================================================== */
+
+function isServerMarked(
+    value,
+    calledBalls
+){
+
+    return (
+        value === "FREE" ||
+        calledBalls.includes(
+            Number(value)
+        )
+    );
+}
+
+
+/* ==================================================
+   SERVER WIN CHECK
+   Must match frontend isWinningCard()
+   ================================================== */
+
+function isServerWinningCard(
+    card,
+    calledBalls
+){
+
+    if(
+        !Array.isArray(card) ||
+        card.length !== 25
+    ){
+
+        return false;
+    }
+
+    function marked(value){
+
+        return isServerMarked(
+            value,
+            calledBalls
+        );
+
+    }
+
+
+    // ----------------------------------------------
+    // ROWS
+    // ----------------------------------------------
+
+    for(
+        let row = 0;
+        row < 5;
+        row++
+    ){
+
+        let complete = true;
+
+        for(
+            let column = 0;
+            column < 5;
+            column++
+        ){
+
+            if(
+                !marked(
+                    card[
+                        row * 5 +
+                        column
+                    ]
+                )
+            ){
+
+                complete = false;
+                break;
+
+            }
+
+        }
+
+        if(complete){
+
+            return true;
+
+        }
+
+    }
+
+
+    // ----------------------------------------------
+    // COLUMNS
+    // ----------------------------------------------
+
+    for(
+        let column = 0;
+        column < 5;
+        column++
+    ){
+
+        let complete = true;
+
+        for(
+            let row = 0;
+            row < 5;
+            row++
+        ){
+
+            if(
+                !marked(
+                    card[
+                        row * 5 +
+                        column
+                    ]
+                )
+            ){
+
+                complete = false;
+                break;
+
+            }
+
+        }
+
+        if(complete){
+
+            return true;
+
+        }
+
+    }
+
+
+    // ----------------------------------------------
+    // DIAGONAL 1
+    // ----------------------------------------------
+
+    if(
+        [0,1,2,3,4].every(
+            index =>
+                marked(
+                    card[
+                        index * 5 +
+                        index
+                    ]
+                )
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    // ----------------------------------------------
+    // DIAGONAL 2
+    // ----------------------------------------------
+
+    if(
+        [0,1,2,3,4].every(
+            index =>
+                marked(
+                    card[
+                        index * 5 +
+                        (4 - index)
+                    ]
+                )
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    // ----------------------------------------------
+    // FOUR CORNERS
+    // ----------------------------------------------
+
+    return (
+        marked(card[0]) &&
+        marked(card[4]) &&
+        marked(card[20]) &&
+        marked(card[24])
+    );
+}
+
+app.post("/api/game/finish",auth,(req, res) => {
 
 try {  
 
@@ -2463,7 +2701,10 @@ try {
                 req.body.result ||  
                 "LOSE"  
             ).toUpperCase();  
-
+        const cardNumber =
+    integer(
+        req.body.cardNumber
+    );
         if (!matchId) {  
 
             return res.status(400).json({  
@@ -2484,6 +2725,30 @@ try {
             result = "LOSE";  
         }  
 
+        // ------------------------------------------------
+// SERVER-SIDE WINNER VALIDATION
+// ------------------------------------------------
+
+if (result === "WIN") {
+
+    // Card number must be valid
+    if (
+        !Number.isInteger(cardNumber) ||
+        cardNumber < 1 ||
+        cardNumber > 200
+    ) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            error:
+                "Invalid winner card number"
+
+        });
+
+    }
+}
         // ------------------------------------------------  
         // FIND PLAYER GAME  
         // ------------------------------------------------  
@@ -2505,6 +2770,56 @@ try {
                 req.user.id  
             );  
 
+        // ------------------------------------------------
+// VERIFY WINNER CARD BELONGS TO THIS GAME
+// ------------------------------------------------
+
+if (result === "WIN") {
+
+    let playerCards = [];
+
+    try {
+
+        playerCards =
+            game.card_numbers
+                ? JSON.parse(
+                    game.card_numbers
+                )
+                : [];
+
+    } catch (error) {
+
+        playerCards = [];
+
+    }
+
+    if (!Array.isArray(playerCards)) {
+
+        playerCards = [];
+
+    }
+
+    playerCards =
+        playerCards.map(Number);
+
+    if (
+        !playerCards.includes(
+            Number(cardNumber)
+        )
+    ) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            error:
+                "Winner card does not belong to this player"
+
+        });
+
+    }
+}
+
         if (!game) {  
 
             return res.status(404).json({  
@@ -2517,6 +2832,120 @@ try {
             });  
         }  
 
+        // ------------------------------------------------
+// VERIFY ACTUAL BINGO WIN
+// ------------------------------------------------
+
+if (result === "WIN") {
+
+    const match =
+        db.prepare(`
+            SELECT
+                called_balls,
+                status
+            FROM matches
+            WHERE id = ?
+        `).get(
+            matchId
+        );
+
+    if (!match) {
+
+        return res.status(404).json({
+
+            success: false,
+
+            error:
+                "Match not found"
+
+        });
+
+    }
+
+
+    // --------------------------------------------
+    // READ SERVER CALLED BALLS
+    // --------------------------------------------
+
+    let calledBalls = [];
+
+    try {
+
+        calledBalls =
+            match.called_balls
+                ? JSON.parse(
+                    match.called_balls
+                )
+                : [];
+
+    } catch (error) {
+
+        calledBalls = [];
+
+    }
+
+    if (!Array.isArray(calledBalls)) {
+
+        calledBalls = [];
+
+    }
+
+    calledBalls =
+        calledBalls.map(Number);
+
+
+    // --------------------------------------------
+    // GENERATE THE PLAYER'S CARD
+    // --------------------------------------------
+
+    const winningCard =
+        generateServerBingoNumbers(
+            Number(cardNumber)
+        );
+
+
+    // --------------------------------------------
+    // CHECK BINGO
+    // --------------------------------------------
+
+    const actuallyWon =
+        isServerWinningCard(
+            winningCard,
+            calledBalls
+        );
+
+
+    console.log(
+        "🏆 SERVER WIN CHECK:",
+        {
+            matchId,
+            userId: req.user.id,
+            cardNumber,
+            calledBalls,
+            winningCard,
+            actuallyWon
+        }
+    );
+
+
+    // --------------------------------------------
+    // REJECT FALSE WIN
+    // --------------------------------------------
+
+    if (!actuallyWon) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            error:
+                "Invalid Bingo claim"
+
+        });
+
+    }
+
+}
         // ------------------------------------------------  
         // IF ALREADY FINISHED  
         // ------------------------------------------------  
