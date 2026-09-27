@@ -774,41 +774,62 @@ const user =
 // ======================================================
 // HISTORY
 // ======================================================
-
 app.get(
-"/api/history",
-auth,
-(req, res) => {
+    "/api/history",
+    auth,
+    (req, res) => {
 
-const rows =  
-        db.prepare(`  
-            SELECT  
-                g.id,  
-                g.match_id,  
-                g.stake,  
-                g.cards,  
-                g.result,  
-                g.prize,  
-                g.status,  
-                g.created_at,  
-                g.finished_at  
-            FROM games g  
-            WHERE g.user_id = ?  
-            ORDER BY g.id DESC  
-            LIMIT 100  
-        `).all(  
-            req.user.id  
-        );  
+        try{
 
-    res.json({  
-        success: true,  
-        history: rows  
-    });  
+            const rows =
+                db.prepare(`
+                    SELECT
+                        g.id,
+                        g.match_id,
+                        g.stake,
+                        g.cards,
+                        g.result,
+                        g.prize,
+                        g.status,
+                        g.created_at,
+                        g.finished_at
+                    FROM games g
+                    WHERE g.user_id = ?
+                    ORDER BY g.id DESC
+                    LIMIT 100
+                `).all(
+                    req.user.id
+                );
 
-}
+            console.log(
+                "📜 HISTORY USER:",
+                req.user.id
+            );
 
+            console.log(
+                "📜 HISTORY ROWS:",
+                rows
+            );
+
+            res.json({
+                success: true,
+                history: rows
+            });
+
+        }catch(error){
+
+            console.error(
+                "❌ HISTORY ERROR:",
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
 );
-
 // ======================================================
 // SCORE / TOP 10
 // ======================================================
