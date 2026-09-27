@@ -5045,92 +5045,86 @@ function checkAnyBingo(){
    FINISH GAME  
 ================================================== */  
   
-async function finishGame(playerWon=false){  
-  
-    if(!gameRunning){  
-  
-        return;  
-  
-    }  
-  
-    gameRunning = false;  
-  
-  
-    if(gameInterval){  
-  
-        clearInterval(  
-            gameInterval  
-        );  
-  
-        gameInterval = null;  
-  
-    }  
-  
-  
-    let result = null;  
-  
-  
-    try{  
-  
-        if(currentGameId){  
-  
-            result =  
-                await apiFetch(  
-                    "/api/game/finish",  
-                    {  
-                        method:"POST",  
-  
-                        body:JSON.stringify({  
-  
-                            gameId:  
-                                currentGameId,  
-  
-                            won:  
-                                Boolean(  
-                                    playerWon  
-                                )  
-  
-                        })  
-  
-                    }  
-                );  
-  
-        }  
-  
-    }catch(error){  
-  
-        console.log(  
-            "Finish game:",  
-            error.message  
-        );  
-  
-    }  
-  
-  
+async function finishGame(playerWon = false){
+
+    if(!gameRunning){
+
+        return;
+
+    }
+
+
+    gameRunning = false;
+
+
+    if(gameInterval){
+
+        clearInterval(
+            gameInterval
+        );
+
+        gameInterval = null;
+
+    }
+
+
+    let result = null;
+
+
+    try{
+
+        if(currentGameId){
+
+            result =
+                await apiFetch(
+                    "/api/game/finish",
+                    {
+                        method:"POST",
+
+                        body:JSON.stringify({
+
+                            gameId:
+                                currentGameId,
+
+                            result:
+                                playerWon
+                                    ? "WIN"
+                                    : "LOSE"
+
+                        })
+                    }
+                );
+
+        }
+
+    }catch(error){
+
+        console.log(
+            "Finish game:",
+            error.message
+        );
+
+    }
+
+
     if(playerWon){
 
-    console.log(
-        "🏆 PLAYER WON - WINNER CARD ALREADY DISPLAYED"
-    );
+        console.log(
+            "🏆 PLAYER WON - WINNER CARD ALREADY DISPLAYED"
+        );
 
-}else{
+    }else{
 
-    showToast(
-        "Game finished."
-    );
+        showToast(
+            "Game finished."
+        );
 
-}  
-  
-        showToast(  
-            "Game finished."  
-        );  
-  
-    }  
-  
-  
-    await loadUser();  
-  
-}  
+    }
+
+
+    await loadUser();
+
+}
   
   
 /* ==================================================  
