@@ -3232,7 +3232,7 @@ button{
 
 </section>  <!-- ==================================================  
      BOTTOM NAV  
-================================================== -->  <nav class="bottom-nav">  <button  
+================================================== -->  <nav id="bottomNav" class="bottom-nav">  <button  
     class="nav-btn active"  
     data-page="page1"  
     onclick="navigateNav('page1',this)">  
@@ -3555,7 +3555,7 @@ async function apiFetch(endpoint, options = {}) {
   
 function showPage(pageId){  
   
-    document  
+  document  
         .querySelectorAll(".page")  
         .forEach(page=>{  
             page.classList.remove("active");  
@@ -5977,7 +5977,17 @@ function showPage(id){
   page.classList.add("active");  
   
  }  
-  
+  const bottomNav =
+    document.getElementById("bottomNav");
+
+if(bottomNav){
+
+    bottomNav.style.display =
+        pageId === "page3"
+            ? "none"
+            : "flex";
+
+}
   
  updateAllDisplays();  
   
