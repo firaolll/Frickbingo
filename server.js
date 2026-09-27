@@ -2448,16 +2448,59 @@ function finalizeMatchPayout(matchId) {
    SERVER BINGO CARD GENERATOR
    Must match frontend generateBingoNumbers()
    ================================================== */
-
 function generateServerBingoNumbers(cardNumber){
 
     const ranges = [
-        [1, 15],
-        [16, 30],
-        [31, 45],
-        [46, 60],
-        [61, 75]
+        [1, 15],    // B
+        [16, 30],   // I
+        [31, 45],   // N
+        [46, 60],   // G
+        [61, 75]    // O
     ];
+
+    const columns = [];
+
+    for(let column = 0; column < 5; column++){
+
+        const min = ranges[column][0];
+        const max = ranges[column][1];
+
+        const numbers = [];
+
+        // Create only numbers for this column
+        for(let n = min; n <= max; n++){
+            numbers.push(n);
+        }
+
+        // Deterministic shuffle
+        let seed =
+            Number(cardNumber) * 1000 +
+            column * 100;
+
+        for(let i = numbers.length - 1; i > 0; i--){
+
+            seed =
+                Math.sin(seed) * 100000;
+
+            const random =
+                seed - Math.floor(seed);
+
+            const j =
+                Math.floor(
+                    random * (i + 1)
+                );
+
+            const temp = numbers[i];
+
+            numbers[i] = numbers[j];
+            numbers[j] = temp;
+        }
+
+        // Five unique numbers
+        columns.push(
+            numbers.slice(0, 5)
+        );
+    }
 
     const grid = [];
 
@@ -2469,35 +2512,18 @@ function generateServerBingoNumbers(cardNumber){
 
                 grid.push("FREE");
 
-                continue;
-            }
+            }else{
 
-            const [min, max] =
-                ranges[column];
-
-            const seed =
-                Number(cardNumber) * 1000 +
-                column * 100 +
-                row;
-
-            const value =
-                min +
-                (
-                    Math.abs(
-                        Math.sin(seed) * 100000
-                    ) %
-                    (max - min + 1)
+                grid.push(
+                    columns[column][row]
                 );
 
-            grid.push(
-                Math.floor(value)
-            );
+            }
         }
     }
 
     return grid;
 }
-
 
 /* ==================================================
    SERVER MARK CHECK

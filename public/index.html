@@ -4548,59 +4548,64 @@ function seededRandom(seed){
   
 }  
   
-  
-function generateBingoNumbers(cardNumber){
+ function generateBingoNumbers(cardNumber){
 
     const ranges = [
-        [1, 15],
-        [16, 30],
-        [31, 45],
-        [46, 60],
-        [61, 75]
+        [1, 15],    // B
+        [16, 30],   // I
+        [31, 45],   // N
+        [46, 60],   // G
+        [61, 75]    // O
     ];
 
-    const grid = [];
+    const columns = [];
 
     for(let column = 0; column < 5; column++){
 
-        const [min, max] = ranges[column];
+        const min = ranges[column][0];
+        const max = ranges[column][1];
 
-        // Create all numbers in this column range
         const numbers = [];
 
-        for(let value = min; value <= max; value++){
-            numbers.push(value);
+        // Create ONLY numbers belonging to this column
+        for(let n = min; n <= max; n++){
+            numbers.push(n);
         }
 
-        // Deterministic shuffle based on card number
+        // Deterministic shuffle
         let seed =
             Number(cardNumber) * 1000 +
-            column * 777;
+            column * 100;
 
         for(let i = numbers.length - 1; i > 0; i--){
 
             seed =
-                Math.sin(seed) * 10000;
+                Math.sin(seed) * 100000;
 
             const random =
                 seed - Math.floor(seed);
 
             const j =
-                Math.floor(
-                    random * (i + 1)
-                );
+                Math.floor(random * (i + 1));
 
-            [
-                numbers[i],
-                numbers[j]
-            ] = [
-                numbers[j],
-                numbers[i]
-            ];
+            const temp = numbers[i];
+
+            numbers[i] = numbers[j];
+
+            numbers[j] = temp;
         }
 
-        // Put 5 unique numbers into the column
-        for(let row = 0; row < 5; row++){
+        // Exactly 5 unique numbers
+        columns.push(
+            numbers.slice(0, 5)
+        );
+    }
+
+    const grid = [];
+
+    for(let row = 0; row < 5; row++){
+
+        for(let column = 0; column < 5; column++){
 
             if(row === 2 && column === 2){
 
@@ -4609,15 +4614,7 @@ function generateBingoNumbers(cardNumber){
             }else{
 
                 grid.push(
-                    numbers[
-                        row +
-                        (
-                            column === 2 &&
-                            row > 2
-                                ? 1
-                                : 0
-                        )
-                    ]
+                    columns[column][row]
                 );
 
             }
