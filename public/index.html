@@ -5952,7 +5952,32 @@ setInterval(
  },  
  10000  
 );  
-  
+function updateBottomNav(){
+
+    const bottomNav =
+        document.getElementById("bottomNav");
+
+    if(!bottomNav){
+        return;
+    }
+
+    if(
+        document
+            .getElementById("page3")
+            ?.classList.contains("active")
+    ){
+
+        bottomNav.classList.add(
+            "hidden-on-game"
+        );
+
+    }else{
+
+        bottomNav.classList.remove(
+            "hidden-on-game"
+        );
+    }
+}
   
 /* =====================================================  
    PAGE  
@@ -5977,23 +6002,10 @@ function showPage(id){
   page.classList.add("active");  
   
  }  
-  const bottomNav =
-    document.getElementById("bottomNav");
-
-if(bottomNav){
-
-    bottomNav.style.display =
-        pageId === "page3"
-            ? "none"
-            : "flex";
-
-}
   
  updateAllDisplays();  
-  
+ updateBottomNav();
 }  
-  
-  
 /* =====================================================  
    NAVIGATION  
 ===================================================== */  
