@@ -1458,10 +1458,7 @@ button{
 .playing-cards .bingo-card{
     flex:0 0 95px;
 }
-/* Hide bottom navigation only during Bingo game */
-body:has(#page3.active) #bottomNav {
-    display: none !important;
-}
+
 /* ==================================================
    PAGE 3 — FIXED COMPACT MOBILE LAYOUT
 ================================================== */
@@ -1810,7 +1807,7 @@ body:has(#page3.active) #bottomNav {
   
     height:61px;  
   
-    display:grid;  
+   display:grid !important;
   
     grid-template-columns:  
         repeat(5,1fr);  
@@ -1860,7 +1857,9 @@ body:has(#page3.active) #bottomNav {
     text-shadow:  
         0 0 7px var(--purple);  
 }  
-  
+.bottom-nav.hide-on-page3{
+    display:none !important;
+}
 /* =========================  
    MODALS  
 ========================= */  
