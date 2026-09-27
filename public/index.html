@@ -7214,11 +7214,22 @@ function beginActualGame(){
 
     showPage("page3");
 
-    const callButton =
-        document.getElementById(
-            "callBtn"
-        );
+/* Hide bottom navigation during Bingo game */
+const bottomNav =
+    document.getElementById("bottomNav");
 
+if(bottomNav){
+    bottomNav.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+}
+
+const callButton =
+    document.getElementById(
+        "callBtn"
+    );
     if(callButton){
         callButton.disabled = false;
     }
