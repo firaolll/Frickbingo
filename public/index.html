@@ -3586,10 +3586,22 @@ function showPage(pageId){
 
     if(bottomNav){
 
-        bottomNav.style.display =
-            pageId === "page3"
-                ? "none"
-                : "grid";
+        if(pageId === "page3"){
+
+            bottomNav.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }else{
+
+            bottomNav.style.setProperty(
+                "display",
+                "grid",
+                "important"
+            );
+        }
     }
 
     window.scrollTo(0,0);
@@ -6030,9 +6042,6 @@ function navPage(
   renderProfile();  
   
  }  
-if(id === "page3"){
-    bottomNav.style.display = "none";
-}
 }  
   
   
@@ -7186,18 +7195,6 @@ function beginActualGame(){
     stopAutoCalling();
 
     showPage("page3");
-
-/* Hide bottom navigation during Bingo game */
-const bottomNav =
-    document.getElementById("bottomNav");
-
-if(bottomNav){
-    bottomNav.style.setProperty(
-        "display",
-        "none",
-        "important"
-    );
-}
 
 const callButton =
     document.getElementById(
