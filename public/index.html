@@ -6004,7 +6004,6 @@ function showPage(id){
  }  
   
  updateAllDisplays();  
- updateBottomNav();
 }  
 /* =====================================================  
    NAVIGATION  
@@ -6068,7 +6067,9 @@ function navPage(
   renderProfile();  
   
  }  
-  
+if(id === "page3"){
+    bottomNav.style.display = "none";
+}
 }  
   
   
