@@ -3557,34 +3557,43 @@ async function apiFetch(endpoint, options = {}) {
 /* ==================================================  
    PAGE NAVIGATION  
 ================================================== */  
-  
-function showPage(pageId){  
-  
-  document  
-        .querySelectorAll(".page")  
-        .forEach(page=>{  
-            page.classList.remove("active");  
-        });  
-  
-    const page =  
-        document.getElementById(pageId);  
-  
-    if(page){  
-        page.classList.add("active");  
-    }  
-  
-    document  
-        .querySelectorAll(".nav-btn")  
-        .forEach(btn=>{  
-            btn.classList.toggle(  
-                "active",  
-                btn.dataset.page === pageId  
-            );  
-        });  
-  
-    window.scrollTo(0,0);  
-  
-}  
+function showPage(pageId){
+
+    document
+        .querySelectorAll(".page")
+        .forEach(page=>{
+            page.classList.remove("active");
+        });
+
+    const page =
+        document.getElementById(pageId);
+
+    if(page){
+        page.classList.add("active");
+    }
+
+    document
+        .querySelectorAll(".nav-btn")
+        .forEach(btn=>{
+            btn.classList.toggle(
+                "active",
+                btn.dataset.page === pageId
+            );
+        });
+
+    const bottomNav =
+        document.getElementById("bottomNav");
+
+    if(bottomNav){
+
+        bottomNav.style.display =
+            pageId === "page3"
+                ? "none"
+                : "grid";
+    }
+
+    window.scrollTo(0,0);
+}
   
 function navigateNav(pageId,button){  
   
@@ -5957,44 +5966,8 @@ setInterval(
  },  
  10000  
 );  
-  
-/* =====================================================  
-   PAGE  
-===================================================== */  
-  
-function showPage(id){  
-  
- document  
-  .querySelectorAll(".page")  
-  .forEach(  
-   page=>  
-    page.classList.remove("active")  
-  );  
-  
-  
- const page =  
-  document.getElementById(id);  
-  
-  
- if(page){  
-  
-  page.classList.add("active");  
-  
- }  
-  
- updateAllDisplays();  
 
- const bottomNav =
-    document.getElementById("bottomNav");
 
-if(bottomNav){
-
-    bottomNav.classList.toggle(
-        "hide-on-page3",
-        id === "page3"
-    );
-}
-}  
 /* =====================================================  
    NAVIGATION  
 ===================================================== */  
