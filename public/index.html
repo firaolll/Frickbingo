@@ -7195,7 +7195,10 @@ function beginActualGame(){
     stopAutoCalling();
 
     showPage("page3");
-
+alert(
+    "NAV COUNT: " +
+    document.querySelectorAll(".bottom-nav").length
+);
 const callButton =
     document.getElementById(
         "callBtn"
