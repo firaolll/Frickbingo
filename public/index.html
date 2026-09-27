@@ -4561,44 +4561,71 @@ function generateBingoNumbers(cardNumber){
 
     const grid = [];
 
-    for(let row = 0; row < 5; row++){
+    for(let column = 0; column < 5; column++){
 
-        for(let column = 0; column < 5; column++){
+        const [min, max] = ranges[column];
+
+        // Create all numbers in this column range
+        const numbers = [];
+
+        for(let value = min; value <= max; value++){
+            numbers.push(value);
+        }
+
+        // Deterministic shuffle based on card number
+        let seed =
+            Number(cardNumber) * 1000 +
+            column * 777;
+
+        for(let i = numbers.length - 1; i > 0; i--){
+
+            seed =
+                Math.sin(seed) * 10000;
+
+            const random =
+                seed - Math.floor(seed);
+
+            const j =
+                Math.floor(
+                    random * (i + 1)
+                );
+
+            [
+                numbers[i],
+                numbers[j]
+            ] = [
+                numbers[j],
+                numbers[i]
+            ];
+        }
+
+        // Put 5 unique numbers into the column
+        for(let row = 0; row < 5; row++){
 
             if(row === 2 && column === 2){
 
                 grid.push("FREE");
 
-                continue;
-            }
+            }else{
 
-            const [min, max] =
-                ranges[column];
-
-            const seed =
-                Number(cardNumber) * 1000 +
-                column * 100 +
-                row;
-
-            const value =
-                min +
-                (
-                    Math.abs(
-                        Math.sin(seed) * 100000
-                    ) %
-                    (max - min + 1)
+                grid.push(
+                    numbers[
+                        row +
+                        (
+                            column === 2 &&
+                            row > 2
+                                ? 1
+                                : 0
+                        )
+                    ]
                 );
 
-            grid.push(
-                Math.floor(value)
-            );
-
+            }
         }
     }
 
     return grid;
 }
-
 /* ==================================================  
    GAME STATS  
 ================================================== */  
