@@ -386,7 +386,7 @@ function processWaitingMatches() {
       AND status = 'WAITING'
 `).run(
     match.id
-);s
+);
 
 
                     console.log(
@@ -448,6 +448,139 @@ setInterval(
     },
     1000
 );
+
+
+// ======================================================
+// SERVER-CONTROLLED BINGO BALL CALLING
+// ======================================================
+
+function processPlayingMatches(){
+
+    try{
+
+        const playingMatches =
+            db.prepare(`
+                SELECT
+                    id,
+                    called_balls,
+                    current_ball
+                FROM matches
+                WHERE status = 'PLAYING'
+            `).all();
+
+
+        for(const match of playingMatches){
+
+            let calledBalls = [];
+
+            try{
+
+                calledBalls =
+                    match.called_balls
+                        ? JSON.parse(match.called_balls)
+                        : [];
+
+            }catch(error){
+
+                calledBalls = [];
+
+            }
+
+            if(!Array.isArray(calledBalls)){
+                calledBalls = [];
+            }
+
+            calledBalls =
+                calledBalls
+                    .map(Number)
+                    .filter(
+                        number =>
+                            Number.isInteger(number) &&
+                            number >= 1 &&
+                            number <= 75
+                    );
+
+
+            // Stop after all 75 balls
+            if(calledBalls.length >= 75){
+                continue;
+            }
+
+
+            // Find numbers not called yet
+            const available = [];
+
+            for(let number = 1; number <= 75; number++){
+
+                if(!calledBalls.includes(number)){
+                    available.push(number);
+                }
+
+            }
+
+
+            if(!available.length){
+                continue;
+            }
+
+
+            // Server selects the next ball
+            const index =
+                Math.floor(
+                    Math.random() * available.length
+                );
+
+            const number =
+                available[index];
+
+            calledBalls.push(number);
+
+
+            // Save the new shared state
+            const result =
+                db.prepare(`
+                    UPDATE matches
+                    SET
+                        called_balls = ?,
+                        current_ball = ?
+                    WHERE id = ?
+                      AND status = 'PLAYING'
+                `).run(
+                    JSON.stringify(calledBalls),
+                    number,
+                    match.id
+                );
+
+
+            if(result.changes === 1){
+
+                console.log(
+                    `🎱 SERVER MATCH ${match.id}: CALLED ${number}`
+                );
+
+            }
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "❌ SERVER BALL CALLING ERROR:",
+            error
+        );
+
+    }
+
+}
+
+
+// Generate the next ball every 3 seconds
+setInterval(
+    processPlayingMatches,
+    3000
+);
+
+
 
 // ======================================================
 // TELEGRAM INIT DATA
@@ -1347,8 +1480,6 @@ mainSpent
     }
 
 });
-
-
 app.get("/api/match/:matchId", auth, (req, res) => {
 
     try {
@@ -1554,13 +1685,18 @@ currentBall:
     }
 
 });
-app.post("/api/match/:matchId/call", auth, (req, res) => {
-console.log(
-    "📞 CALL ENDPOINT HIT — MATCH:",
-    req.params.matchId,
-    "USER:",
-    req.user?.id
-);
+app.post(
+    "/api/match/:matchId/call",
+    auth,
+    (req, res) => {
+
+    console.log(
+        "📞 SERVER CALL REQUEST — MATCH:",
+        req.params.matchId,
+        "USER:",
+        req.user?.id
+    );
+
     try {
 
         const matchId =
@@ -1598,24 +1734,10 @@ console.log(
             });
 
         }
-// ==================================================
-// ONLY FIRST PLAYER CAN CALL NUMBERS
-// ==================================================
 
-const caller = db.prepare(`
-    SELECT user_id
-    FROM games
-    WHERE match_id = ?
-    ORDER BY id ASC
-    LIMIT 1
-`).get(matchId);
-
-const isCaller =
-    caller &&
-    Number(req.user.id) === Number(caller.user_id);
-        // ------------------------------------------------
-        // MATCH ALREADY FINISHED
-        // ------------------------------------------------
+        /*
+         * MATCH FINISHED
+         */
 
         if (
             String(match.status).toUpperCase() ===
@@ -1633,7 +1755,7 @@ const isCaller =
                         )
                         : [];
 
-            } catch (error) {
+            } catch(error) {
 
                 calledBalls = [];
 
@@ -1647,8 +1769,7 @@ const isCaller =
 
                 success: true,
 
-                matchStatus:
-                    "FINISHED",
+                matchStatus: "FINISHED",
 
                 currentBall:
                     match.current_ball
@@ -1671,9 +1792,10 @@ const isCaller =
 
         }
 
-        // ------------------------------------------------
-        // MATCH MUST BE PLAYING
-        // ------------------------------------------------
+
+        /*
+         * MATCH MUST BE PLAYING
+         */
 
         if (
             String(match.status).toUpperCase() !==
@@ -1694,9 +1816,10 @@ const isCaller =
 
         }
 
-        // ------------------------------------------------
-        // READ EXISTING CALLED NUMBERS
-        // ------------------------------------------------
+
+        /*
+         * READ SERVER CALLED BALLS
+         */
 
         let calledBalls = [];
 
@@ -1709,7 +1832,7 @@ const isCaller =
                     )
                     : [];
 
-        } catch (error) {
+        } catch(error) {
 
             calledBalls = [];
 
@@ -1720,23 +1843,19 @@ const isCaller =
         }
 
         calledBalls =
-            calledBalls.map(
-                Number
-            );
+            calledBalls
+                .map(Number)
+                .filter(
+                    number =>
+                        Number.isInteger(number) &&
+                        number >= 1 &&
+                        number <= 75
+                );
 
-// Non-caller players NEVER generate a new ball.
-// They only receive the current shared state.
-if(!isCaller){
-    return res.json({
-        success:true,
-        matchStatus:match.status,
-        currentBall:match.current_ball || null,
-        calledBalls
-    });
-}
-        // ------------------------------------------------
-        // ALL 75 NUMBERS CALLED
-        // ------------------------------------------------
+
+        /*
+         * ALL 75 NUMBERS CALLED
+         */
 
         if (
             calledBalls.length >= 75
@@ -1758,35 +1877,33 @@ if(!isCaller){
 
         }
 
-        // ------------------------------------------------
-        // FIND AVAILABLE NUMBERS
-        // ------------------------------------------------
+
+        /*
+         * FIND AVAILABLE NUMBERS
+         */
 
         const available = [];
 
-        for (
+        for(
             let number = 1;
             number <= 75;
             number++
-        ) {
+        ){
 
-            if (
-                !calledBalls.includes(
-                    number
-                )
-            ) {
+            if(
+                !calledBalls.includes(number)
+            ){
 
-                available.push(
-                    number
-                );
+                available.push(number);
 
             }
 
         }
 
-        if (
+
+        if(
             available.length === 0
-        ) {
+        ){
 
             return res.json({
 
@@ -1804,9 +1921,10 @@ if(!isCaller){
 
         }
 
-        // ------------------------------------------------
-        // SELECT NEXT SHARED NUMBER
-        // ------------------------------------------------
+
+        /*
+         * SERVER GENERATES NEXT BALL
+         */
 
         const index =
             Math.floor(
@@ -1817,13 +1935,15 @@ if(!isCaller){
         const number =
             available[index];
 
+
         calledBalls.push(
             number
         );
 
-        // ------------------------------------------------
-        // SAVE SHARED NUMBER
-        // ------------------------------------------------
+
+        /*
+         * SAVE SERVER STATE
+         */
 
         db.prepare(`
             UPDATE matches
@@ -1845,9 +1965,18 @@ if(!isCaller){
 
         );
 
-        // ------------------------------------------------
-        // RETURN SHARED STATE
-        // ------------------------------------------------
+
+        console.log(
+            "🎱 SERVER CALLED BALL:",
+            number,
+            "MATCH:",
+            matchId
+        );
+
+
+        /*
+         * RETURN SHARED STATE
+         */
 
         return res.json({
 
@@ -1863,29 +1992,39 @@ if(!isCaller){
 
         });
 
-    } catch (error) {
 
-    console.error(
-        "❌ CALL NUMBER ERROR:",
-        error
-    );
+    } catch(error) {
 
-    console.error(
-        "❌ ERROR MESSAGE:",
-        error?.message
-    );
+        console.error(
+            "❌ CALL NUMBER ERROR:",
+            error
+        );
 
-    console.error(
-        "❌ ERROR STACK:",
-        error?.stack
-    );
+        console.error(
+            "❌ ERROR MESSAGE:",
+            error?.message
+        );
 
-    return res.status(500).json({
-        success: false,
-        error: "Could not call Bingo number",
-        debug: error?.message || "Unknown server error"
-    });
-}
+        console.error(
+            "❌ ERROR STACK:",
+            error?.stack
+        );
+
+        return res.status(500).json({
+
+            success: false,
+
+            error:
+                "Could not call Bingo number",
+
+            debug:
+                error?.message ||
+                "Unknown server error"
+
+        });
+
+    }
+
 });
 // ======================================================
 // JOIN / START GAME

@@ -7242,17 +7242,16 @@ const callButton =
 startSharedGameSync();
 
 // Only the server-designated caller generates balls
-if(window.isSharedCaller){
-    autoMode = true;
-    startAutoCalling();
+// Server controls Bingo ball calling.
+// Every player only synchronizes with the server.
 
-    console.log("🎯 CALLER: Automatic ball calling started");
-}else{
-    autoMode = false;
+autoMode = true;
 
-    console.log("👀 PLAYER: Waiting for shared balls");
-}
+startAutoCalling();
 
+console.log(
+    "🎱 SERVER-CONTROLLED CALLING STARTED"
+);
 haptic("success");
 }
   
@@ -7466,166 +7465,108 @@ function getAmharicLetter(letter){
 ===================================================== */  
 async function callNumber(){
 
-    if(
-        !actualGameStarted ||
-        winnerShown
-    ){
-        return;
-    }
+    if(!actualGameStarted || winnerShown) return;
 
     if(!currentGameId){
-        console.error(
-            "❌ No current game ID"
-        );
+        console.error("❌ No current game ID");
         return;
     }
 
     try{
 
-        const data =
-            await apiFetch(
-                "/api/match/" +
-                currentGameId +
-                "/call",
-                {
-                    method: "POST"
-                }
-            );
+        // READ the shared match state.
+        // Do not POST to /call — the server now generates balls.
+        const data = await apiFetch(
+            "/api/match/" + currentGameId
+        );
 
-        if(!data){
-            return;
-        }
+        if(!data) return;
 
-        // ------------------------------------------------
-        // SHARED MATCH ALREADY FINISHED
-        // ------------------------------------------------
+        const match = data.match || data;
 
-        if(
-            String(
-                data.matchStatus || ""
-            ).toUpperCase() ===
-            "FINISHED"
-        ){
+        const status = String(
+            match.status ||
+            match.matchStatus ||
+            data.matchStatus ||
+            ""
+        ).toUpperCase();
 
-            console.log(
-                "🏁 MATCH FINISHED"
-            );
+        if(status === "FINISHED"){
+
+            console.log("🏁 MATCH FINISHED");
 
             stopAutoCalling();
-
             actualGameStarted = false;
 
-            /*
-             * If this player has not already
-             * shown the winner screen,
-             * they are the loser.
-             */
-
             if(!winnerShown){
-
                 showLoserScreen();
-
             }
 
             return;
         }
 
-        if(!data.success){
+        const balls =
+            match.calledBalls ||
+            data.calledBalls ||
+            [];
 
-            console.error(
-                "❌ CALL NUMBER ERROR:",
-                data
-            );
+        const number = Number(
+            match.currentBall ||
+            data.currentBall
+        );
 
+        if(!Array.isArray(balls)){
+            console.error("❌ Invalid calledBalls response");
             return;
         }
 
-        // ------------------------------------------------
-        // UPDATE SHARED NUMBERS
-        // ------------------------------------------------
+        // Remember the previous ball so we don't announce
+        // the same ball every time we poll the server.
+        const previousBall =
+            calledNumbers.length
+                ? Number(calledNumbers[calledNumbers.length - 1])
+                : null;
 
-        const number =
-            Number(
-                data.currentBall
-            );
-
-        if(
-            Array.isArray(
-                data.calledBalls
-            )
-        ){
-
-            calledNumbers =
-                data.calledBalls.map(
-                    Number
-                );
-
-        }
+        calledNumbers = balls.map(Number);
 
         if(
             !Number.isInteger(number) ||
             number < 1 ||
             number > 75
         ){
-
+            renderBigBoard();
+            markPlayerCards();
+            checkWinner();
             return;
-
         }
 
-        const letter =
-            getBingoLetter(
-                number
-            );
-const display =
-    document.getElementById(
-        "gameBall"
-    );
+        const letter = getBingoLetter(number);
+        const ballText = `${letter}-${number}`;
 
-if(display){
+        const display = document.getElementById("gameBall");
+        if(display) display.textContent = ballText;
 
-    display.textContent =
-        `${letter}-${number}`;
-
-}
-
-const lastCalled =
-    document.getElementById(
-        "lastCalled"
-    );
-
-if(lastCalled){
-
-    lastCalled.textContent =
-        `${letter}-${number}`;
-
-}
+        const lastCalled = document.getElementById("lastCalled");
+        if(lastCalled) lastCalled.textContent = ballText;
 
         renderBigBoard();
-
         markPlayerCards();
-
-        speakNumber(
-            letter,
-            number
-        );
-
         checkWinner();
-
         updateAllDisplays();
 
-        haptic();
+        // Announce only when a new ball arrives.
+        if(previousBall !== number){
+            speakNumber(letter, number);
+            haptic();
+            console.log("🎱 SERVER BALL:", ballText);
+        }
 
     }catch(error){
 
-        console.error(
-            "❌ BINGO CALL ERROR:",
-            error
-        );
+        console.error("❌ SHARED BALL SYNC ERROR:", error);
 
     }
-
 }
-  
 /* =====================================================  
    VOICE  
 ===================================================== */  
@@ -7733,47 +7674,80 @@ function startAutoCalling(){
 
     stopAutoCalling();
 
-    console.log("🚀 START AUTO CALLING");
-    console.log("autoMode:", autoMode);
-    console.log("actualGameStarted:", actualGameStarted);
-    console.log("winnerShown:", winnerShown);
-    console.log("isCaller:", window.isSharedCaller);
-    console.log("currentGameId:", currentGameId);
+    console.log(
+        "🚀 START SERVER-CONTROLLED AUTO CALLING"
+    );
+
+    console.log(
+        "autoMode:",
+        autoMode
+    );
+
+    console.log(
+        "actualGameStarted:",
+        actualGameStarted
+    );
+
+    console.log(
+        "winnerShown:",
+        winnerShown
+    );
+
+    console.log(
+        "currentGameId:",
+        currentGameId
+    );
+
 
     if(
-        !window.isSharedCaller ||
         !actualGameStarted ||
         winnerShown ||
         !currentGameId
     ){
-        console.log("⛔ AUTO CALLING NOT STARTED");
+
+        console.log(
+            "⛔ AUTO CALLING NOT STARTED"
+        );
+
         return;
+
     }
+
 
     autoMode = true;
 
-    autoInterval = setInterval(
-        async () => {
 
-            if(
-                !window.isSharedCaller ||
-                !actualGameStarted ||
-                winnerShown ||
-                !currentGameId
-            ){
-                return;
-            }
+    autoInterval =
+        setInterval(
+            async () => {
 
-            console.log("⏱️ AUTO CALL TICK");
-            console.log("🎯 CALLING NEXT BALL");
+                if(
+                    !actualGameStarted ||
+                    winnerShown ||
+                    !currentGameId
+                ){
 
-            await callNumber();
+                    return;
 
-        },
-        3000
+                }
+
+
+                console.log(
+                    "⏱️ SERVER CALL TICK"
+                );
+
+
+                await callNumber();
+
+            },
+            3000
+        );
+
+
+    console.log(
+        "✅ SERVER-CONTROLLED AUTO CALLING STARTED"
     );
 
-    console.log("✅ AUTO CALLING INTERVAL STARTED");
 }
 /* =====================================================  
    AUTO STOP  
