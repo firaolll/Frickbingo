@@ -3516,7 +3516,7 @@ let winnerResetInterval = null;
 let selectionTimerInterval = null;
 let profileData = {};
 let winnerShown = false;  
-
+let winnerClaimInProgress = false;
  
 /* =====================================================  
    CONFIG  
@@ -8216,8 +8216,8 @@ async function showWinner(
         );
 
         return;
+        
     }
-
 
     if(winnerShown){
 
@@ -8239,7 +8239,18 @@ async function showWinner(
         return;
 
     }
+ winnerClaimInProgress = true;
 
+
+    if(!currentGameId){
+        console.warn(
+            "⚠️ No currentGameId available."
+        );
+
+        winnerClaimInProgress = false;
+
+        return;
+    }
 
     let data;
 
@@ -8268,10 +8279,10 @@ async function showWinner(
             );
 
 
-        console.log(
-            "GAME FINISH:",
-            data
-        );
+       console.log(
+    "🎮 GAME FINISH RESPONSE:",
+    JSON.stringify(data, null, 2)
+);
 
 
     }catch(error){
@@ -8300,9 +8311,9 @@ async function showWinner(
     ){
 
         console.warn(
-            "❌ Server rejected winner:",
-            data
-        );
+    "❌ SERVER REJECTED WINNER:",
+    JSON.stringify(data, null, 2)
+);
 
         showToast(
             data?.error ||
