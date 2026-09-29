@@ -2938,48 +2938,87 @@ if (result === "WIN") {
         // ------------------------------------------------  
         // FIND PLAYER GAME  
         // ------------------------------------------------  
-
-        const game =  
-            db.prepare(`  
-                SELECT *  
-                FROM games  
-
-                WHERE match_id = ?  
-
-                AND user_id = ?  
-
-                ORDER BY id DESC  
-
-                LIMIT 1  
-            `).get(  
-                matchId,  
-                req.user.id  
-            );  
-
-        // ------------------------------------------------
-// VERIFY WINNER CARD BELONGS TO THIS GAME
+// ------------------------------------------------
+// FIND PLAYER GAME
 // ------------------------------------------------
 
-if (result === "WIN") {
+const game =
+    db.prepare(`
+        SELECT *
+        FROM games
+        WHERE match_id = ?
+        AND user_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+    `).get(
+        matchId,
+        req.user.id
+    );
+
+
+// ------------------------------------------------
+// PLAYER GAME MUST EXIST
+// ------------------------------------------------
+
+if(!game){
+
+    return res.status(404).json({
+        success:false,
+        error:"Player game not found"
+    });
+
+}
+
+
+// ------------------------------------------------
+// SERVER-SIDE WIN VALIDATION
+// ------------------------------------------------
+
+if(result === "WIN"){
+
+    // --------------------------------------------
+    // 1. VALIDATE CARD NUMBER
+    // --------------------------------------------
+
+    if(
+        !Number.isInteger(cardNumber) ||
+        cardNumber < 1 ||
+        cardNumber > 200
+    ){
+
+        return res.status(400).json({
+            success:false,
+            error:"Invalid winner card number"
+        });
+
+    }
+
+
+    // --------------------------------------------
+    // 2. GET PLAYER'S CARD NUMBERS
+    // --------------------------------------------
 
     let playerCards = [];
 
-    try {
+    try{
 
         playerCards =
             game.card_numbers
-                ? JSON.parse(
-                    game.card_numbers
-                )
+                ? JSON.parse(game.card_numbers)
                 : [];
 
-    } catch (error) {
+    }catch(error){
+
+        console.error(
+            "❌ PLAYER CARD PARSE ERROR:",
+            error
+        );
 
         playerCards = [];
 
     }
 
-    if (!Array.isArray(playerCards)) {
+    if(!Array.isArray(playerCards)){
 
         playerCards = [];
 
@@ -2988,41 +3027,29 @@ if (result === "WIN") {
     playerCards =
         playerCards.map(Number);
 
-    if (
+
+    // --------------------------------------------
+    // 3. CARD MUST BELONG TO PLAYER
+    // --------------------------------------------
+
+    if(
         !playerCards.includes(
             Number(cardNumber)
         )
-    ) {
+    ){
 
         return res.status(400).json({
-
-            success: false,
-
+            success:false,
             error:
                 "Winner card does not belong to this player"
-
         });
 
     }
-}
 
-        if (!game) {  
 
-            return res.status(404).json({  
-
-                success: false,  
-
-                error:  
-                    "Player game not found"  
-
-            });  
-        }  
-
-        // ------------------------------------------------
-// VERIFY ACTUAL BINGO WIN
-// ------------------------------------------------
-
-if (result === "WIN") {
+    // --------------------------------------------
+    // 4. GET CURRENT MATCH
+    // --------------------------------------------
 
     const match =
         db.prepare(`
@@ -3035,27 +3062,23 @@ if (result === "WIN") {
             matchId
         );
 
-    if (!match) {
+    if(!match){
 
         return res.status(404).json({
-
-            success: false,
-
-            error:
-                "Match not found"
-
+            success:false,
+            error:"Match not found"
         });
 
     }
 
 
     // --------------------------------------------
-    // READ SERVER CALLED BALLS
+    // 5. READ SERVER CALLED BALLS
     // --------------------------------------------
 
     let calledBalls = [];
 
-    try {
+    try{
 
         calledBalls =
             match.called_balls
@@ -3064,24 +3087,36 @@ if (result === "WIN") {
                 )
                 : [];
 
-    } catch (error) {
+    }catch(error){
+
+        console.error(
+            "❌ CALLED BALLS PARSE ERROR:",
+            error
+        );
 
         calledBalls = [];
 
     }
 
-    if (!Array.isArray(calledBalls)) {
+    if(!Array.isArray(calledBalls)){
 
         calledBalls = [];
 
     }
 
     calledBalls =
-        calledBalls.map(Number);
+        calledBalls
+            .map(Number)
+            .filter(
+                number =>
+                    Number.isInteger(number) &&
+                    number >= 1 &&
+                    number <= 75
+            );
 
 
     // --------------------------------------------
-    // GENERATE THE PLAYER'S CARD
+    // 6. GENERATE THE SAME CARD
     // --------------------------------------------
 
     const winningCard =
@@ -3091,7 +3126,7 @@ if (result === "WIN") {
 
 
     // --------------------------------------------
-    // CHECK BINGO
+    // 7. SERVER BINGO CHECK
     // --------------------------------------------
 
     const actuallyWon =
@@ -3101,12 +3136,17 @@ if (result === "WIN") {
         );
 
 
+    // --------------------------------------------
+    // DEBUG
+    // --------------------------------------------
+
     console.log(
         "🏆 SERVER WIN CHECK:",
         {
             matchId,
             userId: req.user.id,
             cardNumber,
+            playerCards,
             calledBalls,
             winningCard,
             actuallyWon
@@ -3115,27 +3155,19 @@ if (result === "WIN") {
 
 
     // --------------------------------------------
-    // REJECT FALSE WIN
+    // 8. REJECT INVALID CLAIM
     // --------------------------------------------
 
-    if (!actuallyWon) {
+    if(!actuallyWon){
 
         return res.status(400).json({
-
-            success: false,
-
-            error:
-                "Invalid Bingo claim"
-
+            success:false,
+            error:"Invalid Bingo claim"
         });
 
     }
 
 }
-        // ------------------------------------------------  
-        // IF ALREADY FINISHED  
-        // ------------------------------------------------  
-
         if (  
             game.status ===  
             "FINISHED"  
