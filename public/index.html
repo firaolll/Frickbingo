@@ -6655,7 +6655,7 @@ async function readyForGame(){
 ================================================== */
 
 let sharedSyncInterval = null;
-
+```js
 async function syncSharedGameState(){
 
     if(
@@ -6681,35 +6681,41 @@ async function syncSharedGameState(){
         const match =
             data.match ||
             data;
+
+        /* ==============================
+           MATCH STATUS
+        ============================== */
+
         const matchStatus =
-    String(
-        match.status ??
-        data.status ??
-        ""
-    ).toUpperCase();
+            String(
+                match.status ??
+                data.status ??
+                ""
+            ).toUpperCase();
 
-if(matchStatus === "FINISHED"){
+        if(matchStatus === "FINISHED"){
 
-    console.log(
-        "🏁 SHARED MATCH FINISHED"
-    );
+            console.log(
+                "🏁 SHARED MATCH FINISHED"
+            );
 
-    stopSharedGameSync();
-    stopAutoCalling();
+            stopSharedGameSync();
+            stopAutoCalling();
 
-    actualGameStarted = false;
+            actualGameStarted = false;
 
-    if(!winnerShown){
+            if(!winnerShown){
 
-        showLoserScreen();
+                showLoserScreen();
 
-    }
+            }
 
-    return;
-}
-        /* ------------------------------
+            return;
+        }
+
+        /* ==============================
            SYNC CALLED NUMBERS
-        ------------------------------ */
+        ============================== */
 
         let serverCalled =
             match.calledBalls ??
@@ -6753,9 +6759,9 @@ if(matchStatus === "FINISHED"){
 
         }
 
-        /* ------------------------------
-           SYNC CURRENT BALL
-        ------------------------------ */
+        /* ==============================
+           CURRENT BALL
+        ============================== */
 
         const serverBall =
             Number(
@@ -6776,6 +6782,9 @@ if(matchStatus === "FINISHED"){
                     serverBall
                 );
 
+            const ballText =
+                `${letter}-${serverBall}`;
+
             const display =
                 document.getElementById(
                     "gameBall"
@@ -6784,7 +6793,7 @@ if(matchStatus === "FINISHED"){
             if(display){
 
                 display.textContent =
-                    `${letter}-${serverBall}`;
+                    ballText;
 
             }
 
@@ -6796,15 +6805,15 @@ if(matchStatus === "FINISHED"){
             if(lastCalled){
 
                 lastCalled.textContent =
-                    `${letter}-${serverBall}`;
+                    ballText;
 
             }
 
         }
 
-        /* ------------------------------
+        /* ==============================
            CALLED COUNT
-        ------------------------------ */
+        ============================== */
 
         const calledCount =
             document.getElementById(
@@ -6834,15 +6843,21 @@ if(matchStatus === "FINISHED"){
 
         }
 
-        /* ------------------------------
-           REDRAW EVERYTHING
-        ------------------------------ */
+        /* ==============================
+           REDRAW GAME
+        ============================== */
 
         renderBigBoard();
 
         markPlayerCards();
 
         updateAllDisplays();
+
+        /* ==============================
+           CHECK BINGO
+        ============================== */
+
+        checkWinner();
 
     }catch(error){
 
@@ -6874,7 +6889,7 @@ function startSharedGameSync(){
     sharedSyncInterval =
         setInterval(
             syncSharedGameState,
-            500
+            3000
         );
 
 }
@@ -7240,14 +7255,6 @@ const callButton =
    renderPlayingPage();
 
 startSharedGameSync();
-
-// Only the server-designated caller generates balls
-// Server controls Bingo ball calling.
-// Every player only synchronizes with the server.
-
-autoMode = true;
-
-startAutoCalling();
 
 console.log(
     "🎱 SERVER-CONTROLLED CALLING STARTED"
