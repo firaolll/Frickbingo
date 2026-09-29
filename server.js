@@ -276,21 +276,23 @@ Number(cards) <= MAX_CARDS
 // ======================================================
 // FIND WAITING MATCH
 // ======================================================
-
-function findWaitingMatch(stake) {
+function findActiveMatch(stake) {
 
     return db.prepare(`
         SELECT *
         FROM matches
         WHERE stake = ?
-          AND status = 'WAITING'
-        ORDER BY id ASC
+          AND status IN ('WAITING', 'PLAYING')
+        ORDER BY
+            CASE
+                WHEN status = 'WAITING' THEN 0
+                WHEN status = 'PLAYING' THEN 1
+            END,
+            id ASC
         LIMIT 1
     `).get(stake);
 
 }
-
-
 // ======================================================
 // GET MATCH COUNTDOWN
 // ======================================================
@@ -2057,7 +2059,7 @@ app.post("/api/game/start", auth, async (req, res) => {
     // -----------------------------  
     // FIND OR CREATE WAITING MATCH  
     // -----------------------------  
-    let match = findWaitingMatch(stake);  
+    let match = findActiveMatch(stake);  
 
     if (!match) {  
       const result = db.prepare(`  
@@ -2082,6 +2084,126 @@ app.post("/api/game/start", auth, async (req, res) => {
       });  
     }  
 
+
+    // ==================================================
+// LATE PLAYER JOINING A PLAYING MATCH
+// ==================================================
+
+if (match.status === "PLAYING") {
+
+    // ----------------------------------------------
+    // Check whether this player already has a record
+    // ----------------------------------------------
+
+    const existingLateGame = db.prepare(`
+        SELECT *
+        FROM games
+        WHERE match_id = ?
+          AND user_id = ?
+        LIMIT 1
+    `).get(matchId, userId);
+
+    if (existingLateGame) {
+
+        return res.json({
+
+            success: true,
+
+            gameId: matchId,
+            sharedGameId: matchId,
+            matchId: matchId,
+
+            playerGameId:
+                existingLateGame.id,
+
+            stake: stake,
+
+            cards:
+                existingLateGame.cards || 0,
+
+            status: "PLAYING",
+
+            playerStatus:
+                existingLateGame.status,
+
+            lateJoin: true,
+
+            started: true,
+
+            message:
+                "Game already playing. Waiting for next round."
+
+        });
+
+    }
+
+    // ----------------------------------------------
+    // DO NOT charge this player
+    // DO NOT select cards
+    // DO NOT start a new match
+    // ----------------------------------------------
+
+    const lateGame = db.prepare(`
+        INSERT INTO games (
+            match_id,
+            user_id,
+            stake,
+            cards,
+            result,
+            prize,
+            status,
+            play_spent,
+            main_spent
+        )
+        VALUES (
+            ?,
+            ?,
+            ?,
+            0,
+            'WAITING_NEXT_ROUND',
+            0,
+            'WAITING_NEXT_ROUND',
+            0,
+            0
+        )
+    `).run(
+        matchId,
+        userId,
+        stake
+    );
+
+    return res.json({
+
+        success: true,
+
+        gameId: matchId,
+        sharedGameId: matchId,
+        matchId: matchId,
+
+        playerGameId:
+            Number(
+                lateGame.lastInsertRowid
+            ),
+
+        stake: stake,
+
+        cards: 0,
+
+        status: "PLAYING",
+
+        playerStatus:
+            "WAITING_NEXT_ROUND",
+
+        lateJoin: true,
+
+        started: true,
+
+        message:
+            "Game is already playing. " +
+            "Wait for the next card selection."
+
+    });
+}
     // -----------------------------  
     // CHECK IF PLAYER ALREADY JOINED  
     // -----------------------------  
@@ -2327,16 +2449,16 @@ function finalizeMatchPayout(matchId) {
             // GET ALL PLAYERS
             // ------------------------------------------------
 
-            const games =
-                db.prepare(`
-                    SELECT *
-                    FROM games
-                    WHERE match_id = ?
-                    ORDER BY id ASC
-                `).all(
-                    matchId
-                );
-
+           const games =
+    db.prepare(`
+        SELECT *
+        FROM games
+        WHERE match_id = ?
+        AND status != 'WAITING_NEXT_ROUND'
+        ORDER BY id ASC
+    `).all(
+        matchId
+    );
             if (
                 games.length === 0
             ) {
@@ -2519,24 +2641,26 @@ function finalizeMatchPayout(matchId) {
             // ------------------------------------------------
 
             db.prepare(`
-                UPDATE games
+    UPDATE games
 
-                SET
-                    result = 'LOSE',
-                    prize = 0,
-                    status = 'FINISHED',
-                    finished_at =
-                        CURRENT_TIMESTAMP
+    SET
+        result = 'LOSE',
+        prize = 0,
+        status = 'FINISHED',
+        finished_at =
+            CURRENT_TIMESTAMP
 
-                WHERE match_id = ?
+    WHERE match_id = ?
 
-                AND (
-                    result IS NULL
-                    OR result != 'WIN'
-                )
-            `).run(
-                matchId
-            );
+    AND status != 'WAITING_NEXT_ROUND'
+
+    AND (
+        result IS NULL
+        OR result != 'WIN'
+    )
+`).run(
+    matchId
+);
 
             // ------------------------------------------------
             // FINISH SHARED MATCH
