@@ -2033,11 +2033,26 @@ app.post(
 app.post("/api/game/start", auth, async (req, res) => {
   try {
     const stake = num(req.body.stake);
-    const cards = Number(req.body.cards);
+const cards = Number(req.body.cards);
 
-    // -----------------------------  
-    // VALIDATION  
-    // -----------------------------  
+const cardNumbers = Array.isArray(req.body.cardNumbers)
+    ? req.body.cardNumbers.map(Number)
+    : [];
+    if (cardNumbers.length !== cards) {
+    return res.status(400).json({
+        success: false,
+        error: "Card numbers do not match card count"
+    });
+}
+
+if (cardNumbers.some(card => !Number.isInteger(card) || card < 1 || card > 200)) {
+    return res.status(400).json({
+        success: false,
+        error: "Invalid card number"
+    });
+}
+
+
     if (!validStake(stake)) {  
       return res.status(400).json({  
         success: false,  
@@ -2269,12 +2284,29 @@ if (match.status === "PLAYING") {
         throw new Error("Balance changed. Please try again.");  
       }  
 
-      const gameResult = db.prepare(`  
-        INSERT INTO games (  
-          match_id, user_id, stake, cards, result, prize, status, play_spent, main_spent  
-        ) VALUES (?, ?, ?, ?, 'STARTED', 0, 'STARTED', ?, ?)  
-      `).run(matchId, userId, stake, cards, playSpent, mainSpent);  
-
+     const gameResult = db.prepare(`
+  INSERT INTO games (
+    match_id,
+    user_id,
+    stake,
+    cards,
+    card_numbers,
+    result,
+    prize,
+    status,
+    play_spent,
+    main_spent
+  )
+  VALUES (?, ?, ?, ?, ?, 'STARTED', 0, 'STARTED', ?, ?)
+`).run(
+    matchId,
+    userId,
+    stake,
+    cards,
+    JSON.stringify(cardNumbers),
+    playSpent,
+    mainSpent
+);
       if (!match.countdown_started_at) {  
         db.prepare(`  
           UPDATE matches  
@@ -2384,7 +2416,6 @@ return res.json({
 
 
 function finalizeMatchPayout(matchId) {
-
     const transaction =
         db.transaction(() => {
 
@@ -3077,7 +3108,14 @@ const game =
         req.user.id
     );
 
-
+console.log("🎫 FINISH GAME DEBUG:", {
+    matchId,
+    userId: req.user.id,
+    gameId: game?.id,
+    gameStatus: game?.status,
+    gameCards: game?.cards,
+    gameCardNumbers: game?.card_numbers
+});
 // ------------------------------------------------
 // PLAYER GAME MUST EXIST
 // ------------------------------------------------
