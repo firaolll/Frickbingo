@@ -4243,13 +4243,11 @@ console.log(
   async function removeCard(number){
 
     if(playerReady){
-        showToast("You are already ready.");
         return;
     }
 
     number = Number(number);
 
-    // Remove locally first
     selectedCards =
         selectedCards.filter(
             item => Number(item) !== number
@@ -4265,45 +4263,24 @@ console.log(
         selectedCards
     );
 
-    // Update the visual selection immediately
     updateSelectedCards();
 
-    const button =
-        document.querySelector(
-            `.card-number[data-number="${number}"]`
-        );
-
-    if(button){
-        button.classList.remove("selected");
-    }
-
-
-    // -----------------------------------------
-    // SEND LATEST SELECTION TO SERVER
-    // This also triggers the refund
-    // -----------------------------------------
-
-    try {
+    try{
 
         await joinSharedMatch();
 
-        console.log(
-            "✅ CARD REMOVAL SYNCED WITH SERVER"
-        );
-
         haptic("success");
 
-    } catch(error) {
+    }catch(error){
 
         console.error(
-            "❌ CARD REMOVAL SYNC ERROR:",
+            "❌ CARD UPDATE ERROR:",
             error
         );
 
         haptic("error");
 
     }
-
 }
 /* ==================================================  
    UPDATE SELECTED CARDS  
@@ -4916,7 +4893,9 @@ async function callNextNumber(){
    CHECK PLAYER BINGO
    ================================================== */
 
-checkWinner();
+if(!winnerClaimInProgress && !winnerShown){
+    checkWinner();
+}
 
     }catch(error){
 
@@ -8259,28 +8238,16 @@ async function showWinner(
        SERVER MUST CONFIRM THE WIN FIRST
        ================================================== */
 
-    if(!currentGameId){
+   if(!currentGameId){
 
-        console.warn(
-            "⚠️ No currentGameId available."
-        );
+    console.warn(
+        "⚠️ No currentGameId available."
+    );
 
-        return;
+    return;
+}
 
-    }
- winnerClaimInProgress = true;
-
-
-    if(!currentGameId){
-        console.warn(
-            "⚠️ No currentGameId available."
-        );
-
-        winnerClaimInProgress = false;
-
-        return;
-    }
-
+winnerClaimInProgress = true;
     let data;
 
 
@@ -8314,45 +8281,44 @@ async function showWinner(
 );
 
 
-    }catch(error){
+    catch(error){
 
-        console.error(
-            "❌ Finish game error:",
-            error
-        );
+    console.error(
+        "❌ Finish game error:",
+        error
+    );
 
-        showToast(
-            "Server could not verify the Bingo."
-        );
+    winnerClaimInProgress = false;
 
-        return;
+    showToast(
+        "Server could not verify the Bingo."
+    );
 
-    }
-
+    return;
+}
 
     /* ==================================================
        SERVER REJECTED THE WIN
        ================================================== */
+if(
+    !data ||
+    data.success !== true
+){
 
-    if(
-        !data ||
-        data.success !== true
-    ){
+    console.warn(
+        "❌ SERVER REJECTED WINNER:",
+        JSON.stringify(data, null, 2)
+    );
 
-        console.warn(
-    "❌ SERVER REJECTED WINNER:",
-    JSON.stringify(data, null, 2)
-);
+    winnerClaimInProgress = false;
 
-        showToast(
-            data?.error ||
-            "Bingo win was not verified."
-        );
+    showToast(
+        data?.error ||
+        "Bingo win was not verified."
+    );
 
-        return;
-
-    }
-
+    return;
+}
 
     /* ==================================================
        SERVER CONFIRMED WIN

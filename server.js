@@ -1936,280 +1936,379 @@ app.post(
 
         }
 
-        const match =
-            db.prepare(`
-                SELECT *
-                FROM matches
-                WHERE id = ?
-            `).get(
-                matchId
-            );
-
-        if (!match) {
-
-            return res.status(404).json({
-                success: false,
-                error: "Match not found"
-            });
-
-        }
 
         /*
-         * MATCH FINISHED
+         * ==========================================
+         * TRANSACTION
+         *
+         * Read + generate + save must happen
+         * together.
+         * ==========================================
          */
 
-        if (
-            String(match.status).toUpperCase() ===
-            "FINISHED"
-        ) {
+        const result =
+            db.transaction(() => {
 
-            let calledBalls = [];
+                const match =
+                    db.prepare(`
+                        SELECT *
+                        FROM matches
+                        WHERE id = ?
+                    `).get(matchId);
 
-            try {
+
+                if (!match) {
+
+                    return {
+                        type: "ERROR",
+                        status: 404,
+                        body: {
+                            success: false,
+                            error: "Match not found"
+                        }
+                    };
+
+                }
+
+
+                /*
+                 * ======================================
+                 * MATCH FINISHED
+                 * ======================================
+                 */
+
+                if (
+                    String(match.status).toUpperCase() ===
+                    "FINISHED"
+                ) {
+
+                    let calledBalls = [];
+
+                    try {
+
+                        calledBalls =
+                            match.called_balls
+                                ? JSON.parse(
+                                    match.called_balls
+                                )
+                                : [];
+
+                    } catch(error) {
+
+                        calledBalls = [];
+
+                    }
+
+
+                    if (!Array.isArray(calledBalls)) {
+
+                        calledBalls = [];
+
+                    }
+
+
+                    calledBalls =
+                        calledBalls
+                            .map(Number)
+                            .filter(
+                                number =>
+                                    Number.isInteger(number) &&
+                                    number >= 1 &&
+                                    number <= 75
+                            );
+
+
+                    return {
+                        type: "SUCCESS",
+                        body: {
+
+                            success: true,
+
+                            matchStatus:
+                                "FINISHED",
+
+                            currentBall:
+                                match.current_ball
+                                    ? Number(
+                                        match.current_ball
+                                    )
+                                    : null,
+
+                            calledBalls,
+
+                            winnerCount:
+                                Number(
+                                    match.winner_count || 0
+                                ),
+
+                            paid:
+                                Boolean(match.paid)
+
+                        }
+                    };
+
+                }
+
+
+                /*
+                 * ======================================
+                 * MATCH MUST BE PLAYING
+                 * ======================================
+                 */
+
+                if (
+                    String(match.status).toUpperCase() !==
+                    "PLAYING"
+                ) {
+
+                    return {
+                        type: "ERROR",
+                        status: 400,
+                        body: {
+
+                            success: false,
+
+                            error:
+                                "Match is not playing",
+
+                            matchStatus:
+                                match.status
+
+                        }
+                    };
+
+                }
+
+
+                /*
+                 * ======================================
+                 * READ CURRENT SERVER BALLS
+                 * ======================================
+                 */
+
+                let calledBalls = [];
+
+                try {
+
+                    calledBalls =
+                        match.called_balls
+                            ? JSON.parse(
+                                match.called_balls
+                            )
+                            : [];
+
+                } catch(error) {
+
+                    calledBalls = [];
+
+                }
+
+
+                if (!Array.isArray(calledBalls)) {
+
+                    calledBalls = [];
+
+                }
+
 
                 calledBalls =
-                    match.called_balls
-                        ? JSON.parse(
-                            match.called_balls
-                        )
-                        : [];
-
-            } catch(error) {
-
-                calledBalls = [];
-
-            }
-
-            if (!Array.isArray(calledBalls)) {
-                calledBalls = [];
-            }
-
-            return res.json({
-
-                success: true,
-
-                matchStatus: "FINISHED",
-
-                currentBall:
-                    match.current_ball
-                        ? Number(
-                            match.current_ball
-                        )
-                        : null,
-
-                calledBalls,
-
-                winnerCount:
-                    Number(
-                        match.winner_count || 0
-                    ),
-
-                paid:
-                    Boolean(match.paid)
-
-            });
-
-        }
+                    calledBalls
+                        .map(Number)
+                        .filter(
+                            number =>
+                                Number.isInteger(number) &&
+                                number >= 1 &&
+                                number <= 75
+                        );
 
 
-        /*
-         * MATCH MUST BE PLAYING
-         */
+                /*
+                 * ======================================
+                 * ALL 75 NUMBERS CALLED
+                 * ======================================
+                 */
 
-        if (
-            String(match.status).toUpperCase() !==
-            "PLAYING"
-        ) {
+                if (
+                    calledBalls.length >= 75
+                ) {
 
-            return res.status(400).json({
+                    return {
+                        type: "SUCCESS",
+                        body: {
 
-                success: false,
+                            success: true,
 
-                error:
-                    "Match is not playing",
+                            matchStatus:
+                                "PLAYING",
 
-                matchStatus:
-                    match.status
+                            currentBall:
+                                null,
 
-            });
+                            calledBalls
 
-        }
+                        }
+                    };
+
+                }
 
 
-        /*
-         * READ SERVER CALLED BALLS
-         */
+                /*
+                 * ======================================
+                 * FIND AVAILABLE NUMBERS
+                 * ======================================
+                 */
 
-        let calledBalls = [];
+                const available = [];
 
-        try {
+                for (
+                    let number = 1;
+                    number <= 75;
+                    number++
+                ) {
 
-            calledBalls =
-                match.called_balls
-                    ? JSON.parse(
-                        match.called_balls
-                    )
-                    : [];
+                    if (
+                        !calledBalls.includes(number)
+                    ) {
 
-        } catch(error) {
+                        available.push(number);
 
-            calledBalls = [];
+                    }
 
-        }
+                }
 
-        if (!Array.isArray(calledBalls)) {
-            calledBalls = [];
-        }
 
-        calledBalls =
-            calledBalls
-                .map(Number)
-                .filter(
-                    number =>
-                        Number.isInteger(number) &&
-                        number >= 1 &&
-                        number <= 75
+                if (
+                    available.length === 0
+                ) {
+
+                    return {
+                        type: "SUCCESS",
+                        body: {
+
+                            success: true,
+
+                            matchStatus:
+                                "PLAYING",
+
+                            currentBall:
+                                null,
+
+                            calledBalls
+
+                        }
+                    };
+
+                }
+
+
+                /*
+                 * ======================================
+                 * GENERATE NEXT BALL
+                 * ======================================
+                 */
+
+                const index =
+                    Math.floor(
+                        Math.random() *
+                        available.length
+                    );
+
+                const number =
+                    available[index];
+
+
+                calledBalls.push(
+                    number
                 );
 
 
+                /*
+                 * ======================================
+                 * SAVE SHARED SERVER STATE
+                 * ======================================
+                 */
+
+                db.prepare(`
+                    UPDATE matches
+
+                    SET
+                        called_balls = ?,
+                        current_ball = ?
+
+                    WHERE id = ?
+
+                      AND status = 'PLAYING'
+                `).run(
+
+                    JSON.stringify(
+                        calledBalls
+                    ),
+
+                    number,
+
+                    matchId
+
+                );
+
+
+                console.log(
+                    "🎱 SERVER CALLED BALL:",
+                    number,
+                    "MATCH:",
+                    matchId,
+                    "TOTAL CALLED:",
+                    calledBalls.length
+                );
+
+
+                /*
+                 * ======================================
+                 * RETURN EXACT SERVER STATE
+                 * ======================================
+                 */
+
+                return {
+                    type: "SUCCESS",
+                    body: {
+
+                        success: true,
+
+                        matchStatus:
+                            "PLAYING",
+
+                        currentBall:
+                            number,
+
+                        calledBalls
+
+                    }
+                };
+
+            })();
+
+
         /*
-         * ALL 75 NUMBERS CALLED
+         * ==========================================
+         * SEND TRANSACTION RESULT
+         * ==========================================
          */
 
         if (
-            calledBalls.length >= 75
+            result.type === "ERROR"
         ) {
 
-            return res.json({
-
-                success: true,
-
-                matchStatus:
-                    "PLAYING",
-
-                currentBall:
-                    null,
-
-                calledBalls
-
-            });
-
-        }
-
-
-        /*
-         * FIND AVAILABLE NUMBERS
-         */
-
-        const available = [];
-
-        for(
-            let number = 1;
-            number <= 75;
-            number++
-        ){
-
-            if(
-                !calledBalls.includes(number)
-            ){
-
-                available.push(number);
-
-            }
-
-        }
-
-
-        if(
-            available.length === 0
-        ){
-
-            return res.json({
-
-                success: true,
-
-                matchStatus:
-                    "PLAYING",
-
-                currentBall:
-                    null,
-
-                calledBalls
-
-            });
-
-        }
-
-
-        /*
-         * SERVER GENERATES NEXT BALL
-         */
-
-        const index =
-            Math.floor(
-                Math.random() *
-                available.length
+            return res.status(
+                result.status
+            ).json(
+                result.body
             );
 
-        const number =
-            available[index];
+        }
 
 
-        calledBalls.push(
-            number
+        return res.json(
+            result.body
         );
-
-
-        /*
-         * SAVE SERVER STATE
-         */
-
-        db.prepare(`
-            UPDATE matches
-
-            SET
-                called_balls = ?,
-                current_ball = ?
-
-            WHERE id = ?
-        `).run(
-
-            JSON.stringify(
-                calledBalls
-            ),
-
-            number,
-
-            matchId
-
-        );
-
-
-        console.log(
-            "🎱 SERVER CALLED BALL:",
-            number,
-            "MATCH:",
-            matchId
-        );
-
-
-        /*
-         * RETURN SHARED STATE
-         */
-
-        return res.json({
-
-            success: true,
-
-            matchStatus:
-                "PLAYING",
-
-            currentBall:
-                number,
-
-            calledBalls
-
-        });
 
 
     } catch(error) {
@@ -2238,7 +2337,7 @@ app.post(
 
             debug:
                 error?.message ||
-                "Unknown server error"
+                "Unknown error"
 
         });
 
