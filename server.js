@@ -1084,9 +1084,7 @@ app.post("/api/match/create", auth, (req, res) => {
         FIND OR CREATE WAITING MATCH
         ================================================
         */
-
-        let match =
-            findWaitingMatch(stake);
+        let match = findActiveMatch(stake);
 
         if (!match) {
 
