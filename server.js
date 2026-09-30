@@ -1067,7 +1067,11 @@ app.post("/api/match/create", auth, (req, res) => {
 
         }
 
-        if (!validCards(cards)) {
+        if (
+    !Number.isInteger(cards) ||
+    cards < 0 ||
+    cards > MAX_CARDS
+) {
 
             return res.status(400).json({
                 success: false,
@@ -1276,34 +1280,183 @@ mainSpent
 
     transaction();
 
-} else {
+}  } else {
 
     // -----------------------------------------------
-    // EXISTING PLAYER — ADDITIONAL CARD
+    // EXISTING PLAYER — UPDATE LATEST CARD SELECTION
+    // ADD CARD = CHARGE
+    // REMOVE CARD = REFUND
     // -----------------------------------------------
 
     const oldCards =
-        Number(
-            existingGame.cards || 0
-        );
+        Number(existingGame.cards || 0);
 
     const newCards =
         Number(cards);
 
-    const additionalCards =
+    const cardDifference =
         newCards - oldCards;
 
-    // Nothing new to charge
-    if (additionalCards <= 0) {
 
-        // Keep existing game unchanged
+    // =================================================
+    // REMOVE CARD(S) — REFUND
+    // =================================================
 
-    } else {
+    if (cardDifference < 0) {
+
+        const removedCards =
+            Math.abs(cardDifference);
+
+        const refund =
+            num(
+                stake * removedCards
+            );
+
+
+        // Money previously spent from Play Balance
+        const oldPlaySpent =
+            Number(
+                existingGame.play_spent || 0
+            );
+
+        // Money previously spent from Main Balance
+        const oldMainSpent =
+            Number(
+                existingGame.main_spent || 0
+            );
+
+
+        // Refund Play money first
+        const playRefund =
+            Math.min(
+                oldPlaySpent,
+                refund
+            );
+
+        // Remaining refund goes to Main Balance
+        const mainRefund =
+            num(
+                refund - playRefund
+            );
+
+
+        const transaction =
+            db.transaction(() => {
+
+                // -----------------------------------------
+                // REFUND USER WALLET
+                // -----------------------------------------
+
+                const refundResult =
+                    db.prepare(`
+                        UPDATE users
+                        SET
+                            play_balance =
+                                COALESCE(
+                                    play_balance,
+                                    0
+                                ) + ?,
+
+                            balance =
+                                COALESCE(
+                                    balance,
+                                    0
+                                ) + ?
+
+                        WHERE id = ?
+                    `).run(
+                        playRefund,
+                        mainRefund,
+                        userId
+                    );
+
+
+                if (
+                    refundResult.changes !== 1
+                ) {
+
+                    throw new Error(
+                        "Failed to refund card cost."
+                    );
+
+                }
+
+
+                // -----------------------------------------
+                // SAVE LATEST CARD SELECTION
+                // -----------------------------------------
+
+                db.prepare(`
+                    UPDATE games
+                    SET
+                        cards = ?,
+
+                        card_numbers = ?,
+
+                        play_spent =
+                            MAX(
+                                0,
+                                COALESCE(
+                                    play_spent,
+                                    0
+                                ) - ?
+                            ),
+
+                        main_spent =
+                            MAX(
+                                0,
+                                COALESCE(
+                                    main_spent,
+                                    0
+                                ) - ?
+                            )
+
+                    WHERE id = ?
+
+                    AND user_id = ?
+                `).run(
+                    newCards,
+                    JSON.stringify(cardNumbers),
+                    playRefund,
+                    mainRefund,
+                    existingGame.id,
+                    userId
+                );
+
+            });
+
+
+        transaction();
+
+
+        console.log(
+            "💰 CARD REMOVAL REFUND:",
+            {
+                oldCards,
+                newCards,
+                removedCards,
+                refund,
+                playRefund,
+                mainRefund,
+                latestCards: cardNumbers
+            }
+        );
+
+
+    // =================================================
+    // ADD CARD(S) — CHARGE
+    // =================================================
+
+    } else if (cardDifference > 0) {
+
+        const additionalCards =
+            cardDifference;
 
         const additionalCost =
             num(
                 stake * additionalCards
             );
+
 
         const user =
             db.prepare(`
@@ -1314,6 +1467,7 @@ mainSpent
                 WHERE id = ?
             `).get(userId);
 
+
         if (!user) {
 
             return res.status(404).json({
@@ -1323,11 +1477,13 @@ mainSpent
 
         }
 
+
         const totalBalance =
             num(
                 Number(user.balance || 0) +
                 Number(user.play_balance || 0)
             );
+
 
         if (
             totalBalance <
@@ -1354,17 +1510,24 @@ mainSpent
 
         }
 
+
+        // -----------------------------------------
+        // USE PLAY BALANCE FIRST
+        // -----------------------------------------
+
         const additionalPlaySpent =
             Math.min(
                 Number(user.play_balance || 0),
                 additionalCost
             );
 
+
         const additionalMainSpent =
             num(
                 additionalCost -
                 additionalPlaySpent
             );
+
 
         const transaction =
             db.transaction(() => {
@@ -1392,6 +1555,7 @@ mainSpent
                         additionalPlaySpent
                     );
 
+
                 if (
                     updateBalance.changes !== 1
                 ) {
@@ -1402,11 +1566,18 @@ mainSpent
 
                 }
 
+
+                // -----------------------------------------
+                // SAVE LATEST CARD SELECTION
+                // -----------------------------------------
+
                 db.prepare(`
                     UPDATE games
                     SET
                         cards = ?,
-                         card_numbers = ?,
+
+                        card_numbers = ?,
+
                         play_spent =
                             COALESCE(
                                 play_spent,
@@ -1423,17 +1594,65 @@ mainSpent
 
                     AND user_id = ?
                 `).run(
-    newCards,
-    JSON.stringify(cardNumbers),
-    additionalPlaySpent,
-    additionalMainSpent,
-    existingGame.id,
-    userId
-);
+                    newCards,
+                    JSON.stringify(cardNumbers),
+                    additionalPlaySpent,
+                    additionalMainSpent,
+                    existingGame.id,
+                    userId
+                );
 
             });
 
+
         transaction();
+
+
+        console.log(
+            "💳 ADDITIONAL CARD CHARGE:",
+            {
+                oldCards,
+                newCards,
+                additionalCards,
+                additionalCost,
+                additionalPlaySpent,
+                additionalMainSpent,
+                latestCards: cardNumbers
+            }
+        );
+
+
+    // =================================================
+    // SAME NUMBER OF CARDS — ONLY UPDATE CARD NUMBERS
+    // =================================================
+
+    } else {
+
+        db.prepare(`
+            UPDATE games
+            SET
+                cards = ?,
+                card_numbers = ?
+
+            WHERE id = ?
+
+            AND user_id = ?
+        `).run(
+            newCards,
+            JSON.stringify(cardNumbers),
+            existingGame.id,
+            userId
+        );
+
+
+        console.log(
+            "🎫 CARD SELECTION UPDATED:",
+            {
+                gameId: existingGame.id,
+                cards: newCards,
+                cardNumbers: cardNumbers
+            }
+        );
 
     }
 
@@ -2060,12 +2279,16 @@ if (cardNumbers.some(card => !Number.isInteger(card) || card < 1 || card > 200))
       });  
     }  
 
-    if (!validCards(cards)) {  
-      return res.status(400).json({  
-        success: false,  
-        error: "Invalid number of cards"  
-      });  
-    }  
+   if (
+    !Number.isInteger(cards) ||
+    cards < 0 ||
+    cards > MAX_CARDS
+) {
+    return res.status(400).json({
+        success: false,
+        error: "Invalid number of cards"
+    });
+}
 
     const userId = req.user.id;  
 

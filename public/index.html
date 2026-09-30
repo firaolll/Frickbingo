@@ -4240,42 +4240,71 @@ console.log(
 /* ==================================================  
    REMOVE CARD  
 ================================================== */  
-  
-function removeCard(number){  
-  
- if(playerReady){  
-  
-  return;  
-  
- }  
-  
-  
- selectedCards =  
-  selectedCards.filter(  
-   item=>  
-    item !== number  
-  );  
-  
-  
- const button =  
-  document.querySelector(  
-   `.card-number[data-number="${number}"]`  
-  );  
-  
-  
- if(button){  
-  
-  button.classList.remove(  
-   "selected"  
-  );  
-  
- }  
-  
-  
- updateSelectedCards();  
-  
-}  
-  
+  async function removeCard(number){
+
+    if(playerReady){
+        showToast("You are already ready.");
+        return;
+    }
+
+    number = Number(number);
+
+    // Remove locally first
+    selectedCards =
+        selectedCards.filter(
+            item => Number(item) !== number
+        );
+
+    console.log(
+        "🗑️ CARD REMOVED:",
+        number
+    );
+
+    console.log(
+        "🎫 LATEST SELECTED CARDS:",
+        selectedCards
+    );
+
+    // Update the visual selection immediately
+    updateSelectedCards();
+
+    const button =
+        document.querySelector(
+            `.card-number[data-number="${number}"]`
+        );
+
+    if(button){
+        button.classList.remove("selected");
+    }
+
+
+    // -----------------------------------------
+    // SEND LATEST SELECTION TO SERVER
+    // This also triggers the refund
+    // -----------------------------------------
+
+    try {
+
+        await joinSharedMatch();
+
+        console.log(
+            "✅ CARD REMOVAL SYNCED WITH SERVER"
+        );
+
+        haptic("success");
+
+    } catch(error) {
+
+        console.error(
+            "❌ CARD REMOVAL SYNC ERROR:",
+            error
+        );
+
+        haptic("error");
+
+    }
+
+}
 /* ==================================================  
    UPDATE SELECTED CARDS  
 ================================================== */  
