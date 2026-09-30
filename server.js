@@ -1280,7 +1280,7 @@ mainSpent
 
     transaction();
 
-}  } else {
+}   else {
 
     // -----------------------------------------------
     // EXISTING PLAYER — UPDATE LATEST CARD SELECTION
