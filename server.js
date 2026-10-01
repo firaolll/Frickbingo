@@ -144,7 +144,14 @@ FOREIGN KEY(match_id) REFERENCES matches(id)
 
 );
 `);
-
+try {
+    db.exec(`
+        ALTER TABLE games
+        ADD COLUMN winner_card_number INTEGER
+    `);
+} catch (error) {
+    // Column already exists; no action needed.
+}
 // ======================================================
 // MIGRATION HELPER
 // ======================================================
@@ -1778,7 +1785,15 @@ players.forEach(game => {
     }
 
 });
-        const games =
+
+players.forEach(game => {
+    game.winnerCardNumber =
+        game.winner_card_number == null
+            ? null
+            : Number(game.winner_card_number);
+});
+
+     const games =
     db.prepare(`
         SELECT
             g.id,
@@ -2040,7 +2055,12 @@ app.post(
                                 Number(
                                     match.winner_count || 0
                                 ),
-
+winnerCardNumber:
+    players.find(
+        player =>
+            String(player.result || "").toUpperCase() === "WIN"
+    )?.winnerCardNumber ?? null,
+                                  
                             paid:
                                 Boolean(match.paid)
 
@@ -3457,12 +3477,8 @@ if (result === "WIN") {
 
     }
 }
-        // ------------------------------------------------  
-        // FIND PLAYER GAME  
-        // ------------------------------------------------  
-// ------------------------------------------------
-// FIND PLAYER GAME
-// ------------------------------------------------
+       
+
 
 const game =
     db.prepare(`
@@ -3680,10 +3696,7 @@ if(result === "WIN"){
         calledCount: calledBalls.length
     }
 ); 
-console.log(
-    "🏆 SERVER WIN RESULT:",
-    actuallyWon
-);
+
  
 // --------------------------------------------
     // 8. REJECT INVALID CLAIM
@@ -3769,23 +3782,20 @@ console.log(
         // MARK PLAYER FINISHED  
         // ------------------------------------------------  
 
-        db.prepare(`  
-            UPDATE games  
-
-            SET  
-                result = ?,  
-                status = 'FINISHED',  
-                finished_at =  
-                    CURRENT_TIMESTAMP  
-
-            WHERE id = ?  
-
-            AND user_id = ?  
-        `).run(  
-            result,  
-            game.id,  
-            req.user.id  
-        );  
+       db.prepare(`
+    UPDATE games
+    SET
+        result = 'WIN',
+        winner_card_number = ?,
+        status = 'FINISHED',
+        finished_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+      AND user_id = ?
+`).run(
+    Number(cardNumber),
+    game.id,
+    req.user.id
+);
 
         // ------------------------------------------------  
         // FINALIZE SHARED MATCH  
