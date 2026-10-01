@@ -1753,6 +1753,7 @@ app.get("/api/match/:matchId", auth, (req, res) => {
             g.stake,
             g.cards,
             g.card_numbers,
+            g.winner_card_number,
             g.result,
             g.prize,
             g.status,
@@ -1764,7 +1765,6 @@ app.get("/api/match/:matchId", auth, (req, res) => {
         WHERE g.match_id = ?
         ORDER BY g.id ASC
     `).all(matchId);
-
 players.forEach(game => {
 
     try {
@@ -2059,8 +2059,7 @@ winnerCardNumber:
     players.find(
         player =>
             String(player.result || "").toUpperCase() === "WIN"
-    )?.winnerCardNumber ?? null,
-                                  
+    )?.winnerCardNumber ?? null,                            
                             paid:
                                 Boolean(match.paid)
 
@@ -3796,7 +3795,11 @@ if(result === "WIN"){
     game.id,
     req.user.id
 );
-
+console.log("🏆 WINNER CARD SAVED:", {
+    matchId: game.match_id,
+    userId: req.user.id,
+    cardNumber: Number(cardNumber)
+});
         // ------------------------------------------------  
         // FINALIZE SHARED MATCH  
         // ------------------------------------------------  
