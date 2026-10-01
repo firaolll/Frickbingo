@@ -2736,14 +2736,14 @@ return res.json({
 
 });
 
-
 function finalizeMatchPayout(matchId) {
+
     const transaction =
         db.transaction(() => {
 
-            // ------------------------------------------------
+            // =================================================
             // GET MATCH
-            // ------------------------------------------------
+            // =================================================
 
             const match =
                 db.prepare(`
@@ -2762,9 +2762,10 @@ function finalizeMatchPayout(matchId) {
 
             }
 
-            // ------------------------------------------------
+
+            // =================================================
             // ALREADY PAID
-            // ------------------------------------------------
+            // =================================================
 
             if (
                 Number(match.paid) === 1
@@ -2778,38 +2779,44 @@ function finalizeMatchPayout(matchId) {
 
                     totalCost:
                         num(
-                            match.prize_pool /
+                            Number(match.prize_pool || 0) /
                             WIN_RATE
                         ),
 
                     totalPrize:
                         num(
-                            match.prize_pool
+                            match.prize_pool || 0
                         ),
 
                     winnerCount:
                         Number(
-                            match.winner_count
+                            match.winner_count || 0
                         )
 
                 };
 
             }
 
-            // ------------------------------------------------
-            // GET ALL PLAYERS
-            // ------------------------------------------------
 
-           const games =
-    db.prepare(`
-        SELECT *
-        FROM games
-        WHERE match_id = ?
-        AND status != 'WAITING_NEXT_ROUND'
-        ORDER BY id ASC
-    `).all(
-        matchId
-    );
+            // =================================================
+            // GET PLAYERS
+            // =================================================
+
+            const games =
+                db.prepare(`
+                    SELECT *
+                    FROM games
+                    WHERE match_id = ?
+
+                    AND status !=
+                        'WAITING_NEXT_ROUND'
+
+                    ORDER BY id ASC
+                `).all(
+                    matchId
+                );
+
+
             if (
                 games.length === 0
             ) {
@@ -2825,9 +2832,10 @@ function finalizeMatchPayout(matchId) {
 
             }
 
-            // ------------------------------------------------
+
+            // =================================================
             // FIND WINNERS
-            // ------------------------------------------------
+            // =================================================
 
             const winners =
                 games.filter(
@@ -2838,19 +2846,14 @@ function finalizeMatchPayout(matchId) {
                         "WIN"
                 );
 
+
             const winnerCount =
                 winners.length;
 
-            // ------------------------------------------------
-            // NO WINNER YET
-            // ------------------------------------------------
 
-            /*
-             * Do NOT finish the match just because
-             * one player sent LOSE.
-             *
-             * We wait until somebody actually wins.
-             */
+            // =================================================
+            // NO WINNER YET
+            // =================================================
 
             if (
                 winnerCount === 0
@@ -2870,112 +2873,127 @@ function finalizeMatchPayout(matchId) {
 
             }
 
-            // ------------------------------------------------
-            // TOTAL COST OF ALL PLAYERS
-            // ------------------------------------------------
+
+            // =================================================
+            // CALCULATE TOTAL PLAYER COST
+            // =================================================
 
             let totalPlayerCost = 0;
+
 
             for (
                 const game of games
             ) {
 
-               const totalPlayerCost =
-    games.reduce(
-        (total, game) => {
+                const playerCost =
+                    Number(
+                        game.stake || 0
+                    ) *
+                    Number(
+                        game.cards || 0
+                    );
 
-            const playerCost =
-                Number(game.stake || 0) *
-                Number(game.cards || 0);
 
-            return total + playerCost;
+                totalPlayerCost +=
+                    playerCost;
 
-        },
-        0
-    );
+            }
 
-            // ------------------------------------------------
-            // TOTAL PRIZE = 85%
-            // ------------------------------------------------
+
+            // =================================================
+            // WHOLE ETB ONLY
+            // 85% OF TOTAL COST
+            //
+            // Example:
+            // 30 ETB × 85% = 25.5
+            // Math.floor(25.5) = 25
+            // =================================================
 
             const totalPrize =
-    Math.floor(
-        totalPlayerCost * WIN_RATE
-    );
-            // ------------------------------------------------
-            // CALCULATE WINNER SHARE
-            // ------------------------------------------------
+                Math.floor(
+                    totalPlayerCost *
+                    WIN_RATE
+                );
 
-            const winnerCount =
-    winners.length;
+
+            // =================================================
+            // SPLIT PRIZE BETWEEN WINNERS
+            // WHOLE ETB ONLY
+            // =================================================
 
             const baseShare =
-    Math.floor(
-        totalPrize / winnerCount
-    );
+                Math.floor(
+                    totalPrize /
+                    winnerCount
+                );
 
 
-           const remainder =
-    totalPrize % winnerCount;
+            const remainder =
+                totalPrize %
+                winnerCount;
 
-            // ------------------------------------------------
+
+            // =================================================
             // PAY WINNERS
-            // ------------------------------------------------
+            // =================================================
 
             winners.forEach(
-    (winner, index) => {
+                (winner, index) => {
 
-        /*
-         * Whole ETB only.
-         */
-        let winnerPrize =
-            baseShare;
-
-        /*
-         * If there is a remainder,
-         * distribute the extra whole ETB.
-         */
-        if(index < remainder){
-            winnerPrize += 1;
-        }
+                    let winnerPrize =
+                        baseShare;
 
 
-        db.prepare(`
-            UPDATE users
-            SET balance =
-                COALESCE(balance, 0) + ?
-            WHERE id = ?
-        `).run(
-            winnerPrize,
-            winner.user_id
-        );
+                    /*
+                     * If the total prize cannot be divided
+                     * equally, give the remaining whole ETB
+                     * to the first winner(s).
+                     *
+                     * Example:
+                     * 51 ETB / 2 winners
+                     *
+                     * Winner 1 = 26
+                     * Winner 2 = 25
+                     */
+
+                    if (
+                        index <
+                        remainder
+                    ) {
+
+                        winnerPrize += 1;
+
+                    }
 
 
-        db.prepare(`
-            UPDATE games
-            SET
-                prize = ?,
-                result = 'WIN',
-                status = 'FINISHED',
-                finished_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `).run(
-            winnerPrize,
-            winner.id
-        );
+                    console.log(
+                        "💰 PAYING WINNER:",
+                        {
+                            userId:
+                                winner.user_id,
 
-    }
-);
-                    // ----------------------------------------
+                            gameId:
+                                winner.id,
+
+                            prize:
+                                winnerPrize
+                        }
+                    );
+
+
+                    // -----------------------------------------
                     // ADD PRIZE TO MAIN BALANCE
-                    // ----------------------------------------
+                    // -----------------------------------------
 
                     db.prepare(`
                         UPDATE users
 
                         SET
                             balance =
-                                balance + ?
+                                COALESCE(
+                                    balance,
+                                    0
+                                ) + ?
 
                         WHERE id = ?
                     `).run(
@@ -2983,9 +3001,10 @@ function finalizeMatchPayout(matchId) {
                         winner.user_id
                     );
 
-                    // ----------------------------------------
+
+                    // -----------------------------------------
                     // SAVE WINNER PRIZE
-                    // ----------------------------------------
+                    // -----------------------------------------
 
                     db.prepare(`
                         UPDATE games
@@ -3004,36 +3023,40 @@ function finalizeMatchPayout(matchId) {
                     );
 
                 }
+            );
 
-            // ------------------------------------------------
+
+            // =================================================
             // MARK EVERY OTHER PLAYER AS LOSER
-            // ------------------------------------------------
+            // =================================================
 
             db.prepare(`
-    UPDATE games
+                UPDATE games
 
-    SET
-        result = 'LOSE',
-        prize = 0,
-        status = 'FINISHED',
-        finished_at =
-            CURRENT_TIMESTAMP
+                SET
+                    result = 'LOSE',
+                    prize = 0,
+                    status = 'FINISHED',
+                    finished_at =
+                        CURRENT_TIMESTAMP
 
-    WHERE match_id = ?
+                WHERE match_id = ?
 
-    AND status != 'WAITING_NEXT_ROUND'
+                AND status !=
+                    'WAITING_NEXT_ROUND'
 
-    AND (
-        result IS NULL
-        OR result != 'WIN'
-    )
-`).run(
-    matchId
-);
+                AND (
+                    result IS NULL
+                    OR result != 'WIN'
+                )
+            `).run(
+                matchId
+            );
 
-            // ------------------------------------------------
+
+            // =================================================
             // FINISH SHARED MATCH
-            // ------------------------------------------------
+            // =================================================
 
             db.prepare(`
                 UPDATE matches
@@ -3053,9 +3076,10 @@ function finalizeMatchPayout(matchId) {
                 matchId
             );
 
-            // ------------------------------------------------
+
+            // =================================================
             // RETURN RESULT
-            // ------------------------------------------------
+            // =================================================
 
             return {
 
@@ -3066,13 +3090,18 @@ function finalizeMatchPayout(matchId) {
                 totalCost:
                     totalPlayerCost,
 
-                totalPrize,
+                totalPrize:
 
-                winnerCount
+                    totalPrize,
+
+                winnerCount:
+
+                    winnerCount
 
             };
 
         });
+
 
     return transaction();
 
@@ -3641,20 +3670,22 @@ if(result === "WIN"){
     // --------------------------------------------
 
     console.log(
-        "🏆 SERVER WIN CHECK:",
-        {
-            matchId,
-            userId: req.user.id,
-            cardNumber,
-            playerCards,
-            calledBalls,
-            winningCard,
-            actuallyWon
-        }
-    );
-
-
-    // --------------------------------------------
+    "🔎 SERVER WIN CHECK:",
+    {
+        matchId,
+        userId: req.user.id,
+        cardNumber,
+        winningCard,
+        calledBalls,
+        calledCount: calledBalls.length
+    }
+); 
+console.log(
+    "🏆 SERVER WIN RESULT:",
+    actuallyWon
+);
+ 
+// --------------------------------------------
     // 8. REJECT INVALID CLAIM
     // --------------------------------------------
 
