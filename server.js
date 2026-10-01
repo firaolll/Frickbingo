@@ -2880,73 +2880,92 @@ function finalizeMatchPayout(matchId) {
                 const game of games
             ) {
 
-                const playerCost =
-                    num(
-                        Number(game.stake) *
-                        Number(game.cards)
-                    );
+               const totalPlayerCost =
+    games.reduce(
+        (total, game) => {
 
-                totalPlayerCost =
-                    num(
-                        totalPlayerCost +
-                        playerCost
-                    );
+            const playerCost =
+                Number(game.stake || 0) *
+                Number(game.cards || 0);
 
-            }
+            return total + playerCost;
+
+        },
+        0
+    );
 
             // ------------------------------------------------
             // TOTAL PRIZE = 85%
             // ------------------------------------------------
 
             const totalPrize =
-                num(
-                    totalPlayerCost *
-                    WIN_RATE
-                );
-
+    Math.floor(
+        totalPlayerCost * WIN_RATE
+    );
             // ------------------------------------------------
             // CALCULATE WINNER SHARE
             // ------------------------------------------------
 
-            const prizeInCents =
-                Math.round(
-                    totalPrize * 100
-                );
+            const winnerCount =
+    winners.length;
 
-            const baseShareCents =
-                Math.floor(
-                    prizeInCents /
-                    winnerCount
-                );
+            const baseShare =
+    Math.floor(
+        totalPrize / winnerCount
+    );
 
-            const remainderCents =
-                prizeInCents %
-                winnerCount;
+
+           const remainder =
+    totalPrize % winnerCount;
 
             // ------------------------------------------------
             // PAY WINNERS
             // ------------------------------------------------
 
             winners.forEach(
-                (winner, index) => {
+    (winner, index) => {
 
-                    let shareCents =
-                        baseShareCents;
+        /*
+         * Whole ETB only.
+         */
+        let winnerPrize =
+            baseShare;
 
-                    if (
-                        index <
-                        remainderCents
-                    ) {
+        /*
+         * If there is a remainder,
+         * distribute the extra whole ETB.
+         */
+        if(index < remainder){
+            winnerPrize += 1;
+        }
 
-                        shareCents += 1;
 
-                    }
+        db.prepare(`
+            UPDATE users
+            SET balance =
+                COALESCE(balance, 0) + ?
+            WHERE id = ?
+        `).run(
+            winnerPrize,
+            winner.user_id
+        );
 
-                    const winnerPrize =
-                        num(
-                            shareCents / 100
-                        );
 
+        db.prepare(`
+            UPDATE games
+            SET
+                prize = ?,
+                result = 'WIN',
+                status = 'FINISHED',
+                finished_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `).run(
+            winnerPrize,
+            winner.id
+        );
+
+    }
+);
                     // ----------------------------------------
                     // ADD PRIZE TO MAIN BALANCE
                     // ----------------------------------------
@@ -2985,7 +3004,6 @@ function finalizeMatchPayout(matchId) {
                     );
 
                 }
-            );
 
             // ------------------------------------------------
             // MARK EVERY OTHER PLAYER AS LOSER
