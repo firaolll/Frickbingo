@@ -1713,6 +1713,8 @@ mainSpent
     }
 
 });
+
+
 app.get("/api/match/:matchId", auth, (req, res) => {
 
     try {
@@ -1743,6 +1745,18 @@ app.get("/api/match/:matchId", auth, (req, res) => {
             `).get(
                 matchId
             );
+            console.log(
+    "🔄 MATCH STATUS CHECK:",
+    {
+        matchId,
+        status: match?.status,
+        paid: match?.paid,
+        winnerCount: match?.winner_count,
+        calledBalls: match?.called_balls
+            ? JSON.parse(match.called_balls).length
+            : 0
+    }
+);
 
         if (!match) {
 
@@ -2062,10 +2076,7 @@ app.post("/api/match/:matchId/call",
                                     match.winner_count || 0
                                 ),
 winnerCardNumber:
-    players.find(
-        player =>
-            String(player.result || "").toUpperCase() === "WIN"
-    )?.winnerCardNumber ?? null,                            
+    null,                  
                             paid:
                                 Boolean(match.paid)
 

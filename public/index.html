@@ -6851,14 +6851,21 @@ async function readyForGame(){
 /* ==================================================
    SYNC SHARED BINGO STATE
 ================================================== */
-
 let sharedSyncInterval = null;
+
 async function syncSharedGameState(){
+
+    /*
+     * IMPORTANT:
+     * Do not stop shared synchronization just because
+     * the winner overlay is showing.
+     *
+     * The server is the source of truth for the match.
+     */
 
     if(
         !currentGameId ||
-        !actualGameStarted ||
-        winnerShown
+        !actualGameStarted
     ){
         return;
     }
@@ -6875,75 +6882,216 @@ async function syncSharedGameState(){
             return;
         }
 
+
+        // =====================================================
+        // GET MATCH OBJECT
+        // =====================================================
+
         const match =
             data.match ||
             data;
 
-        /* ==============================
-           MATCH STATUS
-        ============================== */
+
+        // =====================================================
+        // MATCH STATUS
+        // =====================================================
 
         const matchStatus =
             String(
                 match.status ??
                 data.status ??
+                match.matchStatus ??
+                data.matchStatus ??
                 ""
             ).toUpperCase();
 
-        if(matchStatus === "FINISHED"){
 
-    console.log("🏁 SHARED MATCH FINISHED");
-
-    stopSharedGameSync();
-    stopAutoCalling();
-
-    actualGameStarted = false;
-
-    // Get the winning card number from the server
-    let winnerCardNumber =
-        match.winnerCardNumber ??
-        match.winner_card_number ??
-        data.winnerCardNumber ??
-        data.winner_card_number ??
-        null;
-
-    // Fallback: find the winning player's card
-    if(winnerCardNumber == null){
-
-        const players = data.players || match.players || [];
-
-        const winner = players.find(player =>
-            String(player.result || "").toUpperCase() === "WIN"
+        console.log(
+            "🔄 SHARED MATCH SYNC:",
+            {
+                matchId: currentGameId,
+                matchStatus,
+                calledCount:
+                    Array.isArray(
+                        match.calledBalls ??
+                        data.calledBalls
+                    )
+                        ? (
+                            match.calledBalls ??
+                            data.calledBalls
+                        ).length
+                        : 0
+            }
         );
 
-        winnerCardNumber =
-            winner?.winnerCardNumber ??
-            winner?.winner_card_number ??
-            null;
-    }
 
-    winnerCardNumber =
-        winnerCardNumber == null
-            ? null
-            : Number(winnerCardNumber);
+        // =====================================================
+        // FINISHED
+        // =====================================================
 
-    console.log(
-        "🏆 WINNER CARD NUMBER:",
-        winnerCardNumber
-    );
+        if(matchStatus === "FINISHED"){
 
-    if(!winnerShown){
+            console.log(
+                "🏁 SHARED MATCH FINISHED:",
+                currentGameId
+            );
 
-        showLoserScreen(winnerCardNumber);
 
-    }
+            // Stop all game activity
+            gameRunning = false;
 
-    return;
-}
+            stopSharedGameSync();
 
-        /* ==============================
-           SYNC CALLED NUMBERS
-        ============================== */
+            stopAutoCalling();
+
+
+            // Stop selection timer if it exists
+            if(
+                typeof stopSelectionTimer ===
+                "function"
+            ){
+
+                stopSelectionTimer();
+
+            }
+
+
+            // This player is no longer actively playing
+            actualGameStarted = false;
+
+
+            // =================================================
+            // GET WINNING CARD
+            // =================================================
+
+            let winnerCardNumber =
+                match.winnerCardNumber ??
+                match.winner_card_number ??
+                data.winnerCardNumber ??
+                data.winner_card_number ??
+                null;
+
+
+            // =================================================
+            // FALLBACK: FIND WINNER FROM PLAYERS
+            // =================================================
+
+            if(
+                winnerCardNumber == null
+            ){
+
+                const players =
+                    Array.isArray(data.players)
+                        ? data.players
+                        : (
+                            Array.isArray(match.players)
+                                ? match.players
+                                : []
+                        );
+
+
+                const winner =
+                    players.find(
+                        player =>
+                            String(
+                                player.result || ""
+                            ).toUpperCase() === "WIN" ||
+                            String(
+                                player.status || ""
+                            ).toUpperCase() === "PAID"
+                    );
+
+
+                if(winner){
+
+                    winnerCardNumber =
+                        winner.winnerCardNumber ??
+                        winner.winner_card_number ??
+                        null;
+
+                }
+
+            }
+
+
+            if(
+                winnerCardNumber != null
+            ){
+
+                winnerCardNumber =
+                    Number(
+                        winnerCardNumber
+                    );
+
+            }
+
+
+            console.log(
+                "🏆 FINAL WINNER CARD:",
+                winnerCardNumber
+            );
+
+
+            // =================================================
+            // THIS PLAYER IS NOT THE WINNER
+            // =================================================
+
+            if(!winnerShown){
+
+                console.log(
+                    "😢 LOSER — RETURNING TO PAGE 2"
+                );
+
+
+                // Make sure winner overlay isn't visible
+                document
+                    .getElementById(
+                        "winnerOverlay"
+                    )
+                    ?.classList.remove("show");
+
+
+                // Show loser result
+                showLoserScreen(
+                    winnerCardNumber
+                );
+
+
+                // Give UI a moment to display result,
+                // then return to card selection.
+                setTimeout(
+                    async () => {
+
+                        try{
+
+                            await refreshBalance();
+
+                            updateAllDisplays();
+
+                        }catch(error){
+
+                            console.error(
+                                "❌ LOSER BALANCE REFRESH ERROR:",
+                                error
+                            );
+
+                        }
+
+                    },
+                    300
+                );
+
+            }
+
+
+            return;
+
+        }
+
+
+        // =====================================================
+        // SYNC CALLED NUMBERS
+        // =====================================================
 
         let serverCalled =
             match.calledBalls ??
@@ -6952,8 +7100,10 @@ async function syncSharedGameState(){
             data.called_balls ??
             [];
 
+
         if(
-            typeof serverCalled === "string"
+            typeof serverCalled ===
+            "string"
         ){
 
             try{
@@ -6965,11 +7115,17 @@ async function syncSharedGameState(){
 
             }catch(error){
 
+                console.error(
+                    "❌ CALLED BALL PARSE ERROR:",
+                    error
+                );
+
                 serverCalled = [];
 
             }
 
         }
+
 
         if(
             Array.isArray(serverCalled)
@@ -6980,24 +7136,32 @@ async function syncSharedGameState(){
                     .map(Number)
                     .filter(
                         number =>
-                            Number.isInteger(number) &&
+                            Number.isInteger(
+                                number
+                            ) &&
                             number >= 1 &&
                             number <= 75
                     );
 
         }
 
-        /* ==============================
-           CURRENT BALL
-        ============================== */
+
+        // =====================================================
+        // CURRENT BALL
+        // =====================================================
+
+        const rawServerBall =
+            match.currentBall ??
+            match.current_ball ??
+            data.currentBall ??
+            data.current_ball;
+
 
         const serverBall =
             Number(
-                match.currentBall ??
-                match.current_ball ??
-                data.currentBall ??
-                data.current_ball
+                rawServerBall
             );
+
 
         if(
             Number.isInteger(serverBall) &&
@@ -7005,18 +7169,25 @@ async function syncSharedGameState(){
             serverBall <= 75
         ){
 
+            lastCalledNumber =
+                serverBall;
+
+
             const letter =
                 getBingoLetter(
                     serverBall
                 );
 
+
             const ballText =
                 `${letter}-${serverBall}`;
+
 
             const display =
                 document.getElementById(
                     "gameBall"
                 );
+
 
             if(display){
 
@@ -7025,10 +7196,12 @@ async function syncSharedGameState(){
 
             }
 
+
             const lastCalled =
                 document.getElementById(
                     "lastCalled"
                 );
+
 
             if(lastCalled){
 
@@ -7039,14 +7212,16 @@ async function syncSharedGameState(){
 
         }
 
-        /* ==============================
-           CALLED COUNT
-        ============================== */
+
+        // =====================================================
+        // CALLED COUNT
+        // =====================================================
 
         const calledCount =
             document.getElementById(
                 "calledCount"
             );
+
 
         if(calledCount){
 
@@ -7055,10 +7230,12 @@ async function syncSharedGameState(){
 
         }
 
+
         const calledProgress =
             document.getElementById(
                 "calledProgress"
             );
+
 
         if(calledProgress){
 
@@ -7071,9 +7248,10 @@ async function syncSharedGameState(){
 
         }
 
-        /* ==============================
-           REDRAW GAME
-        ============================== */
+
+        // =====================================================
+        // REDRAW GAME
+        // =====================================================
 
         renderBigBoard();
 
@@ -7081,11 +7259,28 @@ async function syncSharedGameState(){
 
         updateAllDisplays();
 
-        /* ==============================
-           CHECK BINGO
-        ============================== */
 
-        checkWinner();
+        // =====================================================
+        // CHECK BINGO
+        // =====================================================
+
+        /*
+         * Keep checking during CLAIM_WINDOW.
+         *
+         * New balls are stopped by the server,
+         * but players can still submit a valid Bingo
+         * using the already-called balls.
+         */
+
+        if(
+            matchStatus === "PLAYING" ||
+            matchStatus === "CLAIM_WINDOW"
+        ){
+
+            checkWinner();
+
+        }
+
 
     }catch(error){
 
@@ -7097,7 +7292,6 @@ async function syncSharedGameState(){
     }
 
 }
-
 /* ==================================================
    START SHARED STATE SYNC
 ================================================== */
@@ -8905,17 +9099,44 @@ if(
             1000
         );
 
-}
-function showLoserScreen(winnerCardNumber){
+}function showLoserScreen(winnerCardNumber){
+
+    console.log(
+        "😢 LOSER SCREEN START:",
+        winnerCardNumber
+    );
+
+    // -----------------------------------------
+    // STOP GAME
+    // -----------------------------------------
 
     winnerShown = true;
 
-    stopAutoCalling();
+    gameRunning = false;
 
     actualGameStarted = false;
 
+    stopAutoCalling();
+
+    if(typeof stopSharedGameSync === "function"){
+        stopSharedGameSync();
+    }
+
+    if(typeof stopSelectionTimer === "function"){
+        stopSelectionTimer();
+    }
+
+
+    // -----------------------------------------
+    // REFRESH BALANCE
+    // -----------------------------------------
+
     refreshBalance();
 
+
+    // -----------------------------------------
+    // GET ELEMENTS
+    // -----------------------------------------
 
     const overlay =
         document.getElementById(
@@ -8943,9 +9164,9 @@ function showLoserScreen(winnerCardNumber){
         );
 
 
-    /* =====================================
-       CLEAR OLD WINNER CARD
-    ===================================== */
+    // -----------------------------------------
+    // CLEAR OLD WINNER CARD
+    // -----------------------------------------
 
     if(winnerCardWrap){
 
@@ -8954,9 +9175,9 @@ function showLoserScreen(winnerCardNumber){
     }
 
 
-    /* =====================================
-       GAME OVER TEXT
-    ===================================== */
+    // -----------------------------------------
+    // GAME OVER TEXT
+    // -----------------------------------------
 
     if(winnerName){
 
@@ -8980,9 +9201,9 @@ function showLoserScreen(winnerCardNumber){
     }
 
 
-    /* =====================================
-       SHOW WINNER'S CARD
-    ===================================== */
+    // -----------------------------------------
+    // DISPLAY WINNING CARD
+    // -----------------------------------------
 
     if(
         winnerCardWrap &&
@@ -9001,10 +9222,6 @@ function showLoserScreen(winnerCardNumber){
             cardNumber
         );
 
-
-        /* =================================
-           CARD TITLE
-        ================================= */
 
         const title =
             document.createElement(
@@ -9028,10 +9245,6 @@ function showLoserScreen(winnerCardNumber){
         );
 
 
-        /* =================================
-           GENERATE WINNING CARD
-        ================================= */
-
         const numbers =
             generateBingoNumbers(
                 cardNumber
@@ -9046,10 +9259,6 @@ function showLoserScreen(winnerCardNumber){
         card.className =
             "bingo-card winner-bingo-card";
 
-
-        /* =================================
-           CREATE CARD CELLS
-        ================================= */
 
         numbers.forEach(
             value => {
@@ -9069,10 +9278,6 @@ function showLoserScreen(winnerCardNumber){
                         : value;
 
 
-                /* =========================
-                   MARK CALLED NUMBERS
-                ========================= */
-
                 if(
                     value === "FREE" ||
                     calledNumbers.includes(
@@ -9086,10 +9291,6 @@ function showLoserScreen(winnerCardNumber){
 
                 }
 
-
-                /* =========================
-                   HIGHLIGHT WINNING CARD
-                ========================= */
 
                 cell.classList.add(
                     "winner-cell"
@@ -9119,9 +9320,9 @@ function showLoserScreen(winnerCardNumber){
     }
 
 
-    /* =====================================
-       SHOW OVERLAY
-    ===================================== */
+    // -----------------------------------------
+    // SHOW OVERLAY
+    // -----------------------------------------
 
     if(overlay){
 
@@ -9132,14 +9333,12 @@ function showLoserScreen(winnerCardNumber){
     }
 
 
-    haptic(
-        "error"
-    );
+    haptic("error");
 
 
-    /* =====================================
-       5 SECOND COUNTDOWN
-    ===================================== */
+    // -----------------------------------------
+    // 5 SECOND COUNTDOWN
+    // -----------------------------------------
 
     let seconds = 5;
 
@@ -9192,7 +9391,62 @@ function showLoserScreen(winnerCardNumber){
                     winnerResetInterval =
                         null;
 
-                    resetAfterWinner();
+
+                    console.log(
+                        "🏁 LOSER COUNTDOWN FINISHED"
+                    );
+
+
+                    // --------------------------------
+                    // FORCE RETURN TO CARD SELECTION
+                    // --------------------------------
+
+                    if(overlay){
+
+                        overlay.classList.remove(
+                            "show"
+                        );
+
+                    }
+
+
+                    winnerShown = false;
+
+                    winnerClaimInProgress = false;
+
+                    currentGameId = null;
+
+                    selectedCards = [];
+
+                    calledNumbers = [];
+
+                    lastCalledNumber = null;
+
+                    gameRunning = false;
+
+                    actualGameStarted = false;
+
+
+                    // --------------------------------
+                    // RESET SELECTION PAGE
+                    // --------------------------------
+
+                    if(typeof resetSelection === "function"){
+
+                        resetSelection();
+
+                    }
+
+
+                    // --------------------------------
+                    // FORCE PAGE 2
+                    // --------------------------------
+
+                    console.log(
+                        "📄 RETURNING LOSER TO PAGE 2"
+                    );
+
+                    showPage("page2");
 
                 }
 
@@ -9201,7 +9455,6 @@ function showLoserScreen(winnerCardNumber){
         );
 
 }
-
 /* =====================================================  
    RESET AFTER WIN  
 ===================================================== */  
