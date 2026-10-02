@@ -26,6 +26,13 @@ const WIN_RATE = 0.85;
 const MIN_PLAYERS = 2;
 const COUNTDOWN_SECONDS = 30;
 
+// ============================================================
+// SHARED WINNER CLAIM WINDOW
+// ============================================================
+
+const winnerClaimTimers = new Map();
+
+const WINNER_CLAIM_WINDOW_MS = 3000;
 // ======================================================
 // EXPRESS
 // ======================================================
@@ -1919,8 +1926,7 @@ currentBall:
     }
 
 });
-app.post(
-    "/api/match/:matchId/call",
+app.post("/api/match/:matchId/call",
     auth,
     (req, res) => {
 
@@ -2068,36 +2074,140 @@ winnerCardNumber:
 
                 }
 
+/*
+ * ======================================
+ * STOP BALL CALLING DURING CLAIM WINDOW
+ * ======================================
+ */
 
-                /*
-                 * ======================================
-                 * MATCH MUST BE PLAYING
-                 * ======================================
-                 */
+const matchStatus =
+    String(
+        match.status || ""
+    ).toUpperCase();
 
-                if (
-                    String(match.status).toUpperCase() !==
-                    "PLAYING"
-                ) {
 
-                    return {
-                        type: "ERROR",
-                        status: 400,
-                        body: {
+if (
+    matchStatus === "CLAIM_WINDOW"
+) {
 
-                            success: false,
+    // ----------------------------------
+    // Read existing called balls
+    // ----------------------------------
 
-                            error:
-                                "Match is not playing",
+    let calledBalls = [];
 
-                            matchStatus:
-                                match.status
+    try {
 
-                        }
-                    };
+        calledBalls =
+            match.called_balls
+                ? JSON.parse(
+                    match.called_balls
+                )
+                : [];
 
-                }
+    } catch(error) {
 
+        console.error(
+            "❌ CLAIM WINDOW BALL PARSE ERROR:",
+            error
+        );
+
+        calledBalls = [];
+
+    }
+
+
+    if (!Array.isArray(calledBalls)) {
+
+        calledBalls = [];
+
+    }
+
+
+    calledBalls =
+        calledBalls
+            .map(Number)
+            .filter(
+                number =>
+                    Number.isInteger(number) &&
+                    number >= 1 &&
+                    number <= 75
+            );
+
+
+    console.log(
+        "🛑 BALL CALL BLOCKED — CLAIM WINDOW:",
+        {
+            matchId,
+            calledCount:
+                calledBalls.length,
+            currentBall:
+                match.current_ball
+                    ? Number(
+                        match.current_ball
+                    )
+                    : null
+        }
+    );
+
+
+    return {
+        type: "SUCCESS",
+
+        body: {
+
+            success: true,
+
+            stopped: true,
+
+            matchStatus:
+                "CLAIM_WINDOW",
+
+            currentBall:
+                match.current_ball
+                    ? Number(
+                        match.current_ball
+                    )
+                    : null,
+
+            calledBalls
+
+        }
+    };
+
+}
+
+
+/*
+ * ======================================
+ * MATCH MUST BE PLAYING
+ * ======================================
+ */
+
+if (
+    matchStatus !== "PLAYING"
+) {
+
+    return {
+        type: "ERROR",
+
+        status: 400,
+
+        body: {
+
+            success: false,
+
+            error:
+                "Match is not playing",
+
+            matchStatus:
+                match.status
+
+        }
+
+    };
+
+}
 
                 /*
                  * ======================================
@@ -2754,396 +2864,238 @@ return res.json({
 }
 
 });
+// ============================================================
+// FINALIZE SHARED MATCH PAYOUT
+// ============================================================
 
 function finalizeMatchPayout(matchId) {
+
+    console.log(
+        "💰 FINALIZING MATCH PAYOUT:",
+        matchId
+    );
 
     const transaction =
         db.transaction(() => {
 
-            // =================================================
+            // ------------------------------------------------
             // GET MATCH
-            // =================================================
+            // ------------------------------------------------
 
             const match =
                 db.prepare(`
                     SELECT *
                     FROM matches
                     WHERE id = ?
-                `).get(
-                    matchId
-                );
+                `).get(matchId);
 
-            if (!match) {
+            if(!match){
 
                 throw new Error(
-                    "Match not found"
+                    "Match not found: " + matchId
                 );
 
             }
 
+            // ------------------------------------------------
+            // PREVENT DOUBLE PAYOUT
+            // ------------------------------------------------
 
-            // =================================================
-            // ALREADY PAID
-            // =================================================
+            if(Number(match.paid) === 1){
 
-            if (
-                Number(match.paid) === 1
-            ) {
+                console.log(
+                    "⚠️ MATCH ALREADY PAID:",
+                    matchId
+                );
 
                 return {
-
                     complete: true,
-
                     alreadyPaid: true,
-
-                    totalCost:
-                        num(
-                            Number(match.prize_pool || 0) /
-                            WIN_RATE
-                        ),
-
-                    totalPrize:
-                        num(
-                            match.prize_pool || 0
-                        ),
-
-                    winnerCount:
-                        Number(
-                            match.winner_count || 0
-                        )
-
+                    winnerCount: 0,
+                    winnerPrize: 0
                 };
 
             }
 
+            // ------------------------------------------------
+            // GET ALL VERIFIED WINNERS
+            // ------------------------------------------------
 
-            // =================================================
-            // GET PLAYERS
-            // =================================================
-
-            const games =
+            const winners =
                 db.prepare(`
                     SELECT *
                     FROM games
                     WHERE match_id = ?
+                      AND status = 'WIN'
+                `).all(matchId);
 
-                    AND status !=
-                        'WAITING_NEXT_ROUND'
+            console.log(
+                "🏆 VERIFIED WINNERS:",
+                winners.map(w => ({
+                    id: w.id,
+                    userId: w.user_id,
+                    cardNumber: w.card_number
+                }))
+            );
 
-                    ORDER BY id ASC
-                `).all(
+            if(winners.length === 0){
+
+                console.log(
+                    "⚠️ NO WINNERS FOUND:",
                     matchId
                 );
 
-
-            if (
-                games.length === 0
-            ) {
-
                 return {
-
                     complete: false,
-
-                    reason:
-                        "No players"
-
+                    alreadyPaid: false,
+                    winnerCount: 0,
+                    winnerPrize: 0
                 };
 
             }
 
+            // ------------------------------------------------
+            // TOTAL MONEY USED IN THIS MATCH
+            // ------------------------------------------------
 
-            // =================================================
-            // FIND WINNERS
-            // =================================================
+            const totalCost =
+                db.prepare(`
+                    SELECT
+                        COALESCE(
+                            SUM(
+                                COALESCE(play_spent, 0)
+                                +
+                                COALESCE(main_spent, 0)
+                            ),
+                            0
+                        ) AS total
+                    FROM games
+                    WHERE match_id = ?
+                `).get(matchId).total || 0;
 
-            const winners =
-                games.filter(
-                    game =>
-                        String(
-                            game.result || ""
-                        ).toUpperCase() ===
-                        "WIN"
-                );
-
-
-            const winnerCount =
-                winners.length;
-
-
-            // =================================================
-            // NO WINNER YET
-            // =================================================
-
-            if (
-                winnerCount === 0
-            ) {
-
-                return {
-
-                    complete: false,
-
-                    reason:
-                        "No winner yet",
-
-                    playerCount:
-                        games.length
-
-                };
-
-            }
-
-
-            // =================================================
-            // CALCULATE TOTAL PLAYER COST
-            // =================================================
-
-            let totalPlayerCost = 0;
-
-
-            for (
-                const game of games
-            ) {
-
-                const playerCost =
-                    Number(
-                        game.stake || 0
-                    ) *
-                    Number(
-                        game.cards || 0
-                    );
-
-
-                totalPlayerCost +=
-                    playerCost;
-
-            }
-
-
-            // =================================================
-            // WHOLE ETB ONLY
-            // 85% OF TOTAL COST
-            //
-            // Example:
-            // 30 ETB × 85% = 25.5
-            // Math.floor(25.5) = 25
-            // =================================================
+            // ------------------------------------------------
+            // 85% PRIZE POOL
+            // ------------------------------------------------
 
             const totalPrize =
                 Math.floor(
-                    totalPlayerCost *
-                    WIN_RATE
+                    Number(totalCost) * 0.85
                 );
 
+            // ------------------------------------------------
+            // EQUAL WHOLE-ETB WINNINGS
+            // ------------------------------------------------
 
-            // =================================================
-            // SPLIT PRIZE BETWEEN WINNERS
-            // WHOLE ETB ONLY
-            // =================================================
-
-            const baseShare =
+            const winnerPrize =
                 Math.floor(
-                    totalPrize /
-                    winnerCount
+                    totalPrize / winners.length
                 );
 
-
-            const remainder =
-                totalPrize %
-                winnerCount;
-
-
-            // =================================================
-            // PAY WINNERS
-            // =================================================
-
-            winners.forEach(
-                (winner, index) => {
-
-                    let winnerPrize =
-                        baseShare;
-
-
-                    /*
-                     * If the total prize cannot be divided
-                     * equally, give the remaining whole ETB
-                     * to the first winner(s).
-                     *
-                     * Example:
-                     * 51 ETB / 2 winners
-                     *
-                     * Winner 1 = 26
-                     * Winner 2 = 25
-                     */
-
-                    if (
-                        index <
-                        remainder
-                    ) {
-
-                        winnerPrize += 1;
-
-                    }
-
-
-                    console.log(
-                        "💰 PAYING WINNER:",
-                        {
-                            userId:
-                                winner.user_id,
-
-                            gameId:
-                                winner.id,
-
-                            prize:
-                                winnerPrize
-                        }
-                    );
-
-
-                    // -----------------------------------------
-                    // ADD PRIZE TO MAIN BALANCE
-                    // -----------------------------------------
-
-                    db.prepare(`
-                        UPDATE users
-
-                        SET
-                            balance =
-                                COALESCE(
-                                    balance,
-                                    0
-                                ) + ?
-
-                        WHERE id = ?
-                    `).run(
-                        winnerPrize,
-                        winner.user_id
-                    );
-
-
-                    // -----------------------------------------
-                    // SAVE WINNER PRIZE
-                    // -----------------------------------------
-
-                    db.prepare(`
-                        UPDATE games
-
-                        SET
-                            prize = ?,
-                            result = 'WIN',
-                            status = 'FINISHED',
-                            finished_at =
-                                CURRENT_TIMESTAMP
-
-                        WHERE id = ?
-                    `).run(
-                        winnerPrize,
-                        winner.id
-                    );
-
+            console.log(
+                "💰 PAYOUT CALCULATION:",
+                {
+                    matchId,
+                    totalCost,
+                    totalPrize,
+                    winnerCount: winners.length,
+                    winnerPrize
                 }
             );
 
+            // ------------------------------------------------
+            // PAY EVERY WINNER
+            // ------------------------------------------------
 
-            // =================================================
-            // MARK EVERY OTHER PLAYER AS LOSER
-            // =================================================
+            for(const winner of winners){
+
+                const userId =
+                    Number(winner.user_id);
+
+                console.log(
+                    "💵 PAYING WINNER:",
+                    {
+                        userId,
+                        amount: winnerPrize
+                    }
+                );
+
+                if(winnerPrize > 0){
+
+                    db.prepare(`
+                        UPDATE users
+                        SET main_balance =
+                            COALESCE(
+                                main_balance,
+                                0
+                            ) + ?
+                        WHERE id = ?
+                    `).run(
+                        winnerPrize,
+                        userId
+                    );
+
+                }
+
+                // ------------------------------------------------
+                // STORE THE ACTUAL PRIZE ON THE GAME
+                // ------------------------------------------------
+
+                db.prepare(`
+                    UPDATE games
+                    SET prize = ?,
+                        status = 'PAID'
+                    WHERE id = ?
+                `).run(
+                    winnerPrize,
+                    winner.id
+                );
+
+            }
+
+            // ------------------------------------------------
+            // FINISH ALL OTHER GAMES IN THIS MATCH
+            // ------------------------------------------------
 
             db.prepare(`
                 UPDATE games
-
-                SET
-                    result = 'LOSE',
-                    prize = 0,
-                    status = 'FINISHED',
-                    finished_at =
-                        CURRENT_TIMESTAMP
-
+                SET status = 'FINISHED'
                 WHERE match_id = ?
+                  AND status NOT IN ('PAID')
+            `).run(matchId);
 
-                AND status !=
-                    'WAITING_NEXT_ROUND'
-
-                AND (
-                    result IS NULL
-                    OR result != 'WIN'
-                )
-            `).run(
-                matchId
-            );
-
-
-            // =================================================
-            // FINISH SHARED MATCH
-            // =================================================
+            // ------------------------------------------------
+            // FINISH MATCH + MARK PAID
+            // ------------------------------------------------
 
             db.prepare(`
                 UPDATE matches
-
-                SET
-                    prize_pool = ?,
-                    winner_count = ?,
-                    paid = 1,
-                    status = 'FINISHED',
-                    finished_at =
-                        CURRENT_TIMESTAMP
-
+                SET status = 'FINISHED',
+                    paid = 1
                 WHERE id = ?
-            `).run(
-                totalPrize,
-                winnerCount,
-                matchId
+            `).run(matchId);
+
+            console.log(
+                "✅ MATCH FINISHED AND PAID:",
+                {
+                    matchId,
+                    winnerCount: winners.length,
+                    winnerPrize
+                }
             );
 
-
-            // =================================================
-            // RETURN RESULT
-            // =================================================
-
             return {
-
                 complete: true,
-
                 alreadyPaid: false,
-
-                totalCost:
-                    totalPlayerCost,
-
-                totalPrize:
-
-                    totalPrize,
-
-                winnerCount:
-
-                    winnerCount
-
+                totalCost: Number(totalCost),
+                totalPrize: Number(totalPrize),
+                winnerCount: winners.length,
+                winnerPrize: Number(winnerPrize)
             };
 
         });
 
-
-    return transaction();
-
+    return transaction;
 }
-// ======================================================
-// FINISH GAME
-// ======================================================
-//
-// Frontend sends:
-//
-// {
-//   "matchId": 12,
-//   "result": "WIN"
-// }
-//
-// or
-//
-// {
-//   "matchId": 12,
-//   "result": "LOSE"
-// }
-//
-// The server decides the final prize.
 // ======================================================
 /* ==================================================
    SERVER BINGO CARD GENERATOR
@@ -3413,548 +3365,762 @@ function isServerWinningCard(
     );
 }
 
-app.post("/api/game/finish",auth,(req, res) => {
+app.post("/api/game/finish", auth, (req, res) => {
 
-try {  
+    try {
 
-        const matchId =  
-            integer(  
-                req.body.matchId ||  
-                req.body.gameId  
-            );  
+        const matchId =
+            integer(
+                req.body.matchId ||
+                req.body.gameId
+            );
 
-        let result =  
-            String(  
-                req.body.result ||  
-                "LOSE"  
-            ).toUpperCase();  
+        let result =
+            String(
+                req.body.result ||
+                "LOSE"
+            ).toUpperCase();
+
         const cardNumber =
-    integer(
-        req.body.cardNumber
-    );
-        if (!matchId) {  
+            integer(
+                req.body.cardNumber
+            );
 
-            return res.status(400).json({  
 
-                success: false,  
+        // ========================================================
+        // BASIC VALIDATION
+        // ========================================================
 
-                error:  
-                    "matchId is required"  
+        if (!matchId) {
 
-            });  
-        }  
+            return res.status(400).json({
 
-        if (  
-            result !== "WIN" &&  
-            result !== "LOSE"  
-        ) {  
+                success: false,
 
-            result = "LOSE";  
-        }  
+                error:
+                    "matchId is required"
 
-        // ------------------------------------------------
-// SERVER-SIDE WINNER VALIDATION
-// ------------------------------------------------
+            });
 
-if (result === "WIN") {
+        }
 
-    // Card number must be valid
-    if (
-        !Number.isInteger(cardNumber) ||
-        cardNumber < 1 ||
-        cardNumber > 200
-    ) {
 
-        return res.status(400).json({
+        if (
+            result !== "WIN" &&
+            result !== "LOSE"
+        ) {
+
+            result = "LOSE";
+
+        }
+
+
+        // ========================================================
+        // GET PLAYER GAME
+        // ========================================================
+
+        const game =
+            db.prepare(`
+                SELECT *
+                FROM games
+                WHERE match_id = ?
+                  AND user_id = ?
+                ORDER BY id DESC
+                LIMIT 1
+            `).get(
+                matchId,
+                req.user.id
+            );
+
+
+        console.log(
+            "🎫 FINISH GAME DEBUG:",
+            {
+                matchId,
+                userId: req.user.id,
+                gameId: game?.id,
+                gameStatus: game?.status,
+                gameCards: game?.cards,
+                gameCardNumbers: game?.card_numbers
+            }
+        );
+
+
+        // ========================================================
+        // PLAYER GAME MUST EXIST
+        // ========================================================
+
+        if (!game) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                error:
+                    "Player game not found"
+
+            });
+
+        }
+
+
+        // ========================================================
+        // GET MATCH
+        // ========================================================
+
+        const match =
+            db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE id = ?
+            `).get(
+                matchId
+            );
+
+
+        if (!match) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                error:
+                    "Match not found"
+
+            });
+
+        }
+
+
+        // ========================================================
+        // ALREADY FINISHED / PAID
+        // ========================================================
+
+        if (
+            match.status === "FINISHED" ||
+            Number(match.paid) === 1
+        ) {
+
+            const user =
+                db.prepare(`
+                    SELECT
+                        balance,
+                        play_balance
+                    FROM users
+                    WHERE id = ?
+                `).get(
+                    req.user.id
+                );
+
+
+            return res.json({
+
+                success: true,
+
+                alreadyFinished: true,
+
+                gameId:
+                    matchId,
+
+                matchId,
+
+                sharedGameId:
+                    matchId,
+
+                result:
+                    game.result,
+
+                prize:
+                    num(game.prize),
+
+                mainBalance:
+                    num(
+                        user.balance
+                    ),
+
+                playBalance:
+                    num(
+                        user.play_balance
+                    ),
+
+                matchStatus:
+                    match.status,
+
+                payoutComplete:
+                    Boolean(
+                        match.paid
+                    )
+
+            });
+
+        }
+
+
+        // ========================================================
+        // WINNER VALIDATION
+        // ========================================================
+
+        if (result === "WIN") {
+
+
+            // ----------------------------------------------------
+            // 1. VALID CARD NUMBER
+            // ----------------------------------------------------
+
+            if (
+                !Number.isInteger(cardNumber) ||
+                cardNumber < 1 ||
+                cardNumber > 200
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Invalid winner card number"
+
+                });
+
+            }
+
+
+            // ----------------------------------------------------
+            // 2. GET PLAYER CARD NUMBERS
+            // ----------------------------------------------------
+
+            let playerCards = [];
+
+            try {
+
+                playerCards =
+                    game.card_numbers
+                        ? JSON.parse(
+                            game.card_numbers
+                        )
+                        : [];
+
+            } catch (error) {
+
+                console.error(
+                    "❌ PLAYER CARD PARSE ERROR:",
+                    error
+                );
+
+                playerCards = [];
+
+            }
+
+
+            if (!Array.isArray(playerCards)) {
+
+                playerCards = [];
+
+            }
+
+
+            playerCards =
+                playerCards.map(
+                    Number
+                );
+
+
+            // ----------------------------------------------------
+            // 3. CARD MUST BELONG TO PLAYER
+            // ----------------------------------------------------
+
+            if (
+                !playerCards.includes(
+                    Number(cardNumber)
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Winner card does not belong to this player"
+
+                });
+
+            }
+
+
+            // ----------------------------------------------------
+            // 4. SERVER CALLED BALLS
+            // ----------------------------------------------------
+
+            let calledBalls = [];
+
+            try {
+
+                calledBalls =
+                    match.called_balls
+                        ? JSON.parse(
+                            match.called_balls
+                        )
+                        : [];
+
+            } catch (error) {
+
+                console.error(
+                    "❌ CALLED BALLS PARSE ERROR:",
+                    error
+                );
+
+                calledBalls = [];
+
+            }
+
+
+            if (!Array.isArray(calledBalls)) {
+
+                calledBalls = [];
+
+            }
+
+
+            calledBalls =
+                calledBalls
+                    .map(Number)
+                    .filter(
+                        number =>
+                            Number.isInteger(number) &&
+                            number >= 1 &&
+                            number <= 75
+                    );
+
+
+            // ----------------------------------------------------
+            // 5. GENERATE SERVER CARD
+            // ----------------------------------------------------
+
+            const winningCard =
+                generateServerBingoNumbers(
+                    Number(cardNumber)
+                );
+
+
+            // ----------------------------------------------------
+            // 6. SERVER BINGO CHECK
+            // ----------------------------------------------------
+
+            const actuallyWon =
+                isServerWinningCard(
+                    winningCard,
+                    calledBalls
+                );
+
+
+            console.log(
+                "🔎 SERVER WIN CHECK:",
+                {
+                    matchId,
+                    userId: req.user.id,
+                    cardNumber,
+                    winningCard,
+                    calledBalls,
+                    calledCount:
+                        calledBalls.length,
+                    matchStatus:
+                        match.status
+                }
+            );
+
+
+            // ----------------------------------------------------
+            // 7. REJECT INVALID CLAIM
+            // ----------------------------------------------------
+
+            if (!actuallyWon) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Invalid Bingo claim"
+
+                });
+
+            }
+
+        }
+
+
+        // ========================================================
+        // PREVENT SAME PLAYER CLAIMING AGAIN
+        // ========================================================
+
+        if (
+            result === "WIN" &&
+            game.status === "WIN"
+        ) {
+
+            return res.json({
+
+                success: true,
+
+                alreadyClaimed: true,
+
+                gameId:
+                    matchId,
+
+                matchId,
+
+                sharedGameId:
+                    matchId,
+
+                result: "WIN",
+
+                prize:
+                    num(game.prize),
+
+                matchStatus:
+                    match.status,
+
+                payoutComplete:
+                    Boolean(
+                        match.paid
+                    )
+
+            });
+
+        }
+
+
+        // ========================================================
+        // SAVE RESULT
+        // ========================================================
+
+        if (result === "WIN") {
+
+
+            // ----------------------------------------------------
+            // IMPORTANT:
+            //
+            // DO NOT SET FINISHED HERE.
+            //
+            // Keep status = WIN until payout.
+            // This allows finalizeMatchPayout() to find
+            // ALL winners.
+            // ----------------------------------------------------
+
+            db.prepare(`
+                UPDATE games
+                SET
+                    result = 'WIN',
+                    winner_card_number = ?,
+                    status = 'WIN',
+                    finished_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                  AND user_id = ?
+            `).run(
+                Number(cardNumber),
+                game.id,
+                req.user.id
+            );
+
+
+            console.log(
+                "🏆 WINNER CLAIM SAVED:",
+                {
+                    matchId,
+                    userId: req.user.id,
+                    cardNumber:
+                        Number(cardNumber),
+                    gameId:
+                        game.id
+                }
+            );
+
+
+            // ====================================================
+            // CHECK WHETHER THIS IS FIRST WINNER
+            // ====================================================
+
+            const claimWindow =
+                db.prepare(`
+                    UPDATE matches
+
+                    SET status = 'CLAIM_WINDOW'
+
+                    WHERE id = ?
+
+                      AND status = 'PLAYING'
+
+                      AND paid = 0
+                `).run(
+                    matchId
+                );
+
+
+            const firstWinner =
+                claimWindow.changes > 0;
+
+
+            console.log(
+                "🏆 WINNER CLAIM STATUS:",
+                {
+                    matchId,
+                    userId: req.user.id,
+                    firstWinner,
+                    matchStatus:
+                        firstWinner
+                            ? "CLAIM_WINDOW"
+                            : "CLAIM_WINDOW_ALREADY_ACTIVE"
+                }
+            );
+
+
+            // ====================================================
+            // FIRST WINNER STARTS 3 SECOND TIMER
+            // ====================================================
+
+            if (
+                firstWinner &&
+                !winnerClaimTimers.has(
+                    matchId
+                )
+            ) {
+
+
+                console.log(
+                    "⏳ STARTING 3 SECOND WINNER WINDOW:",
+                    matchId
+                );
+
+
+                const timer =
+                    setTimeout(
+                        () => {
+
+                            try {
+
+                                console.log(
+                                    "⏰ 3 SECOND CLAIM WINDOW FINISHED:",
+                                    matchId
+                                );
+
+
+                                winnerClaimTimers.delete(
+                                    matchId
+                                );
+
+
+                                // --------------------------------
+                                // FINALIZE ALL WINNERS
+                                // --------------------------------
+
+                                const payout =
+                                    finalizeMatchPayout(
+                                        matchId
+                                    );
+
+
+                                console.log(
+                                    "💰 FINAL PAYOUT COMPLETE:",
+                                    {
+                                        matchId,
+                                        payout
+                                    }
+                                );
+
+
+                            } catch (error) {
+
+                                console.error(
+                                    "❌ DELAYED PAYOUT ERROR:",
+                                    error
+                                );
+
+                            }
+
+                        },
+                        WINNER_CLAIM_WINDOW_MS
+                    );
+
+
+                winnerClaimTimers.set(
+                    matchId,
+                    timer
+                );
+
+            }
+
+        }
+
+
+        // ========================================================
+        // LOSE
+        // ========================================================
+
+        else {
+
+            db.prepare(`
+                UPDATE games
+                SET
+                    result = 'LOSE',
+                    status = 'FINISHED',
+                    finished_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                  AND user_id = ?
+                  AND status NOT IN ('WIN', 'PAID')
+            `).run(
+                game.id,
+                req.user.id
+            );
+
+        }
+
+
+        // ========================================================
+        // GET UPDATED GAME
+        // ========================================================
+
+        const updatedGame =
+            db.prepare(`
+                SELECT *
+                FROM games
+                WHERE id = ?
+            `).get(
+                game.id
+            );
+
+
+        // ========================================================
+        // GET UPDATED MATCH
+        // ========================================================
+
+        const updatedMatch =
+            db.prepare(`
+                SELECT *
+                FROM matches
+                WHERE id = ?
+            `).get(
+                matchId
+            );
+
+
+        // ========================================================
+        // GET USER BALANCE
+        // ========================================================
+
+        const user =
+            db.prepare(`
+                SELECT
+                    balance,
+                    play_balance
+                FROM users
+                WHERE id = ?
+            `).get(
+                req.user.id
+            );
+
+
+        // ========================================================
+        // TOTAL GAME COST
+        // ========================================================
+
+        const totalCost =
+            updatedMatch.prize_pool
+                ? num(
+                    Number(
+                        updatedMatch.prize_pool
+                    ) / WIN_RATE
+                )
+                : 0;
+
+
+        // ========================================================
+        // RESPONSE
+        // ========================================================
+
+        return res.json({
+
+            success: true,
+
+            gameId:
+                matchId,
+
+            matchId,
+
+            sharedGameId:
+                matchId,
+
+            result:
+                updatedGame.result,
+
+            prize:
+                num(
+                    updatedGame.prize
+                ),
+
+            totalPlayerCost:
+                totalCost,
+
+            totalPrize:
+                num(
+                    updatedMatch.prize_pool
+                ),
+
+            winnerCount:
+                Number(
+                    updatedMatch.winner_count || 0
+                ),
+
+            playerCount:
+                db.prepare(`
+                    SELECT COUNT(*) AS count
+                    FROM games
+                    WHERE match_id = ?
+                `).get(
+                    matchId
+                ).count,
+
+            matchStatus:
+                updatedMatch.status,
+
+            payoutComplete:
+                Boolean(
+                    updatedMatch.paid
+                ),
+
+            mainBalance:
+                num(
+                    user.balance
+                ),
+
+            playBalance:
+                num(
+                    user.play_balance
+                )
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "GAME FINISH ERROR:",
+            error
+        );
+
+
+        return res.status(500).json({
 
             success: false,
 
             error:
-                "Invalid winner card number"
+                error.message ||
+                "Could not finish game"
 
         });
 
     }
-}
-       
 
-
-const game =
-    db.prepare(`
-        SELECT *
-        FROM games
-        WHERE match_id = ?
-        AND user_id = ?
-        ORDER BY id DESC
-        LIMIT 1
-    `).get(
-        matchId,
-        req.user.id
-    );
-
-console.log("🎫 FINISH GAME DEBUG:", {
-    matchId,
-    userId: req.user.id,
-    gameId: game?.id,
-    gameStatus: game?.status,
-    gameCards: game?.cards,
-    gameCardNumbers: game?.card_numbers
 });
-// ------------------------------------------------
-// PLAYER GAME MUST EXIST
-// ------------------------------------------------
-
-if(!game){
-
-    return res.status(404).json({
-        success:false,
-        error:"Player game not found"
-    });
-
-}
-
-
-// ------------------------------------------------
-// SERVER-SIDE WIN VALIDATION
-// ------------------------------------------------
-
-if(result === "WIN"){
-
-    // --------------------------------------------
-    // 1. VALIDATE CARD NUMBER
-    // --------------------------------------------
-
-    if(
-        !Number.isInteger(cardNumber) ||
-        cardNumber < 1 ||
-        cardNumber > 200
-    ){
-
-        return res.status(400).json({
-            success:false,
-            error:"Invalid winner card number"
-        });
-
-    }
-
-
-    // --------------------------------------------
-    // 2. GET PLAYER'S CARD NUMBERS
-    // --------------------------------------------
-
-    let playerCards = [];
-
-    try{
-
-        playerCards =
-            game.card_numbers
-                ? JSON.parse(game.card_numbers)
-                : [];
-
-    }catch(error){
-
-        console.error(
-            "❌ PLAYER CARD PARSE ERROR:",
-            error
-        );
-
-        playerCards = [];
-
-    }
-
-    if(!Array.isArray(playerCards)){
-
-        playerCards = [];
-
-    }
-
-    playerCards =
-        playerCards.map(Number);
-
-
-    // --------------------------------------------
-    // 3. CARD MUST BELONG TO PLAYER
-    // --------------------------------------------
-
-    if(
-        !playerCards.includes(
-            Number(cardNumber)
-        )
-    ){
-
-        return res.status(400).json({
-            success:false,
-            error:
-                "Winner card does not belong to this player"
-        });
-
-    }
-
-
-    // --------------------------------------------
-    // 4. GET CURRENT MATCH
-    // --------------------------------------------
-
-    const match =
-        db.prepare(`
-            SELECT
-                called_balls,
-                status
-            FROM matches
-            WHERE id = ?
-        `).get(
-            matchId
-        );
-
-    if(!match){
-
-        return res.status(404).json({
-            success:false,
-            error:"Match not found"
-        });
-
-    }
-
-
-    // --------------------------------------------
-    // 5. READ SERVER CALLED BALLS
-    // --------------------------------------------
-
-    let calledBalls = [];
-
-    try{
-
-        calledBalls =
-            match.called_balls
-                ? JSON.parse(
-                    match.called_balls
-                )
-                : [];
-
-    }catch(error){
-
-        console.error(
-            "❌ CALLED BALLS PARSE ERROR:",
-            error
-        );
-
-        calledBalls = [];
-
-    }
-
-    if(!Array.isArray(calledBalls)){
-
-        calledBalls = [];
-
-    }
-
-    calledBalls =
-        calledBalls
-            .map(Number)
-            .filter(
-                number =>
-                    Number.isInteger(number) &&
-                    number >= 1 &&
-                    number <= 75
-            );
-
-
-    // --------------------------------------------
-    // 6. GENERATE THE SAME CARD
-    // --------------------------------------------
-
-    const winningCard =
-        generateServerBingoNumbers(
-            Number(cardNumber)
-        );
-
-
-    // --------------------------------------------
-    // 7. SERVER BINGO CHECK
-    // --------------------------------------------
-
-    const actuallyWon =
-        isServerWinningCard(
-            winningCard,
-            calledBalls
-        );
-
-
-    // --------------------------------------------
-    // DEBUG
-    // --------------------------------------------
-
-    console.log(
-    "🔎 SERVER WIN CHECK:",
-    {
-        matchId,
-        userId: req.user.id,
-        cardNumber,
-        winningCard,
-        calledBalls,
-        calledCount: calledBalls.length
-    }
-); 
-
- 
-// --------------------------------------------
-    // 8. REJECT INVALID CLAIM
-    // --------------------------------------------
-
-    if(!actuallyWon){
-
-        return res.status(400).json({
-            success:false,
-            error:"Invalid Bingo claim"
-        });
-
-    }
-
-}
-        if (  
-            game.status ===  
-            "FINISHED"  
-        ) {  
-
-            const user =  
-                db.prepare(`  
-                    SELECT  
-                        balance,  
-                        play_balance  
-                    FROM users  
-                    WHERE id = ?  
-                `).get(  
-                    req.user.id  
-                );  
-
-            const match =  
-                db.prepare(`  
-                    SELECT *  
-                    FROM matches  
-                    WHERE id = ?  
-                `).get(  
-                    matchId  
-                );  
-
-            return res.json({  
-
-                success: true,  
-
-                alreadyFinished: true,  
-
-                gameId:  
-                    matchId,  
-
-                matchId,  
-
-                sharedGameId:  
-                    matchId,  
-
-                result:  
-                    game.result,  
-
-                prize:  
-                    num(game.prize),  
-
-                mainBalance:  
-                    num(  
-                        user.balance  
-                    ),  
-
-                playBalance:  
-                    num(  
-                        user.play_balance  
-                    ),  
-
-                matchStatus:  
-                    match.status,  
-
-                payoutComplete:  
-                    Boolean(  
-                        match.paid  
-                    )  
-
-            });  
-        }  
-
-        // ------------------------------------------------  
-        // MARK PLAYER FINISHED  
-        // ------------------------------------------------  
-
-       db.prepare(`
-    UPDATE games
-    SET
-        result = 'WIN',
-        winner_card_number = ?,
-        status = 'FINISHED',
-        finished_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-      AND user_id = ?
-`).run(
-    Number(cardNumber),
-    game.id,
-    req.user.id
-);
-console.log("🏆 WINNER CARD SAVED:", {
-    matchId: game.match_id,
-    userId: req.user.id,
-    cardNumber: Number(cardNumber)
-});
-        // ------------------------------------------------  
-        // FINALIZE SHARED MATCH  
-        // ------------------------------------------------  
-
-        const payout =  
-            finalizeMatchPayout(  
-                matchId  
-            );  
-
-        // ------------------------------------------------  
-        // GET UPDATED GAME  
-        // ------------------------------------------------  
-
-        const updatedGame =  
-            db.prepare(`  
-                SELECT *  
-                FROM games  
-                WHERE id = ?  
-            `).get(  
-                game.id  
-            );  
-
-        // ------------------------------------------------  
-        // GET MATCH  
-        // ------------------------------------------------  
-
-        const match =  
-            db.prepare(`  
-                SELECT *  
-                FROM matches  
-                WHERE id = ?  
-            `).get(  
-                matchId  
-            );  
-
-        // ------------------------------------------------  
-        // GET USER BALANCE  
-        // ------------------------------------------------  
-
-        const user =  
-            db.prepare(`  
-                SELECT  
-                    balance,  
-                    play_balance  
-                FROM users  
-                WHERE id = ?  
-            `).get(  
-                req.user.id  
-            );  
-
-        // ------------------------------------------------  
-        // TOTAL GAME COST  
-        // ------------------------------------------------  
-
-        const totalCost =  
-            payout.totalCost !==  
-            undefined  
-                ? num(  
-                    payout.totalCost  
-                )  
-                : num(  
-                    match.prize_pool /  
-                    WIN_RATE  
-                );  
-
-        // ------------------------------------------------  
-        // RESPONSE  
-        // ------------------------------------------------  
-
-        res.json({  
-
-            success: true,  
-
-            gameId:  
-                matchId,  
-
-            matchId,  
-
-            sharedGameId:  
-                matchId,  
-
-            result:  
-                updatedGame.result,  
-
-            // This will be zero while  
-            // waiting for the other  
-            // players to finish.  
-            prize:  
-                num(  
-                    updatedGame.prize  
-                ),  
-
-            totalPlayerCost:  
-                totalCost,  
-
-            totalPrize:  
-                num(  
-                    match.prize_pool  
-                ),  
-
-            winnerCount:  
-                Number(  
-                    match.winner_count  
-                ),  
-
-            playerCount:  
-                db.prepare(`  
-                    SELECT COUNT(*) AS count  
-                    FROM games  
-                    WHERE match_id = ?  
-                `).get(  
-                    matchId  
-                ).count,  
-
-            matchStatus:  
-                match.status,  
-
-            payoutComplete:  
-                Boolean(  
-                    match.paid  
-                ),  
-
-            mainBalance:  
-                num(  
-                    user.balance  
-                ),  
-
-            playBalance:  
-                num(  
-                    user.play_balance  
-                )  
-
-        });  
-
-    } catch (error) {  
-
-        console.error(  
-            "GAME FINISH ERROR:",  
-            error  
-        );  
-
-        res.status(500).json({  
-
-            success: false,  
-
-            error:  
-                error.message ||  
-                "Could not finish game"  
-
-        });  
-    }  
-}
-
-);
-
 // ======================================================
 // CREATE DEPOSIT
 // ======================================================
