@@ -8485,9 +8485,10 @@ if(
 
     }
 
-/* =====================================
-   SHOW WINNER'S CARD
-===================================== */
+/* ==================================================
+   SHOW WINNING CARD
+   ================================================== */
+
 const wrapper =
     document.getElementById("winnerCardWrap");
 
@@ -8508,6 +8509,11 @@ if(
     );
 
     wrapper.innerHTML = "";
+
+    /* =================================
+       CREATE CARD USING EXISTING
+       CARD GENERATOR
+    ================================= */
 
     const cardElement =
         createCardElement(
@@ -8534,74 +8540,17 @@ if(
         cardElement.offsetHeight
     );
 
-    cardElement
-        .querySelectorAll(".bingo-cell")
-        .forEach(cell => {
-
-            const value =
-                cell.dataset.value;
-
-            if(
-                value !== "FREE" &&
-                calledNumbers.includes(
-                    Number(value)
-                )
-            ){
-
-                cell.classList.add("called");
-
-            }
-
-        });
-
-}
-else{
-
-    console.warn(
-        "⚠️ Winner card number missing:",
-        cardNumber
-    );
-
-}
-    console.log(
-        "🏆 DISPLAYING WINNING CARD:",
-        cardNumber
-    );
-
-
-    wrapper.innerHTML = "";
-
-
-    /* =================================
-       CREATE CARD USING EXISTING
-       CARD GENERATOR
-    ================================= */
-
-    const cardElement =
-        createCardElement(
-            cardNumber
-        );
-
-
-    wrapper.appendChild(
-        cardElement
-    );
-
-
     /* =================================
        MARK NUMBERS THAT WERE CALLED
     ================================= */
 
     cardElement
-        .querySelectorAll(
-            ".bingo-cell"
-        )
+        .querySelectorAll(".bingo-cell")
         .forEach(
             cell => {
 
                 const value =
                     cell.dataset.value;
-
 
                 if(
                     value !== "FREE" &&
@@ -8624,7 +8573,7 @@ else{
 
     console.warn(
         "⚠️ Winner card number missing:",
-        winnerCardNumber
+        cardNumber
     );
 
 }
