@@ -1940,6 +1940,8 @@ currentBall:
     }
 
 });
+
+
 app.post("/api/match/:matchId/call",
     auth,
     (req, res) => {
@@ -2878,7 +2880,6 @@ return res.json({
 // ============================================================
 // FINALIZE SHARED MATCH PAYOUT
 // ============================================================
-
 function finalizeMatchPayout(matchId) {
 
     console.log(
@@ -2900,7 +2901,7 @@ function finalizeMatchPayout(matchId) {
                     WHERE id = ?
                 `).get(matchId);
 
-            if(!match){
+            if (!match) {
 
                 throw new Error(
                     "Match not found: " + matchId
@@ -2913,7 +2914,7 @@ function finalizeMatchPayout(matchId) {
             // PREVENT DOUBLE PAYOUT
             // ==================================================
 
-            if(Number(match.paid) === 1){
+            if (Number(match.paid) === 1) {
 
                 console.log(
                     "⚠️ MATCH ALREADY PAID:",
@@ -2923,6 +2924,8 @@ function finalizeMatchPayout(matchId) {
                 return {
                     complete: true,
                     alreadyPaid: true,
+                    totalCost: 0,
+                    totalPrize: 0,
                     winnerCount: 0,
                     winnerPrize: 0
                 };
@@ -2931,7 +2934,7 @@ function finalizeMatchPayout(matchId) {
 
 
             // ==================================================
-            // GET ALL VERIFIED WINNERS
+            // GET ALL WINNERS
             // ==================================================
 
             const winners =
@@ -2940,7 +2943,9 @@ function finalizeMatchPayout(matchId) {
                     FROM games
                     WHERE match_id = ?
                       AND status = 'WIN'
+                      AND result = 'WIN'
                 `).all(matchId);
+
 
             console.log(
                 "🏆 VERIFIED WINNERS:",
@@ -2953,9 +2958,6 @@ function finalizeMatchPayout(matchId) {
                     playSpent:
                         Number(w.play_spent || 0),
                     mainSpent:
-                        Number(w.main_spent || 0),
-                    totalSpent:
-                        Number(w.play_spent || 0) +
                         Number(w.main_spent || 0)
                 }))
             );
@@ -2965,7 +2967,7 @@ function finalizeMatchPayout(matchId) {
             // NO WINNERS
             // ==================================================
 
-            if(winners.length === 0){
+            if (winners.length === 0) {
 
                 console.log(
                     "⚠️ NO WINNERS FOUND:",
@@ -2975,6 +2977,8 @@ function finalizeMatchPayout(matchId) {
                 return {
                     complete: false,
                     alreadyPaid: false,
+                    totalCost: 0,
+                    totalPrize: 0,
                     winnerCount: 0,
                     winnerPrize: 0
                 };
@@ -3001,41 +3005,19 @@ function finalizeMatchPayout(matchId) {
                 `).all(matchId);
 
 
-            console.log(
-                "🎮 MATCH GAMES:",
-                matchGames.map(game => ({
-                    id: game.id,
-                    userId: game.user_id,
-                    playSpent:
-                        Number(game.play_spent || 0),
-                    mainSpent:
-                        Number(game.main_spent || 0),
-                    totalSpent:
-                        Number(game.play_spent || 0) +
-                        Number(game.main_spent || 0),
-                    cardNumbers:
-                        game.card_numbers,
-                    status:
-                        game.status,
-                    result:
-                        game.result
-                }))
-            );
-
-
             // ==================================================
-            // TOTAL MONEY USED IN MATCH
+            // TOTAL MONEY USED
             // ==================================================
 
             const totalCost =
                 matchGames.reduce(
                     (total, game) => {
 
-                        return total +
-                            Number(
+                        return total
+                            + Number(
                                 game.play_spent || 0
-                            ) +
-                            Number(
+                            )
+                            + Number(
                                 game.main_spent || 0
                             );
 
@@ -3061,13 +3043,21 @@ function finalizeMatchPayout(matchId) {
 
 
             // ==================================================
-            // EQUAL WHOLE-ETB WINNINGS
+            // NUMBER OF WINNERS
+            // ==================================================
+
+            const winnerCount =
+                winners.length;
+
+
+            // ==================================================
+            // WHOLE ETB WINNER SHARE
             // ==================================================
 
             const winnerPrize =
                 Math.floor(
                     totalPrize /
-                    winners.length
+                    winnerCount
                 );
 
 
@@ -3077,20 +3067,19 @@ function finalizeMatchPayout(matchId) {
                     matchId,
                     totalCost,
                     totalPrize,
-                    winnerCount:
-                        winners.length,
+                    winnerCount,
                     winnerPrize
                 }
             );
 
 
             // ==================================================
-            // PAY EVERY VERIFIED WINNER
+            // PAY ALL WINNERS
             // ==================================================
 
-            for(
+            for (
                 const winner of winners
-            ){
+            ) {
 
                 const userId =
                     Number(
@@ -3098,23 +3087,11 @@ function finalizeMatchPayout(matchId) {
                     );
 
 
-                console.log(
-                    "💵 PAYING WINNER:",
-                    {
-                        gameId:
-                            winner.id,
-                        userId,
-                        amount:
-                            winnerPrize
-                    }
-                );
-
-
                 // ------------------------------------------------
                 // CREDIT MAIN BALANCE
                 // ------------------------------------------------
 
-                if(winnerPrize > 0){
+                if (winnerPrize > 0) {
 
                     const payment =
                         db.prepare(`
@@ -3131,14 +3108,23 @@ function finalizeMatchPayout(matchId) {
                         );
 
 
+                    if (
+                        payment.changes !== 1
+                    ) {
+
+                        throw new Error(
+                            `Could not credit winner user ${userId}`
+                        );
+
+                    }
+
+
                     console.log(
                         "✅ MAIN BALANCE CREDITED:",
                         {
                             userId,
                             amount:
-                                winnerPrize,
-                            rowsChanged:
-                                payment.changes
+                                winnerPrize
                         }
                     );
 
@@ -3146,23 +3132,35 @@ function finalizeMatchPayout(matchId) {
 
 
                 // ------------------------------------------------
-                // STORE WINNER PRIZE
+                // SAVE WINNER PRIZE
                 // ------------------------------------------------
 
-                db.prepare(`
-                    UPDATE games
-                    SET
-                        prize = ?,
-                        status = 'PAID'
-                    WHERE id = ?
-                `).run(
-                    winnerPrize,
-                    winner.id
-                );
+                const paidGame =
+    db.prepare(`
+        UPDATE games
+        SET
+            prize = ?,
+            status = 'PAID'
+        WHERE id = ?
+          AND status = 'WIN'
+    `).run(
+        winnerPrize,
+        winner.id
+    );
 
+
+if(
+    paidGame.changes !== 1
+){
+
+    throw new Error(
+        `Could not mark winner game ${winner.id} as PAID`
+    );
+
+}
 
                 console.log(
-                    "✅ WINNER GAME MARKED PAID:",
+                    "🏆 WINNER PAID:",
                     {
                         gameId:
                             winner.id,
@@ -3176,45 +3174,51 @@ function finalizeMatchPayout(matchId) {
 
 
             // ==================================================
-            // FINISH ALL OTHER GAMES
+            // FINISH NON-WINNING GAMES
             // ==================================================
 
             db.prepare(`
                 UPDATE games
-                SET status = 'FINISHED'
+                SET
+                    status = 'FINISHED'
                 WHERE match_id = ?
                   AND status NOT IN ('PAID')
             `).run(matchId);
 
 
             // ==================================================
-            // FINISH MATCH + MARK PAID
+            // FINISH MATCH
             // ==================================================
 
             db.prepare(`
                 UPDATE matches
                 SET
                     status = 'FINISHED',
-                    paid = 1
+                    paid = 1,
+                    winner_count = ?
                 WHERE id = ?
-            `).run(matchId);
+            `).run(
+                winnerCount,
+                matchId
+            );
 
 
             console.log(
-                "✅ MATCH FINISHED AND PAID:",
+                "✅ MATCH FINISHED:",
                 {
                     matchId,
                     totalCost,
                     totalPrize,
-                    winnerCount:
-                        winners.length,
+                    winnerCount,
                     winnerPrize
                 }
             );
 
 
             return {
+
                 complete: true,
+
                 alreadyPaid: false,
 
                 totalCost:
@@ -3224,10 +3228,11 @@ function finalizeMatchPayout(matchId) {
                     Number(totalPrize),
 
                 winnerCount:
-                    winners.length,
+                    Number(winnerCount),
 
                 winnerPrize:
                     Number(winnerPrize)
+
             };
 
         });

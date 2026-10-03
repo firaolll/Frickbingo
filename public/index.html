@@ -3557,8 +3557,10 @@ let automaticMode = true;
   
 let voiceMode = true;  
   
-let gameRunning = false;  
-  
+let gameRunning = false; 
+
+let claimWindowSyncInterval = null; 
+
 let gameTimer = null;  
   
 let gameInterval = null;  
@@ -4867,7 +4869,278 @@ function renderBigBoard(){
   
 }  
   
-  
+ function startClaimWindowSync(){
+
+    // Prevent duplicate timers
+    if(
+        claimWindowSyncInterval
+    ){
+        return;
+    }
+
+
+    console.log(
+        "🔎 STARTING CLAIM WINDOW SYNC"
+    );
+
+
+    /*
+     * Check the shared server state frequently.
+     *
+     * IMPORTANT:
+     * This DOES NOT generate a new ball.
+     *
+     * The server will return:
+     * CLAIM_WINDOW
+     * or FINISHED
+     */
+    claimWindowSyncInterval =
+        setInterval(
+            async () => {
+
+                try{
+
+                    if(
+                        !currentGameId
+                    ){
+                        return;
+                    }
+
+
+                    const data =
+                        await apiFetch(
+                            "/api/match/" +
+                            currentGameId +
+                            "/call",
+                            {
+                                method: "POST"
+                            }
+                        );
+
+
+                    if(
+                        !data ||
+                        !data.success
+                    ){
+                        return;
+                    }
+
+
+                    /*
+                     * =========================================
+                     * KEEP SHARED BALL LIST
+                     * =========================================
+                     */
+
+                    if(
+                        Array.isArray(
+                            data.calledBalls
+                        )
+                    ){
+
+                        calledNumbers =
+                            data.calledBalls.map(
+                                Number
+                            );
+
+                    }
+
+
+                    /*
+                     * =========================================
+                     * KEEP LAST BALL
+                     * =========================================
+                     */
+
+                    if(
+                        data.currentBall !== null &&
+                        data.currentBall !== undefined
+                    ){
+
+                        const number =
+                            Number(
+                                data.currentBall
+                            );
+
+
+                        if(
+                            Number.isInteger(number) &&
+                            number >= 1 &&
+                            number <= 75
+                        ){
+
+                            lastCalledNumber =
+                                number;
+
+                        }
+
+                    }
+
+
+                    /*
+                     * =========================================
+                     * REFRESH UI
+                     * =========================================
+                     */
+
+                    renderBigBoard();
+
+                    markPlayerCards();
+
+                    if(
+                        Number.isInteger(
+                            lastCalledNumber
+                        )
+                    ){
+
+                        updateLastCalled(
+                            lastCalledNumber
+                        );
+
+                    }
+
+                    updateGameStats();
+
+
+                    /*
+                     * =========================================
+                     * CHECK THIS PLAYER'S CARD
+                     * =========================================
+                     *
+                     * This is the important part.
+                     *
+                     * Every player gets an opportunity
+                     * to submit their own WIN claim
+                     * during the 3-second window.
+                     */
+
+                    if(
+                        String(
+                            data.matchStatus || ""
+                        ).toUpperCase() ===
+                        "CLAIM_WINDOW"
+                    ){
+
+                        if(
+                            !winnerClaimInProgress &&
+                            !winnerShown
+                        ){
+
+                            console.log(
+                                "🔎 CLAIM WINDOW — CHECKING PLAYER CARD"
+                            );
+
+                            checkWinner();
+
+                        }
+
+                    }
+
+
+                    /*
+                     * =========================================
+                     * MATCH FINISHED
+                     * =========================================
+                     */
+
+                    /*
+ * =========================================
+ * MATCH FINISHED
+ * =========================================
+ */
+
+if(
+    String(
+        data.matchStatus || ""
+    ).toUpperCase() ===
+    "FINISHED"
+){
+
+    console.log(
+        "🏁 MATCH FINISHED — STOP CLAIM SYNC"
+    );
+
+
+    // Stop claim-window polling
+    stopClaimWindowSync();
+
+
+    // Stop winner countdown if still running
+    if(winnerResetInterval){
+
+        clearInterval(
+            winnerResetInterval
+        );
+
+        winnerResetInterval = null;
+
+    }
+
+
+    /*
+     * Refresh final balance after payout.
+     */
+
+    if(
+        typeof refreshBalance ===
+        "function"
+    ){
+
+        await refreshBalance();
+
+    }
+
+
+    if(
+        typeof updateAllDisplays ===
+        "function"
+    ){
+
+        updateAllDisplays();
+
+    }
+
+
+    return;
+
+}
+
+
+                }catch(error){
+
+                    console.error(
+                        "❌ CLAIM WINDOW SYNC ERROR:",
+                        error
+                    );
+
+                }
+
+            },
+            500
+        );
+
+}
+
+function stopClaimWindowSync(){
+
+    if(
+        claimWindowSyncInterval
+    ){
+
+        clearInterval(
+            claimWindowSyncInterval
+        );
+
+        claimWindowSyncInterval =
+            null;
+
+        console.log(
+            "🛑 CLAIM WINDOW SYNC STOPPED"
+        );
+
+    }
+
+}
 /* ==================================================  
    CALL NEXT NUMBER  
 ================================================== */  
@@ -4935,7 +5208,7 @@ function renderBigBoard(){
             ){
                 stopAutoCalling();
             }
-
+             startClaimWindowSync();
 
             /*
              * KEEP SERVER'S FINAL SHARED BALL LIST
@@ -5329,18 +5602,31 @@ function checkAnyBingo(){
 /* ==================================================  
    FINISH GAME  
 ================================================== */  
-  
-async function finishGame(playerWon = false){
+async function finishGame(
+    playerWon = false,
+    winningCardNumber = null
+){
+
+    // ==========================================
+    // PREVENT DUPLICATE FINISH
+    // ==========================================
 
     if(!gameRunning){
 
-        return;
+        console.log(
+            "⏳ GAME ALREADY FINISHED"
+        );
 
+        return;
     }
 
 
     gameRunning = false;
 
+
+    // ==========================================
+    // STOP LOCAL GAME TIMER
+    // ==========================================
 
     if(gameInterval){
 
@@ -5360,45 +5646,90 @@ async function finishGame(playerWon = false){
 
         if(currentGameId){
 
+            const body = {
+
+                gameId:
+                    currentGameId,
+
+                result:
+                    playerWon
+                        ? "WIN"
+                        : "LOSE"
+            };
+
+
+            // ==================================
+            // SEND WINNING CARD
+            // ==================================
+
+            if(
+                playerWon &&
+                winningCardNumber !== null
+            ){
+
+                body.cardNumber =
+                    Number(winningCardNumber);
+
+            }
+
+
+            console.log(
+                "🎮 SENDING GAME FINISH:",
+                body
+            );
+
+
             result =
                 await apiFetch(
                     "/api/game/finish",
                     {
                         method:"POST",
 
-                        body:JSON.stringify({
-
-                            gameId:
-                                currentGameId,
-
-                            result:
-                                playerWon
-                                    ? "WIN"
-                                    : "LOSE"
-
-                        })
+                        body:
+                            JSON.stringify(body)
                     }
                 );
+
+
+            console.log(
+                "🎮 GAME FINISH RESPONSE:",
+                result
+            );
 
         }
 
     }catch(error){
 
-        console.log(
-            "Finish game:",
-            error.message
+        console.error(
+            "❌ Finish game error:",
+            error
         );
 
     }
 
 
+    // ==========================================
+    // WIN
+    // ==========================================
+
     if(playerWon){
 
         console.log(
-            "🏆 PLAYER WON - WINNER CARD ALREADY DISPLAYED"
+            "🏆 PLAYER WON - CLAIM SUBMITTED"
         );
 
-    }else{
+        console.log(
+            "⏳ Waiting for other players during CLAIM WINDOW..."
+        );
+
+    }
+
+
+    // ==========================================
+    // LOSE
+    // ==========================================
+
+    else{
 
         showToast(
             "Game finished."
@@ -5407,11 +5738,13 @@ async function finishGame(playerWon = false){
     }
 
 
+    // ==========================================
+    // REFRESH USER DATA
+    // ==========================================
+
     await loadUser();
 
 }
-  
-  
 /* ==================================================  
    WINNER  
 ================================================== */  
@@ -8569,16 +8902,24 @@ function isWinningCard(card){
 ===================================================== */  
 function checkWinner(){
 
-    // Do not check again after THIS player has already claimed
     if(winnerShown){
         return;
     }
 
-    // Prevent duplicate requests from the same player
     if(winnerClaimInProgress){
+
         console.log(
             "⏳ WINNER CLAIM ALREADY IN PROGRESS"
         );
+
+        return;
+    }
+
+    if(!Array.isArray(selectedCards)){
+        return;
+    }
+
+    if(!Array.isArray(calledNumbers)){
         return;
     }
 
@@ -8588,26 +8929,28 @@ function checkWinner(){
         calledNumbers
     );
 
-    // Make sure we have shared numbers
-    if(
-        !Array.isArray(calledNumbers) ||
-        calledNumbers.length === 0
-    ){
-        console.log(
-            "❌ NO SHARED CALLED NUMBERS"
-        );
-        return;
-    }
 
-    // Check EVERY card owned by this player
-    for(
-        const number of selectedCards
-    ){
+    // ==========================================
+    // CHECK EVERY CARD OWNED BY THIS PLAYER
+    // ==========================================
+
+    for(const cardNumber of selectedCards){
+
+        const number =
+            Number(cardNumber);
+
+        if(
+            !Number.isInteger(number)
+        ){
+            continue;
+        }
+
 
         const card =
             generateBingoNumbers(
-                Number(number)
+                number
             );
+
 
         console.log(
             "🎫 CHECKING CARD:",
@@ -8615,13 +8958,23 @@ function checkWinner(){
             card
         );
 
+
         const won =
             isWinningCard(card);
 
+
         console.log(
             "🏆 WIN RESULT:",
-            won
+            {
+                cardNumber: number,
+                won: won
+            }
         );
+
+
+        // ======================================
+        // WIN DETECTED
+        // ======================================
 
         if(won){
 
@@ -8630,21 +8983,33 @@ function checkWinner(){
                 number
             );
 
-            // IMPORTANT:
-            // Stop this function immediately,
-            // but let showWinner() submit the claim.
+
+            // ==================================
+            // LOCK THIS PLAYER'S CLAIM
+            // ==================================
+
+            winnerClaimInProgress = true;
+
+
+            // ==================================
+            // SHOW WINNER CARD
+            // ==================================
+
             showWinner(
-                Number(number),
+                number,
                 card
             );
 
             return;
         }
+
     }
+
 
     console.log(
         "❌ NO WIN YET"
     );
+
 }
 /* =====================================================  
    SHOW WINNER  
@@ -8969,14 +9334,15 @@ else{
     /* ==================================================
    PAYOUT IS DELAYED BY 3 SECONDS
    ================================================== */
-
 if(
     data.payoutComplete === true
 ){
 
-    /*
-     * Payout already completed.
-     */
+    console.log(
+        "💰 PAYOUT ALREADY COMPLETE"
+    );
+
+
     await refreshBalance();
 
     updateAllDisplays();
@@ -8984,55 +9350,7 @@ if(
 }else{
 
     console.log(
-        "⏳ Waiting for 3-second claim window..."
-    );
-
-    /*
-     * Server waits 3 seconds before paying
-     * all verified winners.
-     *
-     * Wait slightly longer than 3 seconds
-     * before refreshing the balance.
-     */
-    setTimeout(
-        async () => {
-
-            try{
-
-                console.log(
-                    "💰 REFRESHING BALANCE AFTER PAYOUT"
-                );
-
-                await refreshBalance();
-
-                updateAllDisplays();
-
-
-                /*
-                 * Ask the server for the final
-                 * match state if your shared-state
-                 * function is available.
-                 */
-                if(
-                    typeof syncSharedGameState ===
-                    "function"
-                ){
-
-                    await syncSharedGameState();
-
-                }
-
-            }catch(error){
-
-                console.error(
-                    "❌ POST-PAYOUT REFRESH ERROR:",
-                    error
-                );
-
-            }
-
-        },
-        3500
+        "⏳ CLAIM WINDOW ACTIVE — WAITING FOR SERVER PAYOUT"
     );
 
 }
