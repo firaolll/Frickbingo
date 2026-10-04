@@ -469,7 +469,6 @@ setInterval(
 // ======================================================
 // SERVER-CONTROLLED BINGO BALL CALLING
 // ======================================================
-
 function processPlayingMatches(){
 
     try{
@@ -487,6 +486,17 @@ function processPlayingMatches(){
 
         for(const match of playingMatches){
 
+            // ====================================================
+            // MATCH ID
+            // ====================================================
+
+            const matchId = Number(match.id);
+
+
+            // ====================================================
+            // LOAD CALLED BALLS
+            // ====================================================
+
             let calledBalls = [];
 
             try{
@@ -498,13 +508,24 @@ function processPlayingMatches(){
 
             }catch(error){
 
+                console.error(
+                    "❌ INVALID CALLED BALLS:",
+                    {
+                        matchId,
+                        calledBalls:
+                            match.called_balls
+                    }
+                );
+
                 calledBalls = [];
 
             }
+
 
             if(!Array.isArray(calledBalls)){
                 calledBalls = [];
             }
+
 
             calledBalls =
                 calledBalls
@@ -517,177 +538,242 @@ function processPlayingMatches(){
                     );
 
 
-            // Stop after all 75 balls
-            if(calledBalls.length >= 75){
-                continue;
-            }
+            // ====================================================
+            // FIND AVAILABLE BALLS
+            // ====================================================
 
-
-            // Find numbers not called yet
             const available = [];
 
-            for(let number = 1; number <= 75; number++){
+            for(
+                let number = 1;
+                number <= 75;
+                number++
+            ){
 
-                if(!calledBalls.includes(number)){
+                if(
+                    !calledBalls.includes(number)
+                ){
+
                     available.push(number);
+
                 }
 
             }
 
 
-            if(!available.length){
+            // ====================================================
+            // DO NOT FINISH AT 75
+            // ====================================================
+
+            if(available.length === 0){
+
+                console.warn(
+                    "⚠️ ALL 75 BALLS CALLED:",
+                    {
+                        matchId,
+                        calledCount:
+                            calledBalls.length
+                    }
+                );
+
                 continue;
+
             }
 
 
-            // Server selects the next ball
+            // ====================================================
+            // SELECT NEXT BALL
+            // ====================================================
+
             const index =
                 Math.floor(
-                    Math.random() * available.length
+                    Math.random() *
+                    available.length
                 );
 
 
             const number =
                 available[index];
 
+
             calledBalls.push(number);
 
-// ========================================================
-// SERVER-SIDE WINNER CHECK
-// ========================================================
-
-let serverWinnerFound = false;
-
-const activeGames =
-    db.prepare(`
-        SELECT
-            id,
-            user_id,
-            card_numbers,
-            status
-        FROM games
-        WHERE match_id = ?
-        AND status = 'PLAYING'
-    `).all(matchId);
-
-for (const game of activeGames) {
-
-    let playerCards = [];
-
-    try {
-
-        playerCards =
-            game.card_numbers
-                ? JSON.parse(game.card_numbers)
-                : [];
-
-    } catch (error) {
-
-        console.error(
-            "❌ INVALID CARD NUMBERS:",
-            {
-                gameId: game.id,
-                card_numbers: game.card_numbers
-            }
-        );
-
-        playerCards = [];
-    }
-
-    if (!Array.isArray(playerCards)) {
-        playerCards = [];
-    }
-
-    playerCards =
-        playerCards
-            .map(Number)
-            .filter(
-                cardNumber =>
-                    Number.isInteger(cardNumber) &&
-                    cardNumber >= 1 &&
-                    cardNumber <= 200
-            );
-
-    for (const cardNumber of playerCards) {
-
-        const card =
-            generateServerBingoNumbers(
-                cardNumber
-            );
-
-        const won =
-            isServerWinningCard(
-                card,
-                calledBalls
-            );
-
-        if (won) {
 
             console.log(
-                "🏆 SERVER DETECTED WINNER:",
-                {
-                    matchId,
-                    gameId: game.id,
-                    userId: game.user_id,
-                    cardNumber,
-                    calledCount: calledBalls.length
-                }
+                `🎱 SERVER MATCH ${matchId}: CALLED ${number}`
             );
 
-            serverWinnerFound = true;
 
-            break;
-        }
-    }
+            // ====================================================
+            // CHECK ALL PLAYERS FOR WINNER
+            // ====================================================
 
-    if (serverWinnerFound) {
-        break;
-    }
-}
+            let serverWinnerFound = false;
 
 
-// ========================================================
-// WINNER FOUND → CLAIM WINDOW
-// ========================================================
+            const activeGames =
+                db.prepare(`
+                    SELECT
+                        id,
+                        user_id,
+                        card_numbers,
+                        status
+                    FROM games
+                    WHERE match_id = ?
+                    AND status = 'PLAYING'
+                `).all(matchId);
 
-if (serverWinnerFound) {
 
-    db.prepare(`
-        UPDATE matches
-        SET
-            called_balls = ?,
-            current_ball = ?,
-            status = 'CLAIM_WINDOW'
-        WHERE id = ?
-        AND status = 'PLAYING'
-    `).run(
-        JSON.stringify(calledBalls),
-        number,
-        matchId
-    );
+            for(const game of activeGames){
 
-    console.log(
-        "🛑 SERVER ENTERED CLAIM WINDOW:",
-        {
-            matchId,
-            currentBall: number,
-            calledCount: calledBalls.length
-        }
-    );
+                let playerCards = [];
 
-    return {
-        type: "SUCCESS",
 
-        body: {
-            success: true,
-            stopped: true,
-            matchStatus: "CLAIM_WINDOW",
-            currentBall: number,
-            calledBalls
-        }
-    };
-}
-            // Save the new shared state
+                try{
+
+                    playerCards =
+                        game.card_numbers
+                            ? JSON.parse(
+                                game.card_numbers
+                              )
+                            : [];
+
+                }catch(error){
+
+                    console.error(
+                        "❌ INVALID PLAYER CARDS:",
+                        {
+                            gameId: game.id,
+                            cardNumbers:
+                                game.card_numbers
+                        }
+                    );
+
+                    playerCards = [];
+
+                }
+
+
+                if(!Array.isArray(playerCards)){
+                    playerCards = [];
+                }
+
+
+                playerCards =
+                    playerCards
+                        .map(Number)
+                        .filter(
+                            cardNumber =>
+                                Number.isInteger(
+                                    cardNumber
+                                ) &&
+                                cardNumber >= 1 &&
+                                cardNumber <= 200
+                        );
+
+
+                for(
+                    const cardNumber
+                    of playerCards
+                ){
+
+                    const card =
+                        generateServerBingoNumbers(
+                            cardNumber
+                        );
+
+
+                    const won =
+                        isServerWinningCard(
+                            card,
+                            calledBalls
+                        );
+
+
+                    if(won){
+
+                        console.log(
+                            "🏆 SERVER DETECTED WINNER:",
+                            {
+                                matchId,
+                                gameId: game.id,
+                                userId: game.user_id,
+                                cardNumber,
+                                calledCount:
+                                    calledBalls.length
+                            }
+                        );
+
+
+                        serverWinnerFound = true;
+
+                        break;
+
+                    }
+
+                }
+
+
+                if(serverWinnerFound){
+                    break;
+                }
+
+            }
+
+
+            // ====================================================
+            // WINNER FOUND
+            // STOP BALL CALLING
+            // ENTER CLAIM WINDOW
+            // ====================================================
+
+            if(serverWinnerFound){
+
+                const result =
+                    db.prepare(`
+                        UPDATE matches
+                        SET
+                            called_balls = ?,
+                            current_ball = ?,
+                            status = 'CLAIM_WINDOW'
+                        WHERE id = ?
+                        AND status = 'PLAYING'
+                    `).run(
+                        JSON.stringify(
+                            calledBalls
+                        ),
+                        number,
+                        matchId
+                    );
+
+
+                if(result.changes === 1){
+
+                    console.log(
+                        "🛑 SERVER ENTERED CLAIM WINDOW:",
+                        {
+                            matchId,
+                            currentBall: number,
+                            calledCount:
+                                calledBalls.length
+                        }
+                    );
+
+                }
+
+
+                // Do NOT process this match again
+                // during this timer cycle.
+                continue;
+
+            }
+
+
+            // ====================================================
+            // NO WINNER
+            // SAVE BALL
+            // ====================================================
+
             const result =
                 db.prepare(`
                     UPDATE matches
@@ -695,23 +781,36 @@ if (serverWinnerFound) {
                         called_balls = ?,
                         current_ball = ?
                     WHERE id = ?
-                      AND status = 'PLAYING'
+                    AND status = 'PLAYING'
                 `).run(
-                    JSON.stringify(calledBalls),
+                    JSON.stringify(
+                        calledBalls
+                    ),
                     number,
-                    match.id
+                    matchId
                 );
 
 
             if(result.changes === 1){
 
                 console.log(
-                    `🎱 SERVER MATCH ${match.id}: CALLED ${number}`
+                    `✅ MATCH ${matchId} SAVED BALL ${number} — TOTAL ${calledBalls.length}`
+                );
+
+            }else{
+
+                console.warn(
+                    "⚠️ BALL SAVE FAILED:",
+                    {
+                        matchId,
+                        number
+                    }
                 );
 
             }
 
         }
+
 
     }catch(error){
 
@@ -725,14 +824,14 @@ if (serverWinnerFound) {
 }
 
 
-// Generate the next ball every 3 seconds
+// ========================================================
+// GENERATE NEXT BALL EVERY 3 SECONDS
+// ========================================================
+
 setInterval(
     processPlayingMatches,
     3000
 );
-
-
-
 // ======================================================
 // TELEGRAM INIT DATA
 // ======================================================
