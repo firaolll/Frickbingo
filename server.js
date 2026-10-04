@@ -546,12 +546,147 @@ function processPlayingMatches(){
                     Math.random() * available.length
                 );
 
+
             const number =
                 available[index];
 
             calledBalls.push(number);
 
+// ========================================================
+// SERVER-SIDE WINNER CHECK
+// ========================================================
 
+let serverWinnerFound = false;
+
+const activeGames =
+    db.prepare(`
+        SELECT
+            id,
+            user_id,
+            card_numbers,
+            status
+        FROM games
+        WHERE match_id = ?
+        AND status = 'PLAYING'
+    `).all(matchId);
+
+for (const game of activeGames) {
+
+    let playerCards = [];
+
+    try {
+
+        playerCards =
+            game.card_numbers
+                ? JSON.parse(game.card_numbers)
+                : [];
+
+    } catch (error) {
+
+        console.error(
+            "❌ INVALID CARD NUMBERS:",
+            {
+                gameId: game.id,
+                card_numbers: game.card_numbers
+            }
+        );
+
+        playerCards = [];
+    }
+
+    if (!Array.isArray(playerCards)) {
+        playerCards = [];
+    }
+
+    playerCards =
+        playerCards
+            .map(Number)
+            .filter(
+                cardNumber =>
+                    Number.isInteger(cardNumber) &&
+                    cardNumber >= 1 &&
+                    cardNumber <= 200
+            );
+
+    for (const cardNumber of playerCards) {
+
+        const card =
+            generateServerBingoNumbers(
+                cardNumber
+            );
+
+        const won =
+            isServerWinningCard(
+                card,
+                calledBalls
+            );
+
+        if (won) {
+
+            console.log(
+                "🏆 SERVER DETECTED WINNER:",
+                {
+                    matchId,
+                    gameId: game.id,
+                    userId: game.user_id,
+                    cardNumber,
+                    calledCount: calledBalls.length
+                }
+            );
+
+            serverWinnerFound = true;
+
+            break;
+        }
+    }
+
+    if (serverWinnerFound) {
+        break;
+    }
+}
+
+
+// ========================================================
+// WINNER FOUND → CLAIM WINDOW
+// ========================================================
+
+if (serverWinnerFound) {
+
+    db.prepare(`
+        UPDATE matches
+        SET
+            called_balls = ?,
+            current_ball = ?,
+            status = 'CLAIM_WINDOW'
+        WHERE id = ?
+        AND status = 'PLAYING'
+    `).run(
+        JSON.stringify(calledBalls),
+        number,
+        matchId
+    );
+
+    console.log(
+        "🛑 SERVER ENTERED CLAIM WINDOW:",
+        {
+            matchId,
+            currentBall: number,
+            calledCount: calledBalls.length
+        }
+    );
+
+    return {
+        type: "SUCCESS",
+
+        body: {
+            success: true,
+            stopped: true,
+            matchStatus: "CLAIM_WINDOW",
+            currentBall: number,
+            calledBalls
+        }
+    };
+}
             // Save the new shared state
             const result =
                 db.prepare(`
@@ -2266,36 +2401,6 @@ if (
 
                 /*
                  * ======================================
-                 * ALL 75 NUMBERS CALLED
-                 * ======================================
-                 */
-
-                if (
-                    calledBalls.length >= 75
-                ) {
-
-                    return {
-                        type: "SUCCESS",
-                        body: {
-
-                            success: true,
-
-                            matchStatus:
-                                "PLAYING",
-
-                            currentBall:
-                                null,
-
-                            calledBalls
-
-                        }
-                    };
-
-                }
-
-
-                /*
-                 * ======================================
                  * FIND AVAILABLE NUMBERS
                  * ======================================
                  */
@@ -2362,7 +2467,183 @@ if (
                 calledBalls.push(
                     number
                 );
+/*
+ * ======================================
+ * SERVER-SIDE WINNER DETECTION
+ *
+ * Check every player's cards immediately
+ * after the new ball is added.
+ * ======================================
+ */
 
+let serverWinnerFound = false;
+
+const activeGames =
+    db.prepare(`
+        SELECT
+            id,
+            user_id,
+            card_numbers,
+            status
+        FROM games
+        WHERE match_id = ?
+          AND status = 'PLAYING'
+    `).all(matchId);
+
+
+for(const game of activeGames){
+
+    let playerCards = [];
+
+    try{
+
+        playerCards =
+            game.card_numbers
+                ? JSON.parse(
+                    game.card_numbers
+                )
+                : [];
+
+    }catch(error){
+
+        console.error(
+            "❌ SERVER CARD JSON ERROR:",
+            {
+                gameId: game.id,
+                error: error.message
+            }
+        );
+
+        playerCards = [];
+
+    }
+
+
+    if(!Array.isArray(playerCards)){
+        playerCards = [];
+    }
+
+
+    playerCards =
+        playerCards
+            .map(Number)
+            .filter(
+                cardNumber =>
+                    Number.isInteger(cardNumber) &&
+                    cardNumber >= 1 &&
+                    cardNumber <= 200
+            );
+
+
+    for(const cardNumber of playerCards){
+
+        const card =
+            generateServerBingoNumbers(
+                cardNumber
+            );
+
+
+        const won =
+            isServerWinningCard(
+                card,
+                calledBalls
+            );
+
+
+        if(won){
+
+            console.log(
+                "🏆 SERVER DETECTED WINNER:",
+                {
+                    matchId,
+                    gameId: game.id,
+                    userId: game.user_id,
+                    cardNumber,
+                    calledCount:
+                        calledBalls.length
+                }
+            );
+
+            serverWinnerFound = true;
+
+            break;
+
+        }
+
+    }
+
+
+    if(serverWinnerFound){
+        break;
+    }
+
+}
+
+
+/*
+ * ======================================
+ * SAVE SHARED SERVER STATE
+ * ======================================
+ */
+
+if(serverWinnerFound){
+
+    db.prepare(`
+        UPDATE matches
+
+        SET
+            called_balls = ?,
+            current_ball = ?,
+            status = 'CLAIM_WINDOW'
+
+        WHERE id = ?
+
+          AND status = 'PLAYING'
+    `).run(
+
+        JSON.stringify(
+            calledBalls
+        ),
+
+        number,
+
+        matchId
+
+    );
+
+
+    console.log(
+        "🛑 SERVER ENTERED CLAIM WINDOW:",
+        {
+            matchId,
+            currentBall: number,
+            calledCount:
+                calledBalls.length
+        }
+    );
+
+
+    return {
+        type: "SUCCESS",
+
+        body: {
+
+            success: true,
+
+            stopped: true,
+
+            matchStatus:
+                "CLAIM_WINDOW",
+
+            currentBall:
+                number,
+
+            calledBalls
+
+        }
+    };
+
+}
 
                 /*
                  * ======================================
@@ -2391,7 +2672,65 @@ if (
                     matchId
 
                 );
+/*
+ * ======================================
+ * ALL 75 NUMBERS CALLED — NO WINNER
+ * ======================================
+ */
 
+if(
+    calledBalls.length >= 75
+){
+
+    db.prepare(`
+        UPDATE matches
+
+        SET
+            status = 'FINISHED',
+            current_ball = ?
+
+        WHERE id = ?
+
+          AND status = 'PLAYING'
+    `).run(
+        number,
+        matchId
+    );
+
+
+    console.log(
+        "🏁 ALL 75 BALLS CALLED — NO WINNER:",
+        {
+            matchId,
+            calledCount:
+                calledBalls.length
+        }
+    );
+
+
+    return {
+        type: "SUCCESS",
+
+        body: {
+
+            success: true,
+
+            matchStatus:
+                "FINISHED",
+
+            currentBall:
+                number,
+
+            calledBalls,
+
+            winnerCount: 0,
+
+            paid: false
+
+        }
+    };
+
+}
 
                 console.log(
                     "🎱 SERVER CALLED BALL:",
@@ -3321,7 +3660,10 @@ function generateServerBingoNumbers(cardNumber){
 
     return grid;
 }
-
+console.log(
+    "🧪 SERVER CARD 48 TEST:",
+    generateServerBingoNumbers(48)
+);
 /* ==================================================
    SERVER MARK CHECK
    Must match frontend isMarked()

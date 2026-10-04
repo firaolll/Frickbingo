@@ -9107,7 +9107,9 @@ winnerClaimInProgress = true;
 
     /* ==================================================
        SERVER REJECTED THE WIN
-       ================================================== */
+ /* ==================================================
+   SERVER REJECTED WINNER
+   ================================================== */
 if(
     !data ||
     data.success !== true
@@ -9115,10 +9117,20 @@ if(
 
     console.warn(
         "❌ SERVER REJECTED WINNER:",
-        JSON.stringify(data, null, 2)
+        JSON.stringify(
+            data,
+            null,
+            2
+        )
     );
 
-    winnerClaimInProgress = false;
+    /*
+     * Keep the claim locked.
+     *
+     * This prevents checkWinner() from repeatedly
+     * sending /api/game/finish every 500ms.
+     */
+    winnerClaimInProgress = true;
 
     showToast(
         data?.error ||
@@ -9127,7 +9139,6 @@ if(
 
     return;
 }
-
     /* ==================================================
        SERVER CONFIRMED WIN
        ================================================== */
