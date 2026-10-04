@@ -334,7 +334,37 @@ function getMatchCountdown(match) {
 
 }
 
+// ============================================================
+// SERVER-GENERATED BINGO CARDS
+// ============================================================
 
+try {
+
+    db.exec(`
+        ALTER TABLE games
+        ADD COLUMN generated_cards TEXT DEFAULT '{}'
+    `);
+
+    console.log(
+        "✅ Added generated_cards column to games"
+    );
+
+} catch(error) {
+
+    if (
+        !String(error.message)
+            .toLowerCase()
+            .includes("duplicate column")
+    ) {
+
+        console.error(
+            "❌ generated_cards migration error:",
+            error
+        );
+
+    }
+
+}
 // ======================================================
 // PROCESS WAITING MATCHES
 // ======================================================
@@ -1488,7 +1518,20 @@ if (!existingGame) {
                 );
 
             }
+const generatedCards =
+    generateServerCards(
+        cardNumbers
+    );
 
+console.log(
+    "🎴 SERVER GENERATED PLAYER CARDS:",
+    {
+        userId,
+        matchId,
+        cardNumbers,
+        generatedCards
+    }
+);
             db.prepare(`
                 INSERT INTO games (
     match_id,
@@ -1496,13 +1539,15 @@ if (!existingGame) {
     stake,
     cards,
     card_numbers,
+    generated_cards,
     result,
     prize,
     status,
     play_spent,
     main_spent
 )
-                VALUES (
+VALUES (
+    ?,
     ?,
     ?,
     ?,
@@ -1515,14 +1560,15 @@ if (!existingGame) {
     ?
 )
             `).run(
-                matchId,
-userId,
-stake,
-cards,
-JSON.stringify(cardNumbers),
-playSpent,
-mainSpent
-            );
+    matchId,
+    userId,
+    stake,
+    cards,
+    JSON.stringify(cardNumbers),
+    JSON.stringify(generatedCards),
+    playSpent,
+    mainSpent
+);
 
         });
 
@@ -1634,43 +1680,54 @@ mainSpent
                 // SAVE LATEST CARD SELECTION
                 // -----------------------------------------
 
-                db.prepare(`
-                    UPDATE games
-                    SET
-                        cards = ?,
+               const generatedCards =
+    generateServerCards(
+        cardNumbers
+    );
 
-                        card_numbers = ?,
+console.log(
+    "🎴 SERVER GENERATED UPDATED CARDS:",
+    {
+        userId,
+        matchId,
+        cardNumbers,
+        generatedCards
+    }
+);
 
-                        play_spent =
-                            MAX(
-                                0,
-                                COALESCE(
-                                    play_spent,
-                                    0
-                                ) - ?
-                            ),
+db.prepare(`
+    UPDATE games
+    SET
+        cards = ?,
 
-                        main_spent =
-                            MAX(
-                                0,
-                                COALESCE(
-                                    main_spent,
-                                    0
-                                ) - ?
-                            )
+        card_numbers = ?,
 
-                    WHERE id = ?
+        generated_cards = ?,
 
-                    AND user_id = ?
-                `).run(
-                    newCards,
-                    JSON.stringify(cardNumbers),
-                    playRefund,
-                    mainRefund,
-                    existingGame.id,
-                    userId
-                );
+        play_spent =
+            COALESCE(
+                play_spent,
+                0
+            ) + ?,
 
+        main_spent =
+            COALESCE(
+                main_spent,
+                0
+            ) + ?
+
+    WHERE id = ?
+
+    AND user_id = ?
+`).run(
+    newCards,
+    JSON.stringify(cardNumbers),
+    JSON.stringify(generatedCards),
+    additionalPlaySpent,
+    additionalMainSpent,
+    existingGame.id,
+    userId
+);
             });
 
 
@@ -1919,19 +1976,76 @@ mainSpent
                 FROM matches
                 WHERE id = ?
             `).get(matchId);
+const playerGame =
+    db.prepare(`
+        SELECT
+            id,
+            card_numbers,
+            generated_cards
+        FROM games
+        WHERE match_id = ?
+        AND user_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+    `).get(
+        matchId,
+        userId
+    );
+
+let generatedCards = {};
+
+try {
+
+    generatedCards =
+        playerGame?.generated_cards
+            ? JSON.parse(
+                playerGame.generated_cards
+            )
+            : {};
+
+} catch(error) {
+
+    generatedCards = {};
+
+}
 
         return res.json({
-            success: true,
-            matchId: matchId,
-            gameId: matchId,
-            sharedGameId: matchId,
-            stake: num(updatedMatch.stake),
-            status: updatedMatch.status,
-            playerCount: playerCount,
-            minPlayers: MIN_PLAYERS,
-            countdown: getMatchCountdown(updatedMatch)
-        });
 
+    success: true,
+
+    matchId:
+        matchId,
+
+    gameId:
+        matchId,
+
+    sharedGameId:
+        matchId,
+
+    stake:
+        num(updatedMatch.stake),
+
+    status:
+        updatedMatch.status,
+
+    playerCount:
+        playerCount,
+
+    minPlayers:
+        MIN_PLAYERS,
+
+    countdown:
+        getMatchCountdown(
+            updatedMatch
+        ),
+
+    cardNumbers:
+        cardNumbers,
+
+    generatedCards:
+        generatedCards
+
+});
     } catch (err) {
 
         console.error(
@@ -3885,7 +3999,34 @@ function isServerMarked(
     );
 }
 
+function generateServerCards(cardNumbers){
 
+    const generatedCards = {};
+
+    for(
+        const cardNumber
+        of cardNumbers
+    ){
+
+        const number =
+            Number(cardNumber);
+
+        if(
+            !Number.isInteger(number) ||
+            number < 1 ||
+            number > 200
+        ){
+            continue;
+        }
+
+        generatedCards[number] =
+            generateServerBingoNumbers(
+                number
+            );
+    }
+
+    return generatedCards;
+}
 /* ==================================================
    SERVER WIN CHECK
    Must match frontend isWinningCard()
