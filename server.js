@@ -2134,6 +2134,158 @@ app.get("/api/match/:matchId", auth, (req, res) => {
         WHERE g.match_id = ?
         ORDER BY g.id ASC
     `).all(matchId);
+
+    // ========================================================
+// FIND CURRENT WINNERS FROM SHARED MATCH STATE
+// ========================================================
+
+let winnerCards = [];
+
+if (
+    String(match.status || "").toUpperCase() ===
+    "CLAIM_WINDOW"
+) {
+
+    let calledBalls = [];
+
+    try {
+
+        calledBalls =
+            match.called_balls
+                ? JSON.parse(match.called_balls)
+                : [];
+
+    } catch (error) {
+
+        console.error(
+            "❌ WINNER BALL JSON ERROR:",
+            error
+        );
+
+        calledBalls = [];
+
+    }
+
+    if (!Array.isArray(calledBalls)) {
+        calledBalls = [];
+    }
+
+    calledBalls =
+        calledBalls
+            .map(Number)
+            .filter(
+                number =>
+                    Number.isInteger(number) &&
+                    number >= 1 &&
+                    number <= 75
+            );
+
+
+    console.log(
+        "🔎 CHECKING SHARED WINNERS:",
+        {
+            matchId,
+            calledCount: calledBalls.length
+        }
+    );
+
+
+    for (const game of games) {
+
+        let cardNumbers = [];
+
+        try {
+
+            cardNumbers =
+                game.card_numbers
+                    ? JSON.parse(game.card_numbers)
+                    : [];
+
+        } catch (error) {
+
+            console.error(
+                "❌ PLAYER CARD JSON ERROR:",
+                {
+                    gameId: game.id,
+                    error: error.message
+                }
+            );
+
+            cardNumbers = [];
+
+        }
+
+        if (!Array.isArray(cardNumbers)) {
+            cardNumbers = [];
+        }
+
+        cardNumbers =
+            cardNumbers
+                .map(Number)
+                .filter(
+                    cardNumber =>
+                        Number.isInteger(cardNumber) &&
+                        cardNumber >= 1 &&
+                        cardNumber <= 200
+                );
+
+
+        for (const cardNumber of cardNumbers) {
+
+            const card =
+                generateServerBingoNumbers(
+                    cardNumber
+                );
+
+            const won =
+                isServerWinningCard(
+                    card,
+                    calledBalls
+                );
+
+
+            if (won) {
+
+                winnerCards.push({
+
+                    gameId:
+                        Number(game.id),
+
+                    userId:
+                        Number(game.user_id),
+
+                    cardNumber:
+                        Number(cardNumber),
+
+                    username:
+                        game.username || null,
+
+                    firstName:
+                        game.first_name || null,
+
+                    prize:
+                        Number(game.prize || 0)
+
+                });
+
+
+                console.log(
+                    "🏆 SHARED WINNER FOUND:",
+                    {
+                        matchId,
+                        gameId: game.id,
+                        userId: game.user_id,
+                        cardNumber
+                    }
+                );
+
+            }
+
+        }
+
+    }
+
+}
 players.forEach(game => {
 
     try {
@@ -2172,12 +2324,15 @@ players.forEach(game => {
             g.card_numbers,
             g.status,
             g.result,
-            g.prize
+            g.prize,
+            u.username,
+            u.first_name
         FROM games g
+        LEFT JOIN users u
+            ON u.id = g.user_id
         WHERE g.match_id = ?
         ORDER BY g.id ASC
     `).all(matchId);
-
         const myGame =
             players.find(
                 player =>
@@ -2233,11 +2388,14 @@ console.log(
                     num(match.prize_pool),
 
                 winnerCount:
-                    match.winner_count,
+    winnerCards.length ||
+    Number(match.winner_count || 0),
 
-                paid:
-                    Boolean(match.paid),
+winnerCards:
+    winnerCards,
 
+paid:
+    Boolean(match.paid),
                 playerCount:
                     players.length,
                 isCaller:
@@ -2902,19 +3060,15 @@ for(const game of activeGames){
  * SAVE SHARED SERVER STATE
  * ======================================
  */
-
-if(serverWinnerFound){
+if (serverWinnerFound) {
 
     db.prepare(`
         UPDATE matches
-
         SET
             called_balls = ?,
             current_ball = ?,
             status = 'CLAIM_WINDOW'
-
         WHERE id = ?
-
           AND status = 'PLAYING'
     `).run(
 
@@ -2929,18 +3083,124 @@ if(serverWinnerFound){
     );
 
 
-    console.log(
-        "🛑 SERVER ENTERED CLAIM WINDOW:",
-        {
-            matchId,
-            currentBall: number,
-            calledCount:
-                calledBalls.length
+    // ========================================================
+    // FIND ALL WINNERS AFTER SAVING THE WINNING BALL
+    // ========================================================
+
+    const winnerCards = [];
+
+
+    const winnerGames =
+        db.prepare(`
+            SELECT
+                g.id,
+                g.user_id,
+                g.card_numbers,
+                g.prize,
+                u.username,
+                u.first_name
+            FROM games g
+            LEFT JOIN users u
+                ON u.id = g.user_id
+            WHERE g.match_id = ?
+              AND g.status = 'PLAYING'
+        `).all(matchId);
+
+
+    for (const game of winnerGames) {
+
+        let cardNumbers = [];
+
+        try {
+
+            cardNumbers =
+                game.card_numbers
+                    ? JSON.parse(
+                        game.card_numbers
+                    )
+                    : [];
+
+        } catch (error) {
+
+            cardNumbers = [];
+
         }
+
+
+        if (!Array.isArray(cardNumbers)) {
+            cardNumbers = [];
+        }
+
+
+        for (const cardNumberRaw of cardNumbers) {
+
+            const cardNumber =
+                Number(cardNumberRaw);
+
+
+            if (
+                !Number.isInteger(cardNumber) ||
+                cardNumber < 1 ||
+                cardNumber > 200
+            ) {
+                continue;
+            }
+
+
+            const card =
+                generateServerBingoNumbers(
+                    cardNumber
+                );
+
+
+            const won =
+                isServerWinningCard(
+                    card,
+                    calledBalls
+                );
+
+
+            if (won) {
+
+                winnerCards.push({
+
+                    gameId:
+                        Number(game.id),
+
+                    userId:
+                        Number(game.user_id),
+
+                    cardNumber:
+                        cardNumber,
+
+                    username:
+                        game.username || null,
+
+                    firstName:
+                        game.first_name || null,
+
+                    prize:
+                        Number(
+                            game.prize || 0
+                        )
+
+                });
+
+            }
+
+        }
+
+    }
+
+
+    console.log(
+        "🏆 SHARED MATCH WINNERS:",
+        winnerCards
     );
 
 
     return {
+
         type: "SUCCESS",
 
         body: {
@@ -2955,13 +3215,18 @@ if(serverWinnerFound){
             currentBall:
                 number,
 
-            calledBalls
+            calledBalls,
+
+            winnerCount:
+                winnerCards.length,
+
+            winnerCards
 
         }
+
     };
 
 }
-
                 /*
                  * ======================================
                  * SAVE SHARED SERVER STATE

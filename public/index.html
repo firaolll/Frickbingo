@@ -7343,11 +7343,11 @@ let sharedSyncInterval = null;
 async function syncSharedGameState(){
 
     /*
-     * IMPORTANT:
-     * Do not stop shared synchronization just because
-     * the winner overlay is showing.
+     * =====================================================
+     * SHARED MATCH SYNCHRONIZATION
      *
-     * The server is the source of truth for the match.
+     * SERVER IS THE SOURCE OF TRUTH
+     * =====================================================
      */
 
     if(
@@ -7357,6 +7357,7 @@ async function syncSharedGameState(){
         return;
     }
 
+
     try{
 
         const data =
@@ -7364,6 +7365,7 @@ async function syncSharedGameState(){
                 "/api/match/" +
                 currentGameId
             );
+
 
         if(!data){
             return;
@@ -7393,11 +7395,32 @@ async function syncSharedGameState(){
             ).toUpperCase();
 
 
+        // =====================================================
+        // WINNER INFORMATION
+        // =====================================================
+
+        const winnerCards =
+            Array.isArray(
+                match.winnerCards
+            )
+                ? match.winnerCards
+                : (
+                    Array.isArray(
+                        data.winnerCards
+                    )
+                        ? data.winnerCards
+                        : []
+                );
+
+
         console.log(
             "🔄 SHARED MATCH SYNC:",
             {
-                matchId: currentGameId,
+                matchId:
+                    currentGameId,
+
                 matchStatus,
+
                 calledCount:
                     Array.isArray(
                         match.calledBalls ??
@@ -7407,16 +7430,267 @@ async function syncSharedGameState(){
                             match.calledBalls ??
                             data.calledBalls
                         ).length
-                        : 0
+                        : 0,
+
+                winnerCount:
+                    winnerCards.length,
+
+                winnerCards:
+                    winnerCards
             }
         );
+
+
+        // =====================================================
+        // CLAIM WINDOW
+        //
+        // SERVER ALREADY FOUND ONE OR MORE WINNERS
+        // =====================================================
+
+        if(
+            matchStatus ===
+            "CLAIM_WINDOW"
+        ){
+
+            console.log(
+                "🛑 CLAIM WINDOW ACTIVE"
+            );
+
+
+            console.log(
+                "🏆 SHARED WINNERS:",
+                winnerCards
+            );
+
+
+            // -----------------------------------------------
+            // STOP AUTOMATIC BALL CALLING
+            // -----------------------------------------------
+
+            gameRunning = false;
+
+
+            if(
+                typeof stopAutoCalling ===
+                "function"
+            ){
+
+                stopAutoCalling();
+
+            }
+
+
+            // -----------------------------------------------
+            // SYNC CALLED BALLS
+            // -----------------------------------------------
+
+            let serverCalled =
+                match.calledBalls ??
+                match.called_balls ??
+                data.calledBalls ??
+                data.called_balls ??
+                [];
+
+
+            if(
+                typeof serverCalled ===
+                "string"
+            ){
+
+                try{
+
+                    serverCalled =
+                        JSON.parse(
+                            serverCalled
+                        );
+
+                }catch(error){
+
+                    console.error(
+                        "❌ CLAIM WINDOW BALL PARSE ERROR:",
+                        error
+                    );
+
+                    serverCalled = [];
+
+                }
+
+            }
+
+
+            if(
+                Array.isArray(serverCalled)
+            ){
+
+                calledNumbers =
+                    serverCalled
+                        .map(Number)
+                        .filter(
+                            number =>
+                                Number.isInteger(
+                                    number
+                                ) &&
+                                number >= 1 &&
+                                number <= 75
+                        );
+
+            }
+
+
+            // -----------------------------------------------
+            // CURRENT BALL
+            // -----------------------------------------------
+
+            const rawServerBall =
+                match.currentBall ??
+                match.current_ball ??
+                data.currentBall ??
+                data.current_ball;
+
+
+            const serverBall =
+                Number(
+                    rawServerBall
+                );
+
+
+            if(
+                Number.isInteger(serverBall) &&
+                serverBall >= 1 &&
+                serverBall <= 75
+            ){
+
+                lastCalledNumber =
+                    serverBall;
+
+
+                const letter =
+                    getBingoLetter(
+                        serverBall
+                    );
+
+
+                const ballText =
+                    `${letter}-${serverBall}`;
+
+
+                const display =
+                    document.getElementById(
+                        "gameBall"
+                    );
+
+
+                if(display){
+
+                    display.textContent =
+                        ballText;
+
+                }
+
+
+                const lastCalled =
+                    document.getElementById(
+                        "lastCalled"
+                    );
+
+
+                if(lastCalled){
+
+                    lastCalled.textContent =
+                        ballText;
+
+                }
+
+            }
+
+
+            // -----------------------------------------------
+            // UPDATE BOARD
+            // -----------------------------------------------
+
+            renderBigBoard();
+
+            markPlayerCards();
+
+            updateAllDisplays();
+
+
+            const calledCount =
+                document.getElementById(
+                    "calledCount"
+                );
+
+
+            if(calledCount){
+
+                calledCount.textContent =
+                    calledNumbers.length;
+
+            }
+
+
+            const calledProgress =
+                document.getElementById(
+                    "calledProgress"
+                );
+
+
+            if(calledProgress){
+
+                calledProgress.style.width =
+                    (
+                        calledNumbers.length /
+                        75 *
+                        100
+                    ) + "%";
+
+            }
+
+
+            // =================================================
+            // IMPORTANT
+            //
+            // DO NOT CALL checkWinner() HERE
+            //
+            // The server has already determined the winner.
+            // =================================================
+
+            if(
+                winnerCards.length > 0
+            ){
+
+                console.log(
+                    "🏆 SERVER WINNER CONFIRMED:",
+                    winnerCards
+                );
+
+
+                handleSharedWinners(
+                    winnerCards
+                );
+
+            }else{
+
+                console.warn(
+                    "⚠️ CLAIM_WINDOW BUT NO WINNER DATA YET"
+                );
+
+            }
+
+
+            return;
+
+        }
 
 
         // =====================================================
         // FINISHED
         // =====================================================
 
-        if(matchStatus === "FINISHED"){
+        if(
+            matchStatus ===
+            "FINISHED"
+        ){
 
             console.log(
                 "🏁 SHARED MATCH FINISHED:",
@@ -7424,15 +7698,14 @@ async function syncSharedGameState(){
             );
 
 
-            // Stop all game activity
             gameRunning = false;
+
 
             stopSharedGameSync();
 
             stopAutoCalling();
 
 
-            // Stop selection timer if it exists
             if(
                 typeof stopSelectionTimer ===
                 "function"
@@ -7443,130 +7716,49 @@ async function syncSharedGameState(){
             }
 
 
-            // This player is no longer actively playing
             actualGameStarted = false;
 
 
-            // =================================================
-            // GET WINNING CARD
-            // =================================================
+            // -----------------------------------------------
+            // GET WINNERS
+            // -----------------------------------------------
 
-            let winnerCardNumber =
-                match.winnerCardNumber ??
-                match.winner_card_number ??
-                data.winnerCardNumber ??
-                data.winner_card_number ??
-                null;
-
-
-            // =================================================
-            // FALLBACK: FIND WINNER FROM PLAYERS
-            // =================================================
-
-            if(
-                winnerCardNumber == null
-            ){
-
-                const players =
-                    Array.isArray(data.players)
-                        ? data.players
-                        : (
-                            Array.isArray(match.players)
-                                ? match.players
-                                : []
-                        );
-
-
-                const winner =
-                    players.find(
-                        player =>
-                            String(
-                                player.result || ""
-                            ).toUpperCase() === "WIN" ||
-                            String(
-                                player.status || ""
-                            ).toUpperCase() === "PAID"
-                    );
-
-
-                if(winner){
-
-                    winnerCardNumber =
-                        winner.winnerCardNumber ??
-                        winner.winner_card_number ??
-                        null;
-
-                }
-
-            }
-
-
-            if(
-                winnerCardNumber != null
-            ){
-
-                winnerCardNumber =
-                    Number(
-                        winnerCardNumber
-                    );
-
-            }
+            const finalWinnerCards =
+                winnerCards;
 
 
             console.log(
-                "🏆 FINAL WINNER CARD:",
-                winnerCardNumber
+                "🏆 FINAL WINNERS:",
+                finalWinnerCards
             );
 
 
-            // =================================================
-            // THIS PLAYER IS NOT THE WINNER
-            // =================================================
+            // -----------------------------------------------
+            // SHOW RESULT
+            // -----------------------------------------------
 
-            if(!winnerShown){
+            if(
+                finalWinnerCards.length > 0
+            ){
+
+                handleSharedWinners(
+                    finalWinnerCards
+                );
+
+            }else{
 
                 console.log(
-                    "😢 LOSER — RETURNING TO PAGE 2"
+                    "😢 MATCH FINISHED — NO WINNER"
                 );
 
 
-                // Make sure winner overlay isn't visible
-                document
-                    .getElementById(
-                        "winnerOverlay"
-                    )
-                    ?.classList.remove("show");
+                if(!winnerShown){
 
+                    showLoserScreen(
+                        null
+                    );
 
-                // Show loser result
-                showLoserScreen(
-                    winnerCardNumber
-                );
-
-
-                // Give UI a moment to display result,
-                // then return to card selection.
-                setTimeout(
-                    async () => {
-
-                        try{
-
-                            await refreshBalance();
-
-                            updateAllDisplays();
-
-                        }catch(error){
-
-                            console.error(
-                                "❌ LOSER BALANCE REFRESH ERROR:",
-                                error
-                            );
-
-                        }
-
-                    },
-                    300
-                );
+                }
 
             }
 
@@ -7748,20 +7940,14 @@ async function syncSharedGameState(){
 
 
         // =====================================================
-        // CHECK BINGO
+        // PLAYING
+        //
+        // ONLY HERE DO WE CHECK OUR OWN CARDS
         // =====================================================
 
-        /*
-         * Keep checking during CLAIM_WINDOW.
-         *
-         * New balls are stopped by the server,
-         * but players can still submit a valid Bingo
-         * using the already-called balls.
-         */
-
         if(
-            matchStatus === "PLAYING" ||
-            matchStatus === "CLAIM_WINDOW"
+            matchStatus ===
+            "PLAYING"
         ){
 
             checkWinner();
@@ -7777,6 +7963,138 @@ async function syncSharedGameState(){
         );
 
     }
+
+}
+
+function handleSharedWinners(
+    winnerCards
+){
+
+    if(
+        !Array.isArray(winnerCards) ||
+        winnerCards.length === 0
+    ){
+
+        return;
+
+    }
+
+
+    console.log(
+        "🏆 HANDLING SHARED WINNERS:",
+        winnerCards
+    );
+
+
+    // Prevent showing the result repeatedly
+    if(
+        window.sharedWinnerHandled
+    ){
+
+        return;
+
+    }
+
+
+    window.sharedWinnerHandled =
+        true;
+
+
+    // =====================================================
+    // STOP GAME
+    // =====================================================
+
+    gameRunning = false;
+
+
+    stopAutoCalling();
+
+
+    // =====================================================
+    // FIND THIS PLAYER'S WIN
+    // =====================================================
+
+    const myUserId =
+        Number(
+            window.currentUser?.id ??
+            currentUser?.id ??
+            0
+        );
+
+
+    const myWinner =
+        winnerCards.find(
+            winner =>
+                Number(
+                    winner.userId
+                ) === myUserId
+        ) || null;
+
+
+    // =====================================================
+    // FIRST WINNER
+    // =====================================================
+
+    const firstWinner =
+        winnerCards[0];
+
+
+    console.log(
+        "👤 MY WINNER:",
+        myWinner
+    );
+
+
+    console.log(
+        "🏆 FIRST SHARED WINNER:",
+        firstWinner
+    );
+
+
+    // =====================================================
+    // THIS PLAYER WON
+    // =====================================================
+
+    if(myWinner){
+
+        console.log(
+            "🎉 THIS PLAYER WON!",
+            myWinner
+        );
+
+
+        winnerShown = true;
+
+
+        // Use your existing winner UI
+        showWinner(
+            myWinner.cardNumber,
+            myWinner.prize
+        );
+
+
+        return;
+
+    }
+
+
+    // =====================================================
+    // ANOTHER PLAYER WON
+    // =====================================================
+
+    console.log(
+        "😢 ANOTHER PLAYER WON:",
+        firstWinner
+    );
+
+
+    // Make sure our winner flag is false
+    winnerShown = false;
+
+
+    showLoserScreen(
+        firstWinner.cardNumber
+    );
 
 }
 /* ==================================================
