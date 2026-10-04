@@ -5049,6 +5049,12 @@ function renderBigBoard(){
  * =========================================
  */
 
+/*
+ * =========================================
+ * MATCH FINISHED
+ * =========================================
+ */
+
 if(
     String(
         data.matchStatus || ""
@@ -5057,15 +5063,22 @@ if(
 ){
 
     console.log(
-        "🏁 MATCH FINISHED — STOP CLAIM SYNC"
+        "🏁 MATCH FINISHED — STOP CLAIM SYNC",
+        data
     );
 
 
-    // Stop claim-window polling
+    // =========================================
+    // STOP CLAIM WINDOW POLLING
+    // =========================================
+
     stopClaimWindowSync();
 
 
-    // Stop winner countdown if still running
+    // =========================================
+    // STOP WINNER RESET TIMER
+    // =========================================
+
     if(winnerResetInterval){
 
         clearInterval(
@@ -5077,9 +5090,152 @@ if(
     }
 
 
-    /*
-     * Refresh final balance after payout.
-     */
+    // =========================================
+    // STOP GAME / AUTO CALLING
+    // =========================================
+
+    gameRunning = false;
+
+
+    if(autoCallInterval){
+
+        clearInterval(
+            autoCallInterval
+        );
+
+        autoCallInterval = null;
+
+    }
+
+
+    // =========================================
+    // WINNER INFORMATION FROM SERVER
+    // =========================================
+
+    const winnerCards =
+        Array.isArray(
+            data.winnerCards
+        )
+            ? data.winnerCards
+            : [];
+
+
+    console.log(
+        "🏆 FINAL WINNER CARDS:",
+        winnerCards
+    );
+
+
+    // =========================================
+    // CURRENT TELEGRAM USER
+    // =========================================
+
+    const myUserId =
+        Number(
+            window.Telegram?.WebApp
+                ?.initDataUnsafe
+                ?.user
+                ?.id
+        );
+
+
+    // =========================================
+    // CHECK WHETHER THIS PLAYER WON
+    // =========================================
+
+    const myWinningCards =
+        winnerCards.filter(
+            winner =>
+                Number(
+                    winner.userId
+                ) === myUserId
+        );
+
+
+    // =========================================
+    // PLAYER WON
+    // =========================================
+
+    if(
+        myWinningCards.length > 0
+    ){
+
+        console.log(
+            "🏆 THIS PLAYER IS A WINNER:",
+            myWinningCards
+        );
+
+
+        winnerShown = true;
+
+
+        const winningCardNumber =
+            Number(
+                myWinningCards[0]
+                    .cardNumber
+            );
+
+
+        showToast(
+            "🏆 YOU WON!"
+        );
+
+
+        console.log(
+            "🏆 MY WINNING CARD:",
+            winningCardNumber
+        );
+
+    }
+
+
+    // =========================================
+    // PLAYER LOST
+    // =========================================
+
+    else{
+
+        console.log(
+            "😢 THIS PLAYER LOST"
+        );
+
+
+        winnerShown = false;
+
+
+        // Get all winning card numbers
+        const winningCardNumbers =
+            winnerCards.map(
+                winner =>
+                    Number(
+                        winner.cardNumber
+                    )
+            );
+
+
+        if(
+            winningCardNumbers.length > 0
+        ){
+
+            showToast(
+                "😢 You lost. Winner card: " +
+                winningCardNumbers.join(", ")
+            );
+
+        }else{
+
+            showToast(
+                "😢 Bingo finished. You did not win."
+            );
+
+        }
+
+    }
+
+
+    // =========================================
+    // REFRESH FINAL BALANCE
+    // =========================================
 
     if(
         typeof refreshBalance ===
@@ -5104,8 +5260,6 @@ if(
     return;
 
 }
-
-
                 }catch(error){
 
                     console.error(

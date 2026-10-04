@@ -2240,87 +2240,191 @@ app.post("/api/match/:matchId/call",
                     };
 
                 }
+if (
+    String(match.status).toUpperCase() ===
+    "FINISHED"
+) {
+
+    let calledBalls = [];
+
+    try {
+
+        calledBalls =
+            match.called_balls
+                ? JSON.parse(
+                    match.called_balls
+                  )
+                : [];
+
+    } catch(error) {
+
+        calledBalls = [];
+
+    }
 
 
-                /*
-                 * ======================================
-                 * MATCH FINISHED
-                 * ======================================
-                 */
+    if(!Array.isArray(calledBalls)) {
 
-                if (
-                    String(match.status).toUpperCase() ===
-                    "FINISHED"
-                ) {
+        calledBalls = [];
 
-                    let calledBalls = [];
-
-                    try {
-
-                        calledBalls =
-                            match.called_balls
-                                ? JSON.parse(
-                                    match.called_balls
-                                )
-                                : [];
-
-                    } catch(error) {
-
-                        calledBalls = [];
-
-                    }
+    }
 
 
-                    if (!Array.isArray(calledBalls)) {
-
-                        calledBalls = [];
-
-                    }
-
-
-                    calledBalls =
-                        calledBalls
-                            .map(Number)
-                            .filter(
-                                number =>
-                                    Number.isInteger(number) &&
-                                    number >= 1 &&
-                                    number <= 75
-                            );
+    calledBalls =
+        calledBalls
+            .map(Number)
+            .filter(
+                number =>
+                    Number.isInteger(number) &&
+                    number >= 1 &&
+                    number <= 75
+            );
 
 
-                    return {
-                        type: "SUCCESS",
-                        body: {
+    // ========================================================
+    // GET ALL WINNING GAMES
+    // ========================================================
 
-                            success: true,
+    const winningGames =
+        db.prepare(`
+            SELECT
+                user_id,
+                card_numbers,
+                prize,
+                status,
+                result
+            FROM games
+            WHERE match_id = ?
+            AND status IN ('WIN', 'PAID')
+            AND result = 'WIN'
+        `).all(match.id);
 
-                            matchStatus:
-                                "FINISHED",
 
-                            currentBall:
-                                match.current_ball
-                                    ? Number(
-                                        match.current_ball
-                                    )
-                                    : null,
+    // ========================================================
+    // FIND WINNING CARD NUMBERS
+    // ========================================================
 
-                            calledBalls,
+    const winnerCards = [];
 
-                            winnerCount:
-                                Number(
-                                    match.winner_count || 0
-                                ),
-winnerCardNumber:
-    null,                  
-                            paid:
-                                Boolean(match.paid)
 
-                        }
-                    };
+    for(const game of winningGames){
 
-                }
+        let cards = [];
 
+        try {
+
+            cards =
+                game.card_numbers
+                    ? JSON.parse(
+                        game.card_numbers
+                      )
+                    : [];
+
+        } catch(error) {
+
+            cards = [];
+
+        }
+
+
+        if(!Array.isArray(cards)){
+            cards = [];
+        }
+
+
+        cards =
+            cards
+                .map(Number)
+                .filter(
+                    cardNumber =>
+                        Number.isInteger(
+                            cardNumber
+                        )
+                );
+
+
+        // Check every card belonging to this winner
+        for(const cardNumber of cards){
+
+            const card =
+                generateServerBingoNumbers(
+                    cardNumber
+                );
+
+
+            if(
+                isServerWinningCard(
+                    card,
+                    calledBalls
+                )
+            ){
+
+                winnerCards.push({
+                    userId:
+                        Number(game.user_id),
+
+                    cardNumber:
+                        Number(cardNumber),
+
+                    prize:
+                        Number(game.prize || 0)
+                });
+
+            }
+
+        }
+
+    }
+
+
+    console.log(
+        "🏁 FINISHED MATCH RESULT:",
+        {
+            matchId: match.id,
+            winnerCount:
+                Number(
+                    match.winner_count || 0
+                ),
+            winnerCards
+        }
+    );
+
+
+    return {
+
+        type: "SUCCESS",
+
+        body: {
+
+            success: true,
+
+            matchStatus:
+                "FINISHED",
+
+            currentBall:
+                match.current_ball
+                    ? Number(
+                        match.current_ball
+                      )
+                    : null,
+
+            calledBalls,
+
+            winnerCount:
+                Number(
+                    match.winner_count || 0
+                ),
+
+            winnerCards,
+
+            paid:
+                Boolean(match.paid)
+
+        }
+
+    };
+
+}
 /*
  * ======================================
  * STOP BALL CALLING DURING CLAIM WINDOW
