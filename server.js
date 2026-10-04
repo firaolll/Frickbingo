@@ -2138,8 +2138,12 @@ app.get("/api/match/:matchId", auth, (req, res) => {
     // ========================================================
 // FIND CURRENT WINNERS FROM SHARED MATCH STATE
 // ========================================================
+// ========================================================
+// FIND CURRENT WINNERS FROM SHARED MATCH STATE
+// ========================================================
 
 let winnerCards = [];
+
 
 if (
     String(match.status || "").toUpperCase() ===
@@ -2166,9 +2170,13 @@ if (
 
     }
 
+
     if (!Array.isArray(calledBalls)) {
+
         calledBalls = [];
+
     }
+
 
     calledBalls =
         calledBalls
@@ -2185,12 +2193,17 @@ if (
         "🔎 CHECKING SHARED WINNERS:",
         {
             matchId,
-            calledCount: calledBalls.length
+            calledCount:
+                calledBalls.length
         }
     );
 
 
-    for (const game of games) {
+    // ====================================================
+    // USE THE ALREADY LOADED players ARRAY
+    // ====================================================
+
+    for (const game of players) {
 
         let cardNumbers = [];
 
@@ -2198,7 +2211,9 @@ if (
 
             cardNumbers =
                 game.card_numbers
-                    ? JSON.parse(game.card_numbers)
+                    ? JSON.parse(
+                        game.card_numbers
+                    )
                     : [];
 
         } catch (error) {
@@ -2206,8 +2221,11 @@ if (
             console.error(
                 "❌ PLAYER CARD JSON ERROR:",
                 {
-                    gameId: game.id,
-                    error: error.message
+                    gameId:
+                        game.id,
+
+                    error:
+                        error.message
                 }
             );
 
@@ -2215,20 +2233,30 @@ if (
 
         }
 
+
         if (!Array.isArray(cardNumbers)) {
+
             cardNumbers = [];
+
         }
+
 
         cardNumbers =
             cardNumbers
                 .map(Number)
                 .filter(
                     cardNumber =>
-                        Number.isInteger(cardNumber) &&
+                        Number.isInteger(
+                            cardNumber
+                        ) &&
                         cardNumber >= 1 &&
                         cardNumber <= 200
                 );
 
+
+        // =================================================
+        // CHECK EVERY CARD OF THIS PLAYER
+        // =================================================
 
         for (const cardNumber of cardNumbers) {
 
@@ -2236,6 +2264,7 @@ if (
                 generateServerBingoNumbers(
                     cardNumber
                 );
+
 
             const won =
                 isServerWinningCard(
@@ -2258,13 +2287,18 @@ if (
                         Number(cardNumber),
 
                     username:
-                        game.username || null,
+                        game.username ||
+                        null,
 
                     firstName:
-                        game.first_name || null,
+                        game.first_name ||
+                        null,
 
                     prize:
-                        Number(game.prize || 0)
+                        Number(
+                            game.prize ||
+                            0
+                        )
 
                 });
 
@@ -2273,8 +2307,13 @@ if (
                     "🏆 SHARED WINNER FOUND:",
                     {
                         matchId,
-                        gameId: game.id,
-                        userId: game.user_id,
+
+                        gameId:
+                            game.id,
+
+                        userId:
+                            game.user_id,
+
                         cardNumber
                     }
                 );
@@ -2284,6 +2323,12 @@ if (
         }
 
     }
+
+
+    console.log(
+        "🏆 ALL SHARED WINNERS:",
+        winnerCards
+    );
 
 }
 players.forEach(game => {
