@@ -7415,7 +7415,80 @@ function shuffle(array){
 
     return array;
 }
-  
+
+function generateBingoNumbers(cardNumber){
+
+    const ranges = [
+        [1, 15],    // B
+        [16, 30],   // I
+        [31, 45],   // N
+        [46, 60],   // G
+        [61, 75]    // O
+    ];
+
+    const columns = [];
+
+    for(let column = 0; column < 5; column++){
+
+        const min = ranges[column][0];
+        const max = ranges[column][1];
+
+        const numbers = [];
+
+        for(let n = min; n <= max; n++){
+            numbers.push(n);
+        }
+
+        let seed =
+            Number(cardNumber) * 1000 +
+            column * 100;
+
+        for(let i = numbers.length - 1; i > 0; i--){
+
+            seed =
+                Math.sin(seed) * 100000;
+
+            const random =
+                seed - Math.floor(seed);
+
+            const j =
+                Math.floor(
+                    random * (i + 1)
+                );
+
+            const temp = numbers[i];
+
+            numbers[i] = numbers[j];
+            numbers[j] = temp;
+        }
+
+        columns.push(
+            numbers.slice(0, 5)
+        );
+    }
+
+    const grid = [];
+
+    for(let row = 0; row < 5; row++){
+
+        for(let column = 0; column < 5; column++){
+
+            if(row === 2 && column === 2){
+
+                grid.push("FREE");
+
+            }else{
+
+                grid.push(
+                    columns[column][row]
+                );
+
+            }
+        }
+    }
+
+    return grid;
+}
   
 /* =====================================================  
    BINGO CARD  
