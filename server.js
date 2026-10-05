@@ -4732,34 +4732,50 @@ function isServerMarked(
         )
     );
 }
+function generateServerCards(
+    cardNumbers
+) {
 
-function generateServerCards(cardNumbers){
+    const result = {};
 
-    const generatedCards = {};
+    if (
+        !Array.isArray(cardNumbers)
+    ) {
 
-    for(
-        const cardNumber
-        of cardNumbers
-    ){
+        return result;
+
+    }
+
+
+    for (
+        const cardNumber of cardNumbers
+    ) {
 
         const number =
             Number(cardNumber);
 
-        if(
+
+        if (
             !Number.isInteger(number) ||
             number < 1 ||
             number > 200
-        ){
+        ) {
+
             continue;
+
         }
 
-        generatedCards[number] =
+
+        result[number] =
             generateServerBingoNumbers(
                 number
             );
+
     }
 
-    return generatedCards;
+
+    return result;
+
 }
 /* ==================================================
    SERVER WIN CHECK

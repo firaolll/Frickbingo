@@ -3579,7 +3579,7 @@ let selectionTimerInterval = null;
 let profileData = {};
 let winnerShown = false;  
 let winnerClaimInProgress = false;
- 
+let serverGeneratedCards = {}; 
 /* =====================================================  
    CONFIG  
 ===================================================== */  
@@ -4089,7 +4089,7 @@ function renderCardSelection(){
 /* ==================================================  
    SELECT CARD  
 ================================================== */  
- async function selectCard(number){
+async function selectCard(number){
 
     number = Number(number);
 
@@ -4102,6 +4102,7 @@ function renderCardSelection(){
         return;
     }
 
+
     if(
         selectedCards.includes(number)
     ){
@@ -4110,16 +4111,22 @@ function renderCardSelection(){
 
         return;
     }
-if(otherPlayersSelectedCards.includes(number)){
 
-    showToast(
-        "This card is selected by another player."
-    );
 
-    haptic("error");
+    if(
+        otherPlayersSelectedCards.includes(number)
+    ){
 
-    return;
-}
+        showToast(
+            "This card is selected by another player."
+        );
+
+        haptic("error");
+
+        return;
+    }
+
+
     if(
         selectedCards.length >= MAX_CARDS
     ){
@@ -4133,21 +4140,27 @@ if(otherPlayersSelectedCards.includes(number)){
         return;
     }
 
+
+    // ============================================================
+    // TEMPORARILY ADD THE CLICKED CARD
+    // SERVER WILL REPLACE THIS WITH THE REAL CARD NUMBER
+    // ============================================================
+
     selectedCards.push(number);
 
+
     console.log(
-        "SELECTED CARDS:",
-        selectedCards
+        "🖱️ USER CLICKED CARD:",
+        number
     );
-    /*
-    ==========================================
-    SHOW SELECTED STATE IMMEDIATELY
-    ==========================================
-    */
+
 
     updateSelectedCards();
 
-    if(selectedCards.length === 1){
+
+    if(
+        selectedCards.length === 1
+    ){
 
         console.log(
             "FIRST CARD SELECTED"
@@ -4155,19 +4168,50 @@ if(otherPlayersSelectedCards.includes(number)){
 
     }
 
-    await joinSharedMatch();
+
+    try {
+
+        await joinSharedMatch();
+
+    } catch(error){
+
+        console.error(
+            "❌ JOIN MATCH FAILED:",
+            error
+        );
+
+        // Remove temporary frontend selection
+        selectedCards =
+            selectedCards.filter(
+                card =>
+                    Number(card) !==
+                    number
+            );
+
+        updateSelectedCards();
+
+        return;
+
+    }
+
 
     haptic();
-}
 
+}
 async function joinSharedMatch(){
-console.log("🔥 JOIN SHARED MATCH VERSION 2026-09-24-A");
+
+    console.log(
+        "🔥 JOIN SHARED MATCH VERSION 2026-10-05-SERVER-CARDS"
+    );
+
     try{
 
         console.log(
             "🌐 Joining shared match..."
         );
-         await refreshBalance();
+
+        await refreshBalance();
+
 
         if(!selectedStake){
 
@@ -4178,17 +4222,41 @@ console.log("🔥 JOIN SHARED MATCH VERSION 2026-09-24-A");
             return;
         }
 
+
         if(!telegramInitData){
 
             initializeTelegram();
+
         }
+
 
         if(!telegramInitData){
 
             throw new Error(
                 "Open Frick Bingo from the Telegram bot."
             );
+
         }
+
+
+        // ============================================================
+        // HOW MANY CARDS THE PLAYER WANTS
+        // ============================================================
+
+        const requestedCards =
+            selectedCards.length;
+
+
+        console.log(
+            "🖱️ REQUESTED CARD COUNT:",
+            requestedCards
+        );
+
+
+        // ============================================================
+        // ASK SERVER TO JOIN
+        // SERVER CHOOSES THE CARD NUMBERS
+        // ============================================================
 
         const data =
             await apiFetch(
@@ -4196,26 +4264,25 @@ console.log("🔥 JOIN SHARED MATCH VERSION 2026-09-24-A");
                 {
                     method: "POST",
 
-                   body: JSON.stringify({
-    stake:
-        selectedStake,
+                    body: JSON.stringify({
 
-    cards:
-        selectedCards.length,
+                        stake:
+                            selectedStake,
 
-    cardNumbers:
-        Array.from(
-            selectedCards,
-            Number
-        )
-})
+                        cards:
+                            requestedCards
+
+                    })
+
                 }
             );
 
+
         console.log(
-            "🌐 SHARED MATCH:",
+            "🌐 SERVER MATCH RESPONSE:",
             data
         );
+
 
         if(
             !data ||
@@ -4229,39 +4296,144 @@ console.log("🔥 JOIN SHARED MATCH VERSION 2026-09-24-A");
 
         }
 
+
+        // ============================================================
+        // GET SERVER-ASSIGNED CARD NUMBERS
+        // ============================================================
+
+        let serverCardNumbers = [];
+
+
+        if(
+            Array.isArray(
+                data.cardNumbers
+            )
+        ){
+
+            serverCardNumbers =
+                data.cardNumbers
+                    .map(Number)
+                    .filter(
+                        number =>
+                            Number.isInteger(number) &&
+                            number >= 1 &&
+                            number <= 200
+                    );
+
+        }
+
+
+        console.log(
+            "🎴 SERVER ASSIGNED CARD NUMBERS:",
+            serverCardNumbers
+        );
+
+
+        // ============================================================
+        // CHECK CARD COUNT
+        // ============================================================
+
+        if(
+            serverCardNumbers.length !==
+            requestedCards
+        ){
+
+            console.error(
+                "❌ SERVER CARD COUNT MISMATCH:",
+                {
+                    requestedCards,
+                    serverCardNumbers
+                }
+            );
+
+            throw new Error(
+                "Server did not return the correct number of cards."
+            );
+
+        }
+
+
+        // ============================================================
+        // REPLACE FRONTEND CARD WITH SERVER CARD
+        // ============================================================
+
+        selectedCards =
+            serverCardNumbers.slice();
+
+
+        console.log(
+            "🎴 REAL PLAYER CARDS:",
+            selectedCards
+        );
+
+
+        // ============================================================
+        // SERVER GENERATED BINGO CARDS
+        // ============================================================
+
+       // ============================================================
+// SAVE SERVER-GENERATED CARDS
+// ============================================================
+
+serverGeneratedCards =
+    data.generatedCards || {};
+
+console.log(
+    "🎴 SAVED SERVER CARDS:",
+    serverGeneratedCards
+);
+
+
+        // ============================================================
+        // UPDATE CARD UI
+        // ============================================================
+
+        updateSelectedCards();
+
+
+        // ============================================================
+        // MATCH ID
+        // ============================================================
+
         currentGameId =
             data.matchId ??
             data.sharedGameId ??
             data.gameId;
+
 
         console.log(
             "🎮 MATCH ID:",
             currentGameId
         );
 
+
         console.log(
             "👥 PLAYERS:",
             data.playerCount
         );
 
+
         console.log(
             "⏳ SERVER COUNTDOWN:",
             data.countdown
         );
-console.log(
-    "💰 TOTAL CARDS:",
-    data.totalCards
-);
-        /*
-        ==========================================
-        SHOW SERVER COUNTDOWN
-        ==========================================
-        */
+
+
+        console.log(
+            "💰 TOTAL CARDS:",
+            data.totalCards
+        );
+
+
+        // ============================================================
+        // SHOW COUNTDOWN
+        // ============================================================
 
         const timer =
             document.getElementById(
                 "selectionTimer"
             );
+
 
         if(timer){
 
@@ -4270,17 +4442,22 @@ console.log(
 
         }
 
+
+        // ============================================================
+        // SUCCESS
+        // ============================================================
+
         haptic("success");
 
-        /*
-        ==========================================
-        START WATCHING SHARED MATCH
-        ==========================================
-        */
+
+        // ============================================================
+        // WATCH SHARED MATCH
+        // ============================================================
 
         waitForSharedGameStart(
             currentGameId
         );
+
 
     }catch(error){
 
@@ -4289,12 +4466,15 @@ console.log(
             error
         );
 
+
         showToast(
             error.message ||
             "Could not join the game."
         );
 
+
         haptic("error");
+
     }
 
 }
@@ -4614,87 +4794,7 @@ function seededRandom(seed){
   
     return x - Math.floor(x);  
   
-}  
-  function generateBingoCard(cardNumber){
-
-    const ranges = [
-        [1, 15],    // B
-        [16, 30],   // I
-        [31, 45],   // N
-        [46, 60],   // G
-        [61, 75]    // O
-    ];
-
-    const columns = [];
-
-    for(let column = 0; column < 5; column++){
-
-        const min = ranges[column][0];
-        const max = ranges[column][1];
-
-        const numbers = [];
-
-        for(let n = min; n <= max; n++){
-            numbers.push(n);
-        }
-
-        let seed =
-            Number(cardNumber) * 1000 +
-            column * 100;
-
-        for(let i = numbers.length - 1; i > 0; i--){
-
-            seed =
-                Math.sin(seed) * 100000;
-
-            const random =
-                seed - Math.floor(seed);
-
-            const j =
-                Math.floor(
-                    random * (i + 1)
-                );
-
-            const temp =
-                numbers[i];
-
-            numbers[i] =
-                numbers[j];
-
-            numbers[j] =
-                temp;
-        }
-
-        columns.push(
-            numbers.slice(0, 5)
-        );
-    }
-
-    const grid = [];
-
-    for(let row = 0; row < 5; row++){
-
-        for(let column = 0; column < 5; column++){
-
-            if(
-                row === 2 &&
-                column === 2
-            ){
-
-                grid.push("FREE");
-
-            }else{
-
-                grid.push(
-                    columns[column][row]
-                );
-
-            }
-        }
-    }
-
-    return grid;
-}
+} 
 /* ==================================================  
    FINISH GAME  
 ================================================== */  
@@ -7416,66 +7516,162 @@ function shuffle(array){
     return array;
 }
 
-function generateBingoNumbers(cardNumber){
+function generateBingoCard(cardNumber){
+
+    cardNumber =
+        Number(cardNumber);
+
+
+    // ============================================================
+    // USE SERVER-GENERATED CARD
+    // ============================================================
+
+    if(
+        typeof serverGeneratedCards !== "undefined" &&
+        serverGeneratedCards &&
+        serverGeneratedCards[cardNumber] &&
+        Array.isArray(
+            serverGeneratedCards[cardNumber]
+        ) &&
+        serverGeneratedCards[cardNumber].length === 25
+    ){
+
+        console.log(
+            "🎴 USING SERVER CARD:",
+            cardNumber
+        );
+
+        return [
+            ...serverGeneratedCards[cardNumber]
+        ];
+
+    }
+
+
+    // ============================================================
+    // FALLBACK
+    // ============================================================
+
+    console.log(
+        "⚠️ SERVER CARD NOT FOUND — GENERATING LOCALLY:",
+        cardNumber
+    );
+
 
     const ranges = [
+
         [1, 15],    // B
         [16, 30],   // I
         [31, 45],   // N
         [46, 60],   // G
         [61, 75]    // O
+
     ];
+
 
     const columns = [];
 
-    for(let column = 0; column < 5; column++){
 
-        const min = ranges[column][0];
-        const max = ranges[column][1];
+    for(
+        let column = 0;
+        column < 5;
+        column++
+    ){
+
+        const min =
+            ranges[column][0];
+
+        const max =
+            ranges[column][1];
+
 
         const numbers = [];
 
-        for(let n = min; n <= max; n++){
+
+        for(
+            let n = min;
+            n <= max;
+            n++
+        ){
+
             numbers.push(n);
+
         }
 
-        let seed =
-            Number(cardNumber) * 1000 +
-            column * 100;
 
-        for(let i = numbers.length - 1; i > 0; i--){
+        let seed =
+            Number(cardNumber) *
+            1000 +
+            column *
+            100;
+
+
+        for(
+            let i = numbers.length - 1;
+            i > 0;
+            i--
+        ){
 
             seed =
-                Math.sin(seed) * 100000;
+                Math.sin(seed) *
+                100000;
+
 
             const random =
-                seed - Math.floor(seed);
+                seed -
+                Math.floor(seed);
+
 
             const j =
                 Math.floor(
-                    random * (i + 1)
+                    random *
+                    (i + 1)
                 );
 
-            const temp = numbers[i];
 
-            numbers[i] = numbers[j];
-            numbers[j] = temp;
+            const temp =
+                numbers[i];
+
+
+            numbers[i] =
+                numbers[j];
+
+            numbers[j] =
+                temp;
+
         }
+
 
         columns.push(
             numbers.slice(0, 5)
         );
+
     }
+
 
     const grid = [];
 
-    for(let row = 0; row < 5; row++){
 
-        for(let column = 0; column < 5; column++){
+    for(
+        let row = 0;
+        row < 5;
+        row++
+    ){
 
-            if(row === 2 && column === 2){
+        for(
+            let column = 0;
+            column < 5;
+            column++
+        ){
 
-                grid.push("FREE");
+            if(
+                row === 2 &&
+                column === 2
+            ){
+
+                grid.push(
+                    "FREE"
+                );
 
             }else{
 
@@ -7484,25 +7680,15 @@ function generateBingoNumbers(cardNumber){
                 );
 
             }
+
         }
+
     }
 
+
     return grid;
-}
-  
-/* =====================================================  
-   BINGO CARD  
-===================================================== */  
-  
-function generateBingoCard(cardNumber){
-
-    return generateBingoNumbers(cardNumber);
 
 }
-/* =====================================================  
-   CREATE CARD  
-===================================================== */  
-  
 function createCardElement(cardNumber){
 
     const numbers =
