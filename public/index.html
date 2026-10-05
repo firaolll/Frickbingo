@@ -7692,7 +7692,7 @@ function generateBingoCard(cardNumber){
 function createCardElement(cardNumber){
 
     const numbers =
-        generateBingoNumbers(cardNumber);
+        generateBingoCard(cardNumber)
 
     const wrapper =
         document.createElement("div");
@@ -8529,25 +8529,44 @@ function checkWinner(){
 
 
     // ==========================================
-    // CHECK EVERY CARD OWNED BY THIS PLAYER
-    // ==========================================
+// CHECK EVERY CARD OWNED BY THIS PLAYER
+// ==========================================
 
-    for(const cardNumber of selectedCards){
+for(const cardNumber of selectedCards){
 
-        const number =
-            Number(cardNumber);
+    const number =
+        Number(cardNumber);
 
-        if(
-            !Number.isInteger(number)
-        ){
-            continue;
-        }
+    if(
+        !Number.isInteger(number)
+    ){
+        continue;
+    }
 
 
-        const card =
-            generateBingoNumbers(
-                number
-            );
+    // ============================================================
+    // USE THE SERVER-GENERATED CARD
+    // ============================================================
+
+    const card =
+        generateBingoCard(
+            number
+        );
+
+
+    if(
+        !Array.isArray(card) ||
+        card.length !== 25
+    ){
+
+        console.warn(
+            "⚠️ Card not available:",
+            number
+        );
+
+        continue;
+
+    }
 
 
         console.log(

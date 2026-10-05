@@ -4853,7 +4853,8 @@ function isServerWinningCard(
     // ----------------------------------------------
 
     for(
-        let column = 0;
+        
+        column = 0;
         column < 5;
         column++
     ){
