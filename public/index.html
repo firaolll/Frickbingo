@@ -7142,28 +7142,48 @@ async function waitForSharedGameStart(matchId){
             const match =
                 data.match ||
                 data;
+
+
+            // ==========================================
+            // RENDER PLAYERS
+            // ==========================================
+
             renderSharedPlayerCards(
-    data.players ||
-    match.players ||
-    []
-);    
+                data.players ||
+                match.players ||
+                []
+            );
+
+
+            // ==========================================
+            // SERVER COUNTDOWN
+            // ==========================================
+
             const countdown =
-    Number(
-        match.countdown ??
-        data.countdown ??
-        0
-    );
+                Number(
+                    match.countdown ??
+                    data.countdown ??
+                    0
+                );
 
-const timer =
-    document.getElementById(
-        "selectionTimer"
-    );
 
-if(timer){
+            const timer =
+                document.getElementById(
+                    "selectionTimer"
+                );
 
-    timer.textContent =
-        countdown;
-}
+
+            if(timer){
+
+                timer.textContent =
+                    countdown;
+
+            }
+
+
+            // ==========================================
+            // PLAYER COUNT
+            // ==========================================
 
             const players =
                 Number(
@@ -7185,8 +7205,9 @@ if(timer){
                 players;
 
 
-            updateGameStats();
-
+            // ==========================================
+            // GET SERVER MATCH STATUS
+            // ==========================================
 
             const status =
                 String(
@@ -7203,74 +7224,115 @@ if(timer){
 
 
             /*
-             * Only the SERVER can authorize
-             * the actual shared game.
+             * ONLY THE SERVER CAN AUTHORIZE
+             * THE ACTUAL SHARED GAME.
              */
 
             if(status === "PLAYING"){
 
-    console.log(
-        "🟢 SHARED GAME STARTED:",
-        matchId
-    );
-
-    currentGameId =
-        match.id ||
-        match.gameId ||
-        match.sharedGameId ||
-        matchId;
-    const isCaller = Boolean(
-    match.isCaller ?? data.isCaller
-);
-
-console.log(
-    "🎯 THIS PLAYER IS CALLER:",
-    isCaller
-);
-
-window.isSharedCaller = isCaller;
+                console.log(
+                    "🟢 SHARED GAME STARTED:",
+                    matchId
+                );
 
 
-    // Sync Bingo numbers from the server
-    if(match.calledBalls){
-        calledNumbers =
-            Array.isArray(match.calledBalls)
-                ? match.calledBalls
-                : [];
-    }
+                currentGameId =
+                    match.id ||
+                    match.gameId ||
+                    match.sharedGameId ||
+                    matchId;
 
-    if(match.currentBall){
 
-    const ball =
-        Number(match.currentBall);
+                const isCaller =
+                    Boolean(
+                        match.isCaller ??
+                        data.isCaller
+                    );
 
-    if(
-        Number.isInteger(ball) &&
-        ball >= 1 &&
-        ball <= 75
-    ){
 
-        if(
-            !calledNumbers.includes(ball)
-        ){
+                console.log(
+                    "🎯 THIS PLAYER IS CALLER:",
+                    isCaller
+                );
 
-            calledNumbers.push(ball);
 
-            // Check winner immediately
-            checkWinner();
+                window.isSharedCaller =
+                    isCaller;
 
-        }
 
-    }
+                // ==========================================
+                // SYNC CALLED BALLS FROM SERVER
+                // ==========================================
 
-}
+                if(
+                    Array.isArray(
+                        match.calledBalls
+                    )
+                ){
 
-beginActualGame();
+                    calledNumbers =
+                        match.calledBalls
+                            .map(Number)
+                            .filter(
+                                ball =>
+                                    Number.isInteger(ball) &&
+                                    ball >= 1 &&
+                                    ball <= 75
+                            );
 
-return;}
-            /*
-             * Match is still waiting.
-             */
+                }
+
+
+                // ==========================================
+                // SYNC CURRENT BALL
+                // ==========================================
+
+                if(match.currentBall){
+
+                    const ball =
+                        Number(
+                            match.currentBall
+                        );
+
+
+                    if(
+                        Number.isInteger(ball) &&
+                        ball >= 1 &&
+                        ball <= 75
+                    ){
+
+                        if(
+                            !calledNumbers.includes(ball)
+                        ){
+
+                            calledNumbers.push(ball);
+
+
+                            // Check winner immediately
+                            checkWinner();
+
+                        }
+
+                    }
+
+                }
+
+
+                // ==========================================
+                // START ACTUAL GAME
+                // ==========================================
+
+                beginActualGame();
+
+
+                return;
+
+            }
+
+
+            // ==========================================
+            // MATCH STILL WAITING
+            // ==========================================
 
             if(status === "WAITING"){
 
@@ -7281,9 +7343,9 @@ return;}
             }
 
 
-            /*
-             * Match ended before starting.
-             */
+            // ==========================================
+            // MATCH ENDED
+            // ==========================================
 
             if(
                 status === "FINISHED" ||
@@ -7296,6 +7358,10 @@ return;}
 
             }
 
+
+            // ==========================================
+            // CHECK AGAIN AFTER 1 SECOND
+            // ==========================================
 
             await new Promise(
                 resolve =>
@@ -7315,9 +7381,8 @@ return;}
 
 
             /*
-             * Don't immediately kill the
-             * player's waiting state because
-             * one status request failed.
+             * DON'T IMMEDIATELY KILL THE
+             * PLAYER'S WAITING STATE.
              */
 
             await new Promise(
@@ -7338,8 +7403,6 @@ return;}
     );
 
 }
-
-  
 /* =====================================================  
    FINISH SELECTION  
 ===================================================== */  
