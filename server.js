@@ -2140,6 +2140,29 @@ try {
 
 }
 
+let playerCardNumbers = [];
+
+try {
+
+    playerCardNumbers =
+        playerGame?.card_numbers
+            ? JSON.parse(
+                playerGame.card_numbers
+            )
+            : [];
+
+} catch(error) {
+
+    playerCardNumbers = [];
+
+}
+
+if (!Array.isArray(playerCardNumbers)) {
+
+    playerCardNumbers = [];
+
+}
+
         return res.json({
 
     success: true,
