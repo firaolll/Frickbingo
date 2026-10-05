@@ -1299,6 +1299,61 @@ const rows =
 
 );
 
+
+// ============================================================
+// SERVER CARD ASSIGNMENT
+// The client does NOT choose card numbers.
+// The server chooses them.
+// ============================================================
+
+function generateRandomCardNumbers(
+    count,
+    excludedNumbers = []
+){
+
+    const excluded =
+        new Set(
+            excludedNumbers.map(Number)
+        );
+
+    const available = [];
+
+    for(let n = 1; n <= 200; n++){
+
+        if(!excluded.has(n)){
+            available.push(n);
+        }
+
+    }
+
+    // Shuffle available card numbers
+    for(
+        let i = available.length - 1;
+        i > 0;
+        i--
+    ){
+
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
+
+        [
+            available[i],
+            available[j]
+        ] =
+        [
+            available[j],
+            available[i]
+        ];
+
+    }
+
+    return available.slice(
+        0,
+        count
+    );
+}
 // ======================================================
 // CREATE MATCH
 // ======================================================
@@ -1307,35 +1362,19 @@ app.post("/api/match/create", auth, (req, res) => {
     try {
 
         const stake =
-            num(req.body.stake);
+    num(req.body.stake);
 
-        const cards =
-            Number(req.body.cards);
-            const cardNumbers =
-    Array.isArray(req.body.cardNumbers)
-        ? req.body.cardNumbers
-            .map(Number)
-            .filter(
-                n =>
-                    Number.isInteger(n) &&
-                    n >= 1 &&
-                    n <= 200
-            )
-        : [];
-        console.log("🎴 MATCH CARD DEBUG:", {
-    bodyCards: req.body.cards,
-    bodyCardNumbers: req.body.cardNumbers,
-    parsedCards: cards,
-    parsedCardNumbers: cardNumbers
-});
-        if (
-    cardNumbers.length !== cards
-) {
-    return res.status(400).json({
-        success: false,
-        error: "Invalid card selection"
-    });
-}
+const cards =
+    Number(req.body.cards);
+
+console.log(
+    "🎴 MATCH CARD REQUEST:",
+    {
+        bodyCards: req.body.cards,
+        parsedCards: cards,
+        clientCardNumbers: req.body.cardNumbers
+    }
+);
         if (!validStake(stake)) {
 
             return res.status(400).json({
@@ -1454,7 +1493,27 @@ if (!existingGame) {
         });
 
     }
+// ============================================================
+// SERVER ASSIGNS THE PLAYER'S CARD NUMBERS
+// ============================================================
 
+// ============================================================
+// SERVER ASSIGNS THE CARD NUMBERS
+// ============================================================
+
+const cardNumbers =
+    generateRandomCardNumbers(
+        cards
+    );
+
+console.log(
+    "🎴 SERVER ASSIGNED CARDS:",
+    {
+        userId,
+        matchId,
+        cardNumbers
+    }
+);
     const cost =
         num(
             stake * cards
@@ -1524,12 +1583,12 @@ const generatedCards =
     );
 
 console.log(
-    "🎴 SERVER GENERATED PLAYER CARDS:",
+    "🎴 SERVER ASSIGNED CARD NUMBERS:",
     {
         userId,
         matchId,
-        cardNumbers,
-        generatedCards
+        cards,
+        cardNumbers
     }
 );
             db.prepare(`
@@ -1872,40 +1931,112 @@ db.prepare(`
                 }
 
 
-                // -----------------------------------------
-                // SAVE LATEST CARD SELECTION
-                // -----------------------------------------
+                // ============================================================
+// SERVER ASSIGNS ADDITIONAL CARD NUMBERS
+// ============================================================
 
-                db.prepare(`
-                    UPDATE games
-                    SET
-                        cards = ?,
+let oldCardNumbers = [];
 
-                        card_numbers = ?,
+try {
 
-                        play_spent =
-                            COALESCE(
-                                play_spent,
-                                0
-                            ) + ?,
+    oldCardNumbers =
+        existingGame.card_numbers
+            ? JSON.parse(
+                existingGame.card_numbers
+            )
+            : [];
 
-                        main_spent =
-                            COALESCE(
-                                main_spent,
-                                0
-                            ) + ?
+} catch(error) {
 
-                    WHERE id = ?
+    oldCardNumbers = [];
 
-                    AND user_id = ?
-                `).run(
-                    newCards,
-                    JSON.stringify(cardNumbers),
-                    additionalPlaySpent,
-                    additionalMainSpent,
-                    existingGame.id,
-                    userId
-                );
+}
+
+oldCardNumbers =
+    Array.isArray(oldCardNumbers)
+        ? oldCardNumbers
+            .map(Number)
+            .filter(
+                n =>
+                    Number.isInteger(n) &&
+                    n >= 1 &&
+                    n <= 200
+            )
+        : [];
+
+
+// Generate only the number of additional cards needed
+const newCardNumbers =
+    generateRandomCardNumbers(
+        additionalCards,
+        oldCardNumbers
+    );
+
+
+// Keep old cards + new server-assigned cards
+const updatedCardNumbers = [
+    ...oldCardNumbers,
+    ...newCardNumbers
+];
+
+
+// Generate exact server-side card cells
+const generatedCards =
+    generateServerCards(
+        updatedCardNumbers
+    );
+
+
+console.log(
+    "🎴 SERVER ADDED CARDS:",
+    {
+        userId,
+        matchId,
+        oldCardNumbers,
+        newCardNumbers,
+        updatedCardNumbers,
+        generatedCards
+    }
+);
+
+
+db.prepare(`
+    UPDATE games
+    SET
+        cards = ?,
+
+        card_numbers = ?,
+
+        generated_cards = ?,
+
+        play_spent =
+            COALESCE(
+                play_spent,
+                0
+            ) + ?,
+
+        main_spent =
+            COALESCE(
+                main_spent,
+                0
+            ) + ?
+
+    WHERE id = ?
+
+    AND user_id = ?
+`).run(
+    newCards,
+    JSON.stringify(
+        updatedCardNumbers
+    ),
+    JSON.stringify(
+        generatedCards
+    ),
+    additionalPlaySpent,
+    additionalMainSpent,
+    existingGame.id,
+    userId
+);
 
             });
 
@@ -4287,9 +4418,22 @@ function generateServerBingoNumbers(cardNumber){
 
     return grid;
 }
+const testServerCard =
+    generateServerBingoNumbers(48);
+
 console.log(
-    "🧪 SERVER CARD 48 TEST:",
-    generateServerBingoNumbers(48)
+    "🧪 SERVER CARD 48:",
+    testServerCard
+);
+
+console.log(
+    "🧪 CARD LENGTH:",
+    testServerCard.length
+);
+
+console.log(
+    "🧪 FREE CELL:",
+    testServerCard[12]
 );
 /* ==================================================
    SERVER MARK CHECK
