@@ -1515,23 +1515,53 @@ app.post("/api/match/create", auth, (req, res) => {
             // SERVER ASSIGNS CARD NUMBERS
             // ========================================================
 
-            const cardNumbers =
-                generateRandomCardNumbers(
-                    cards
-                );
+           // ============================================================
+// USE PLAYER-REQUESTED CARD NUMBERS
+// SERVER VALIDATES THEM
+// ============================================================
+
+const requestedCardNumbers =
+    Array.isArray(req.body.cardNumbers)
+        ? req.body.cardNumbers
+            .map(Number)
+            .filter(
+                n =>
+                    Number.isInteger(n) &&
+                    n >= 1 &&
+                    n <= 200
+            )
+        : [];
 
 
-            console.log(
-                "🎴 SERVER ASSIGNED CARDS:",
-                {
-                    userId,
-                    matchId,
-                    cards,
-                    cardNumbers
-                }
-            );
+if(
+    requestedCardNumbers.length !== cards
+){
+
+    return res.status(400).json({
+
+        success: false,
+
+        error:
+            "Invalid card selection."
+
+    });
+
+}
 
 
+const cardNumbers =
+    requestedCardNumbers;
+
+
+console.log(
+    "🎴 PLAYER REQUESTED CARDS:",
+    {
+        userId,
+        matchId,
+        cards,
+        cardNumbers
+    }
+);
             // ========================================================
             // CALCULATE COST
             // ========================================================
