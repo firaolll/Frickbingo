@@ -2176,18 +2176,64 @@ console.log(
                         // =============================================
                         // GENERATE ONLY NEW SERVER CARDS
                         // =============================================
+// ============================================================
+// ADD PLAYER-REQUESTED NEW CARDS
+// ============================================================
 
-                        const newCardNumbers =
-                            generateRandomCardNumbers(
-                                additionalCards,
-                                oldCardNumbers
-                            );
+const requestedCardNumbers =
+    Array.isArray(req.body.cardNumbers)
+        ? req.body.cardNumbers
+            .map(Number)
+            .filter(
+                n =>
+                    Number.isInteger(n) &&
+                    n >= 1 &&
+                    n <= 200
+            )
+        : [];
 
 
-                        const updatedCardNumbers = [
-                            ...oldCardNumbers,
-                            ...newCardNumbers
-                        ];
+const newCardNumbers =
+    requestedCardNumbers.filter(
+        number =>
+            !oldCardNumbers.includes(number)
+    );
+
+
+if(
+    newCardNumbers.length !==
+    additionalCards
+){
+
+    return res.status(400).json({
+
+        success: false,
+
+        error:
+            "Invalid additional card selection."
+
+    });
+
+}
+
+
+const updatedCardNumbers = [
+    ...oldCardNumbers,
+    ...newCardNumbers
+];
+
+
+console.log(
+    "🎴 ADDITIONAL PLAYER CARDS:",
+    {
+        userId,
+        matchId,
+        oldCardNumbers,
+        requestedCardNumbers,
+        newCardNumbers,
+        updatedCardNumbers
+    }
+);
 
 
                         // =============================================
