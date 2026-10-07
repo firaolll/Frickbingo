@@ -9383,57 +9383,15 @@ function showLoserScreen(winnerCards){
                     );
 
 
-                    // --------------------------------
-                    // FORCE RETURN TO CARD SELECTION
-                    // --------------------------------
+                   // --------------------------------
+// RESET FOR NEW ROUND
+// --------------------------------
 
-                    if(overlay){
+console.log(
+    "🏁 LOSER COUNTDOWN FINISHED"
+);
 
-                        overlay.classList.remove(
-                            "show"
-                        );
-
-                    }
-
-
-                    winnerShown = false;
-
-                    winnerClaimInProgress = false;
-
-                    currentGameId = null;
-
-                    selectedCards = [];
-
-                    calledNumbers = [];
-
-                    lastCalledNumber = null;
-
-                    gameRunning = false;
-
-                    actualGameStarted = false;
-
-
-                    // --------------------------------
-                    // RESET SELECTION PAGE
-                    // --------------------------------
-
-                    if(typeof resetSelection === "function"){
-
-                        resetSelection();
-
-                    }
-
-
-                    // --------------------------------
-                    // FORCE PAGE 2
-                    // --------------------------------
-
-                    console.log(
-                        "📄 RETURNING LOSER TO PAGE 2"
-                    );
-
-                    showPage("page2");
-
+resetAfterWinner();
                 }
 
             },
@@ -9444,54 +9402,166 @@ function showLoserScreen(winnerCards){
 /* =====================================================  
    RESET AFTER WIN  
 ===================================================== */  
-  
-async function resetAfterWinner(){  
-  
- document  
-  .getElementById(  
-   "winnerOverlay"  
-  )  
-  ?.classList.remove("show");  
-  
-  
- stopAutoCalling();  
- stopSelectionTimer();  
-  
-  
- actualGameStarted = false;  
- playerReady = false;  
- winnerShown = false;  
-  
- selectedCards = [];  
- calledNumbers = [];  
-  
- currentGameId = null;  
-  
-  
- const callButton =  
-  document.getElementById(  
-   "callBtn"  
-  );  
-  
-  
- if(callButton){  
-  
-  callButton.disabled = true;  
-  
- }  
-  
- await refreshBalance();
+async function resetAfterWinner(){
 
- showPage("page2");  
-  
- renderCardSelection();
+    console.log(
+        "🔄 RESETTING FOR NEW ROUND..."
+    );
 
- updateAllDisplays();  
-  
-  
- await loadProfile(false);  
-  
-}  
+
+    // ==========================================
+    // HIDE WINNER OVERLAY
+    // ==========================================
+
+    const overlay =
+        document.getElementById(
+            "winnerOverlay"
+        );
+
+    if(overlay){
+
+        overlay.classList.remove(
+            "show"
+        );
+
+    }
+
+
+    // ==========================================
+    // STOP OLD GAME / TIMERS
+    // ==========================================
+
+    stopAutoCalling();
+
+    stopSelectionTimer();
+
+
+    // ==========================================
+    // RESET GAME STATE
+    // ==========================================
+
+    actualGameStarted = false;
+
+    gameRunning = false;
+
+    playerReady = false;
+
+    winnerShown = false;
+
+    winnerClaimInProgress = false;
+
+
+    currentGameId = null;
+
+
+    // ==========================================
+    // RESET SELECTED CARDS
+    // ==========================================
+
+    selectedCards = [];
+
+
+    // ==========================================
+    // RESET CALLED NUMBERS
+    // ==========================================
+
+    calledNumbers = [];
+
+    lastCalledNumber = null;
+
+
+    // ==========================================
+    // CLEAR SERVER CARD DATA
+    // ==========================================
+
+    serverGeneratedCards = {};
+
+
+    // ==========================================
+    // RESET CALL BUTTON
+    // ==========================================
+
+    const callButton =
+        document.getElementById(
+            "callBtn"
+        );
+
+    if(callButton){
+
+        callButton.disabled = true;
+
+    }
+
+
+    // ==========================================
+    // RESET PAGE 2 SELECTION UI
+    // ==========================================
+
+    if(
+        typeof renderCardSelection ===
+        "function"
+    ){
+
+        renderCardSelection();
+
+    }
+
+
+    // ==========================================
+    // RETURN TO PAGE 2
+    // ==========================================
+
+    console.log(
+        "📄 RETURNING TO FRESH PAGE 2"
+    );
+
+    showPage(
+        "page2"
+    );
+
+
+    // ==========================================
+    // REFRESH BALANCE
+    // ==========================================
+
+    await refreshBalance();
+
+
+    // ==========================================
+    // REFRESH DISPLAY
+    // ==========================================
+
+    if(
+        typeof updateAllDisplays ===
+        "function"
+    ){
+
+        updateAllDisplays();
+
+    }
+
+
+    // ==========================================
+    // REFRESH PROFILE
+    // ==========================================
+
+    if(
+        typeof loadProfile ===
+        "function"
+    ){
+
+        await loadProfile(
+            false
+        );
+
+    }
+
+
+    console.log(
+        "✅ NEW ROUND PAGE 2 READY"
+    );
+
+}
   
   
 /* =====================================================  
