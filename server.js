@@ -5022,6 +5022,193 @@ function isServerWinningCard(
     );
 }
 
+function getServerWinningPattern(card, calledBalls){
+
+    if(
+        !Array.isArray(card) ||
+        card.length !== 25
+    ){
+        return null;
+    }
+
+
+    const called =
+        new Set(
+            calledBalls.map(Number)
+        );
+
+
+    function marked(value){
+
+        if(value === "FREE"){
+            return true;
+        }
+
+        return called.has(
+            Number(value)
+        );
+
+    }
+
+
+    // ==========================================
+    // ROWS
+    // ==========================================
+
+    for(let row = 0; row < 5; row++){
+
+        const indexes = [
+            row * 5,
+            row * 5 + 1,
+            row * 5 + 2,
+            row * 5 + 3,
+            row * 5 + 4
+        ];
+
+
+        if(
+            indexes.every(
+                index =>
+                    marked(card[index])
+            )
+        ){
+
+            return {
+                type: "ROW",
+                index: row,
+                cells: indexes
+            };
+
+        }
+
+    }
+
+
+    // ==========================================
+    // COLUMNS
+    // ==========================================
+
+    for(let column = 0; column < 5; column++){
+
+        const indexes = [
+            column,
+            column + 5,
+            column + 10,
+            column + 15,
+            column + 20
+        ];
+
+
+        if(
+            indexes.every(
+                index =>
+                    marked(card[index])
+            )
+        ){
+
+            return {
+                type: "COLUMN",
+                index: column,
+                cells: indexes
+            };
+
+        }
+
+    }
+
+
+    // ==========================================
+    // DIAGONAL: TOP LEFT → BOTTOM RIGHT
+    // ==========================================
+
+    const diagonal1 = [
+        0,
+        6,
+        12,
+        18,
+        24
+    ];
+
+
+    if(
+        diagonal1.every(
+            index =>
+                marked(card[index])
+        )
+    ){
+
+        return {
+            type: "DIAGONAL",
+            direction: "TOP_LEFT_BOTTOM_RIGHT",
+            cells: diagonal1
+        };
+
+    }
+
+
+    // ==========================================
+    // DIAGONAL: TOP RIGHT → BOTTOM LEFT
+    // ==========================================
+
+    const diagonal2 = [
+        4,
+        8,
+        12,
+        16,
+        20
+    ];
+
+
+    if(
+        diagonal2.every(
+            index =>
+                marked(card[index])
+        )
+    ){
+
+        return {
+            type: "DIAGONAL",
+            direction: "TOP_RIGHT_BOTTOM_LEFT",
+            cells: diagonal2
+        };
+
+    }
+
+
+    // ==========================================
+    // FOUR CORNERS
+    // ==========================================
+
+    const corners = [
+        0,
+        4,
+        20,
+        24
+    ];
+
+
+    if(
+        corners.every(
+            index =>
+                marked(card[index])
+        )
+    ){
+
+        return {
+            type: "CORNERS",
+            cells: corners
+        };
+
+    }
+
+
+    return null;
+
+}
+
+
+
+
 app.post("/api/game/finish", auth, (req, res) => {
 
     try {
@@ -5353,11 +5540,10 @@ app.post("/api/game/finish", auth, (req, res) => {
             // 5. GENERATE SERVER CARD
             // ----------------------------------------------------
 
-            const winningCard =
-                generateServerBingoNumbers(
-                    Number(cardNumber)
-                );
-
+           winningCard =
+    generateServerBingoNumbers(
+        Number(cardNumber)
+    );
 
             // ----------------------------------------------------
             // 6. SERVER BINGO CHECK
@@ -5368,7 +5554,11 @@ app.post("/api/game/finish", auth, (req, res) => {
                     winningCard,
                     calledBalls
                 );
-
+          winningPattern =
+    getServerWinningPattern(
+        winningCard,
+        calledBalls
+    );
 
             console.log(
                 "🔎 SERVER WIN CHECK:",
@@ -5390,18 +5580,21 @@ app.post("/api/game/finish", auth, (req, res) => {
             // 7. REJECT INVALID CLAIM
             // ----------------------------------------------------
 
-            if (!actuallyWon) {
+           if(
+    !actuallyWon ||
+    !winningPattern
+){
 
-                return res.status(400).json({
+    return res.status(400).json({
 
-                    success: false,
+        success: false,
 
-                    error:
-                        "Invalid Bingo claim"
+        error:
+            "Invalid Bingo claim"
 
-                });
+    });
 
-            }
+}
 
         }
 
@@ -5753,7 +5946,23 @@ const payout =
 
             result:
                 updatedGame.result,
+            winningCard:
+    result === "WIN"
+        ? generateServerBingoNumbers(
+            Number(cardNumber)
+        )
+        : null,
 
+winningCells:
+    result === "WIN" &&
+    winningPattern
+        ? winningPattern.cells
+        : [],
+
+winningPattern:
+    result === "WIN"
+        ? winningPattern || null
+        : null,
             prize:
                 num(
                     updatedGame.prize

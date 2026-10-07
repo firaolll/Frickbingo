@@ -3580,6 +3580,8 @@ let profileData = {};
 let winnerShown = false;  
 let winnerClaimInProgress = false;
 let serverGeneratedCards = {}; 
+let winningPattern = null;
+let winningCard = null;
 /* =====================================================  
    CONFIG  
 ===================================================== */  
@@ -8697,6 +8699,7 @@ for(const cardNumber of selectedCards){
 /* =====================================================  
    SHOW WINNER  
 ===================================================== */  
+
 async function showWinner(
     cardNumber,
     card
@@ -8918,96 +8921,157 @@ console.log(
     }
 
 }
-
 /* ==================================================
    SHOW WINNING CARD
    ================================================== */
 
 const wrapper =
-    document.getElementById("winnerCardWrap");
+    document.getElementById(
+        "winnerCardWrap"
+    );
 
 if(
     wrapper &&
-    cardNumber != null &&
-    Number.isInteger(
-        Number(cardNumber)
-    )
+    Array.isArray(card) &&
+    card.length === 25
 ){
 
-    const winningCardNumber =
-        Number(cardNumber);
-
     console.log(
-        "🏆 DISPLAYING WINNING CARD:",
-        winningCardNumber
+        "🏆 DISPLAYING SERVER WINNING CARD:",
+        {
+            cardNumber,
+            card
+        }
     );
+
+
+    // ==========================================
+    // CLEAR OLD WINNER CARD
+    // ==========================================
 
     wrapper.innerHTML = "";
 
-    /* =================================
-       CREATE CARD USING EXISTING
-       CARD GENERATOR
-    ================================= */
+
+    // ==========================================
+    // CREATE WINNER CARD DIRECTLY FROM SERVER CARD
+    // ==========================================
 
     const cardElement =
-        createCardElement(
-            winningCardNumber
-        );
+        document.createElement("div");
+
+    cardElement.className =
+        "bingo-card winner-bingo-card";
+
+
+    // ==========================================
+    // BINGO HEADER
+    // ==========================================
+
+    const header =
+        document.createElement("div");
+
+    header.className =
+        "bingo-header";
+
+    ["B","I","N","G","O"].forEach(
+        letter => {
+
+            const cell =
+                document.createElement("div");
+
+            cell.className =
+                "bingo-header-cell";
+
+            cell.textContent =
+                letter;
+
+            header.appendChild(cell);
+
+        }
+    );
+
+    cardElement.appendChild(
+        header
+    );
+
+
+    // ==========================================
+    // CARD CELLS
+    // ==========================================
+
+    card.forEach(
+        (value, index) => {
+
+            const cell =
+                document.createElement("div");
+
+            cell.className =
+                "bingo-cell";
+
+            cell.dataset.index =
+                String(index);
+
+            cell.dataset.value =
+                String(value);
+
+
+            cell.textContent =
+                value;
+
+
+            // FREE CENTER
+            if(
+                value === "FREE"
+            ){
+
+                cell.classList.add(
+                    "free"
+                );
+
+            }
+
+
+            // CALLED NUMBER
+            if(
+                value !== "FREE" &&
+                calledNumbers.includes(
+                    Number(value)
+                )
+            ){
+
+                cell.classList.add(
+                    "called"
+                );
+
+            }
+
+
+            cardElement.appendChild(
+                cell
+            );
+
+        }
+    );
+
 
     wrapper.appendChild(
         cardElement
     );
 
-    console.log(
-        "🎫 WINNER CARD HTML:",
-        wrapper.innerHTML
-    );
 
     console.log(
-        "🎫 WINNER CARD ELEMENT:",
-        cardElement
+        "🎫 WINNER CARD DISPLAYED"
     );
-
-    console.log(
-        "🎫 WINNER CARD SIZE:",
-        cardElement.offsetWidth,
-        cardElement.offsetHeight
-    );
-
-    /* =================================
-       MARK NUMBERS THAT WERE CALLED
-    ================================= */
-
-    cardElement
-        .querySelectorAll(".bingo-cell")
-        .forEach(
-            cell => {
-
-                const value =
-                    cell.dataset.value;
-
-                if(
-                    value !== "FREE" &&
-                    calledNumbers.includes(
-                        Number(value)
-                    )
-                ){
-
-                    cell.classList.add(
-                        "called"
-                    );
-
-                }
-
-            }
-        );
 
 }
 else{
 
     console.warn(
-        "⚠️ Winner card number missing:",
-        cardNumber
+        "⚠️ Server winning card is missing or invalid:",
+        {
+            cardNumber,
+            card
+        }
     );
 
 }
