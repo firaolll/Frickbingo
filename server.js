@@ -2550,6 +2550,7 @@ console.log(
     }
 
 });
+
 app.get("/api/match/:matchId", auth, (req, res) => {
 
     try {
@@ -2762,33 +2763,44 @@ if (
 
             if (won) {
 
-                winnerCards.push({
+                const winningPattern =
+    getServerWinningPattern(
+        card,
+        calledBalls
+    );
 
-                    gameId:
-                        Number(game.id),
 
-                    userId:
-                        Number(game.user_id),
+winnerCards.push({
 
-                    cardNumber:
-                        Number(cardNumber),
+    gameId:
+        Number(game.id),
 
-                    username:
-                        game.username ||
-                        null,
+    userId:
+        Number(game.user_id),
 
-                    firstName:
-                        game.first_name ||
-                        null,
+    cardNumber:
+        cardNumber,
 
-                    prize:
-                        Number(
-                            game.prize ||
-                            0
-                        )
+    username:
+        game.username || null,
 
-                });
+    firstName:
+        game.first_name || null,
 
+    prize:
+        Number(
+            game.prize || 0
+        ),
+
+    winningCard:
+        card,
+
+    winningCells:
+        winningPattern
+            ? winningPattern.cells
+            : []
+
+});
 
                 console.log(
                     "🏆 SHARED WINNER FOUND:",

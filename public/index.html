@@ -9278,7 +9278,6 @@ if(
         );
 
 }
-
 function showLoserScreen(winnerCards){
 
     console.log(
@@ -9286,37 +9285,43 @@ function showLoserScreen(winnerCards){
         winnerCards
     );
 
-    // -----------------------------------------
+    // ==========================================
     // STOP GAME
-    // -----------------------------------------
+    // ==========================================
 
     winnerShown = true;
-
     gameRunning = false;
-
     actualGameStarted = false;
 
     stopAutoCalling();
 
-    if(typeof stopSharedGameSync === "function"){
+    if(
+        typeof stopSharedGameSync ===
+        "function"
+    ){
+
         stopSharedGameSync();
+
     }
 
-    if(typeof stopSelectionTimer === "function"){
+    if(
+        typeof stopSelectionTimer ===
+        "function"
+    ){
+
         stopSelectionTimer();
+
     }
 
-
-    // -----------------------------------------
+    // ==========================================
     // REFRESH BALANCE
-    // -----------------------------------------
+    // ==========================================
 
     refreshBalance();
 
-
-    // -----------------------------------------
+    // ==========================================
     // GET ELEMENTS
-    // -----------------------------------------
+    // ==========================================
 
     const overlay =
         document.getElementById(
@@ -9343,10 +9348,9 @@ function showLoserScreen(winnerCards){
             "winnerCardWrap"
         );
 
-
-    // -----------------------------------------
-    // CLEAR OLD WINNER CARD
-    // -----------------------------------------
+    // ==========================================
+    // CLEAR OLD CONTENT
+    // ==========================================
 
     if(winnerCardWrap){
 
@@ -9354,10 +9358,9 @@ function showLoserScreen(winnerCards){
 
     }
 
-
-    // -----------------------------------------
-    // GAME OVER TEXT
-    // -----------------------------------------
+    // ==========================================
+    // GAME OVER HEADER
+    // ==========================================
 
     if(winnerName){
 
@@ -9380,10 +9383,11 @@ function showLoserScreen(winnerCards){
 
     }
 
-
-    // -----------------------------------------
-    // DISPLAY WINNER NAMES + PRIZES
-    // -----------------------------------------
+    // ==========================================
+    // DISPLAY WINNERS
+    // + WINNING CARD
+    // + WINNING PATTERN
+    // ==========================================
 
     if(
         winnerCardWrap &&
@@ -9393,10 +9397,18 @@ function showLoserScreen(winnerCards){
         winnerCards.forEach(
             (winner, index) => {
 
+                // ----------------------------------
+                // WINNER NAME
+                // ----------------------------------
+
                 const name =
                     winner.firstName ||
                     winner.username ||
                     `Player ${index + 1}`;
+
+                // ----------------------------------
+                // PRIZE
+                // ----------------------------------
 
                 const prize =
                     Math.floor(
@@ -9405,6 +9417,9 @@ function showLoserScreen(winnerCards){
                         )
                     );
 
+                // ----------------------------------
+                // WINNER INFO BOX
+                // ----------------------------------
 
                 const winnerBox =
                     document.createElement(
@@ -9423,7 +9438,6 @@ function showLoserScreen(winnerCards){
                 winnerBox.style.background =
                     "rgba(255,255,255,0.08)";
 
-
                 const nameElement =
                     document.createElement(
                         "div"
@@ -9437,7 +9451,6 @@ function showLoserScreen(winnerCards){
 
                 nameElement.style.fontWeight =
                     "bold";
-
 
                 const prizeElement =
                     document.createElement(
@@ -9453,7 +9466,6 @@ function showLoserScreen(winnerCards){
                 prizeElement.style.marginTop =
                     "5px";
 
-
                 winnerBox.appendChild(
                     nameElement
                 );
@@ -9462,9 +9474,200 @@ function showLoserScreen(winnerCards){
                     prizeElement
                 );
 
-
                 winnerCardWrap.appendChild(
                     winnerBox
+                );
+
+                // ==================================
+                // GET SERVER WINNING CARD
+                // ==================================
+
+                const winningCard =
+                    Array.isArray(
+                        winner.winningCard
+                    )
+                        ? winner.winningCard
+                        : [];
+
+                const winningCells =
+                    Array.isArray(
+                        winner.winningCells
+                    )
+                        ? winner.winningCells.map(
+                            Number
+                        )
+                        : [];
+
+                console.log(
+                    "🏆 LOSER SCREEN WINNING CARD:",
+                    {
+                        cardNumber:
+                            winner.cardNumber,
+
+                        winningCard:
+                            winningCard,
+
+                        winningCells:
+                            winningCells
+                    }
+                );
+
+                // ==================================
+                // CHECK CARD
+                // ==================================
+
+                if(
+                    winningCard.length !== 25
+                ){
+
+                    console.warn(
+                        "⚠️ LOSER: WINNING CARD MISSING:",
+                        winner
+                    );
+
+                    return;
+
+                }
+
+                // ==================================
+                // CARD CONTAINER
+                // ==================================
+
+                const cardElement =
+                    document.createElement(
+                        "div"
+                    );
+
+                cardElement.className =
+                    "bingo-card winner-bingo-card";
+
+                // ==================================
+                // BINGO HEADER
+                // ==================================
+
+                const header =
+                    document.createElement(
+                        "div"
+                    );
+
+                header.className =
+                    "bingo-header";
+
+                [
+                    "B",
+                    "I",
+                    "N",
+                    "G",
+                    "O"
+                ].forEach(
+                    letter => {
+
+                        const cell =
+                            document.createElement(
+                                "div"
+                            );
+
+                        cell.className =
+                            "bingo-header-cell";
+
+                        cell.textContent =
+                            letter;
+
+                        header.appendChild(
+                            cell
+                        );
+
+                    }
+                );
+
+                cardElement.appendChild(
+                    header
+                );
+
+                // ==================================
+                // CREATE 25 CELLS
+                // ==================================
+
+                winningCard.forEach(
+                    (value, cellIndex) => {
+
+                        const cell =
+                            document.createElement(
+                                "div"
+                            );
+
+                        cell.className =
+                            "bingo-cell";
+
+                        cell.dataset.index =
+                            String(cellIndex);
+
+                        cell.dataset.value =
+                            String(value);
+
+                        cell.textContent =
+                            value;
+
+                        // --------------------------
+                        // FREE CENTER
+                        // --------------------------
+
+                        if(
+                            value === "FREE"
+                        ){
+
+                            cell.classList.add(
+                                "free"
+                            );
+
+                        }
+
+                        // --------------------------
+                        // CALLED NUMBER
+                        // --------------------------
+
+                        if(
+                            value !== "FREE" &&
+                            calledNumbers.includes(
+                                Number(value)
+                            )
+                        ){
+
+                            cell.classList.add(
+                                "called"
+                            );
+
+                        }
+
+                        // --------------------------
+                        // WINNING PATTERN
+                        // --------------------------
+
+                        if(
+                            winningCells.includes(
+                                Number(cellIndex)
+                            )
+                        ){
+
+                            cell.classList.add(
+                                "winning-cell"
+                            );
+
+                        }
+
+                        cardElement.appendChild(
+                            cell
+                        );
+
+                    }
+                );
+
+                // ==================================
+                // ADD CARD TO LOSER SCREEN
+                // ==================================
+
+                winnerCardWrap.appendChild(
+                    cardElement
                 );
 
             }
@@ -9472,10 +9675,9 @@ function showLoserScreen(winnerCards){
 
     }
 
-
-    // -----------------------------------------
+    // ==========================================
     // SHOW OVERLAY
-    // -----------------------------------------
+    // ==========================================
 
     if(overlay){
 
@@ -9485,22 +9687,18 @@ function showLoserScreen(winnerCards){
 
     }
 
-
     haptic("error");
 
-
-    // -----------------------------------------
+    // ==========================================
     // 5 SECOND COUNTDOWN
-    // -----------------------------------------
+    // ==========================================
 
     let seconds = 5;
-
 
     const countdown =
         document.getElementById(
             "winnerCountdown"
         );
-
 
     if(countdown){
 
@@ -9509,18 +9707,15 @@ function showLoserScreen(winnerCards){
 
     }
 
-
     clearInterval(
         winnerResetInterval
     );
 
-
     winnerResetInterval =
         setInterval(
-            ()=>{
+            () => {
 
                 seconds--;
-
 
                 if(countdown){
 
@@ -9534,7 +9729,6 @@ function showLoserScreen(winnerCards){
 
                 }
 
-
                 if(seconds <= 0){
 
                     clearInterval(
@@ -9544,27 +9738,21 @@ function showLoserScreen(winnerCards){
                     winnerResetInterval =
                         null;
 
-
                     console.log(
                         "🏁 LOSER COUNTDOWN FINISHED"
                     );
 
+                    // ==================================
+                    // RESET FOR NEW ROUND
+                    // ==================================
 
-                   // --------------------------------
-// RESET FOR NEW ROUND
-// --------------------------------
+                    resetAfterWinner();
 
-console.log(
-    "🏁 LOSER COUNTDOWN FINISHED"
-);
-
-resetAfterWinner();
                 }
 
             },
             1000
         );
-
 }
 /* =====================================================  
    RESET AFTER WIN  
