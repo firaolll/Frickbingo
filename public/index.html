@@ -9281,10 +9281,27 @@ if(
 function showLoserScreen(winnerCards){
 
     console.log(
-        "😢 LOSER SCREEN START:",
+        "🔴 LOSER winnerCards:",
         winnerCards
     );
 
+    console.log(
+        "🔴 LOSER winnerCards JSON:",
+        JSON.stringify(
+            winnerCards,
+            null,
+            2
+        )
+    );
+
+    console.log(
+        "🔴 WINNER CARD COUNT:",
+        Array.isArray(winnerCards)
+            ? winnerCards.length
+            : "NOT ARRAY"
+    );
+
+    // rest of your existing code
     // ==========================================
     // STOP GAME
     // ==========================================
