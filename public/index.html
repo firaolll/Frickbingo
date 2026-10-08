@@ -6972,19 +6972,42 @@ function handleSharedWinners(winnerCards){
     }
 
 
-    console.log(
-        "🏆 HANDLING SHARED WINNERS:",
+    // ==================================================
+    // PREVENT SAME WINNERS FROM BEING HANDLED AGAIN
+    // ==================================================
+
+    const winnerKey =
         winnerCards
-    );
+            .map(winner =>
+                `${Number(winner.userId)}:${Number(winner.cardNumber)}`
+            )
+            .sort()
+            .join("|");
 
 
-    if(window.sharedWinnerHandled){
+    if(
+        window.sharedWinnerHandledKey ===
+        winnerKey
+    ){
+
+        console.log(
+            "⏭️ SHARED WINNERS ALREADY HANDLED:",
+            winnerKey
+        );
 
         return;
 
     }
 
-    window.sharedWinnerHandled = true;
+
+    window.sharedWinnerHandledKey =
+        winnerKey;
+
+
+    console.log(
+        "🏆 HANDLING SHARED WINNERS:",
+        winnerCards
+    );
 
 
     gameRunning = false;
@@ -7033,23 +7056,24 @@ function handleSharedWinners(winnerCards){
 
     if(myWinner){
 
-    console.log(
-        "🎉 THIS PLAYER WON:",
-        myWinner
-    );
+        console.log(
+            "🎉 THIS PLAYER WON:",
+            myWinner
+        );
 
-    // DO NOT set winnerShown = true here.
-    // showWinner() will set it after server confirmation.
 
-    showWinner(
-        myWinner.cardNumber,
-        myWinner.prize
-    );
+        // Do NOT set winnerShown here.
+        // showWinner() handles that.
 
-    return;
+        showWinner(
+            myWinner.cardNumber,
+            myWinner.prize
+        );
 
-}
- 
+        return;
+
+    }
+
 
     // -----------------------------------------
     // SOMEONE ELSE WON
@@ -9471,7 +9495,7 @@ async function resetAfterWinner(){
     console.log(
         "🔄 RESETTING FOR NEW ROUND..."
     );
-
+window.sharedWinnerHandledKey = null;
 
     // ==========================================
     // HIDE WINNER OVERLAY

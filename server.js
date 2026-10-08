@@ -3163,16 +3163,36 @@ if (
                 )
             ){
 
-                winnerCards.push({
-                    userId:
-                        Number(game.user_id),
+                const winningPattern =
+    getServerWinningPattern(
+        card,
+        calledBalls
+    );
 
-                    cardNumber:
-                        Number(cardNumber),
+winnerCards.push({
 
-                    prize:
-                        Number(game.prize || 0)
-                });
+    userId:
+        Number(game.user_id),
+
+    cardNumber:
+        Number(cardNumber),
+
+    prize:
+        Number(
+            game.prize || 0
+        ),
+
+    // EXACT SERVER-GENERATED WINNING CARD
+    winningCard:
+        card,
+
+    // EXACT WINNING CELLS
+    winningCells:
+        winningPattern
+            ? winningPattern.cells
+            : []
+
+});
 
             }
 
@@ -3694,30 +3714,45 @@ if (serverWinnerFound) {
 
             if (won) {
 
-                winnerCards.push({
+               const winningPattern =
+    getServerWinningPattern(
+        card,
+        calledBalls
+    );
 
-                    gameId:
-                        Number(game.id),
+winnerCards.push({
 
-                    userId:
-                        Number(game.user_id),
+    gameId:
+        Number(game.id),
 
-                    cardNumber:
-                        cardNumber,
+    userId:
+        Number(game.user_id),
 
-                    username:
-                        game.username || null,
+    cardNumber:
+        cardNumber,
 
-                    firstName:
-                        game.first_name || null,
+    username:
+        game.username || null,
 
-                    prize:
-                        Number(
-                            game.prize || 0
-                        )
+    firstName:
+        game.first_name || null,
 
-                });
+    prize:
+        Number(
+            game.prize || 0
+        ),
 
+    // EXACT SERVER-GENERATED WINNING CARD
+    winningCard:
+        card,
+
+    // EXACT CELLS THAT CREATED THE WIN
+    winningCells:
+        winningPattern
+            ? winningPattern.cells
+            : []
+
+});
             }
 
         }
