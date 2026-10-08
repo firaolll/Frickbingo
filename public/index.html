@@ -7095,7 +7095,19 @@ function handleSharedWinners(winnerCards){
 
     winnerShown = false;
 
+console.log(
+    "🔴 SENDING WINNERS TO LOSER SCREEN:",
+    winnerCards
+);
 
+console.log(
+    "🔴 WINNER DATA JSON:",
+    JSON.stringify(
+        winnerCards,
+        null,
+        2
+    )
+);
     showLoserScreen(
         winnerCards
     );
