@@ -843,7 +843,15 @@ button{
         transform .15s ease;
 }
 
-
+.winning-cell {
+    border: 3px solid #00ff88 !important;
+    box-shadow:
+        0 0 10px #00ff88,
+        0 0 20px #00ff88,
+        inset 0 0 10px rgba(0,255,136,0.35);
+    transform: scale(1.04);
+    z-index: 2;
+}
 /* FREE CENTER */
 
 .bingo-cell.free{
@@ -8954,34 +8962,68 @@ const wrapper =
         "winnerCardWrap"
     );
 
+
+// ------------------------------------------
+// USE SERVER CONFIRMED WINNING CARD
+// ------------------------------------------
+
+const winningCard =
+    Array.isArray(data.winningCard)
+        ? data.winningCard
+        : [];
+
+
+// ------------------------------------------
+// USE SERVER CONFIRMED WINNING CELLS
+// ------------------------------------------
+
+const winningCells =
+    Array.isArray(data.winningCells)
+        ? data.winningCells.map(Number)
+        : [];
+
+
+console.log(
+    "🏆 SERVER WINNING CARD:",
+    winningCard
+);
+
+console.log(
+    "🎯 SERVER WINNING CELLS:",
+    winningCells
+);
+
+
 if(
     wrapper &&
-    Array.isArray(card) &&
-    card.length === 25
+    winningCard.length === 25
 ){
 
     console.log(
         "🏆 DISPLAYING SERVER WINNING CARD:",
         {
             cardNumber,
-            card
+            winningCard,
+            winningCells
         }
     );
 
 
     // ==========================================
-    // CLEAR OLD WINNER CARD
+    // CLEAR OLD CARD
     // ==========================================
 
     wrapper.innerHTML = "";
 
 
     // ==========================================
-    // CREATE WINNER CARD DIRECTLY FROM SERVER CARD
+    // CREATE CARD
     // ==========================================
 
     const cardElement =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     cardElement.className =
         "bingo-card winner-bingo-card";
@@ -8992,16 +9034,21 @@ if(
     // ==========================================
 
     const header =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     header.className =
         "bingo-header";
+
 
     ["B","I","N","G","O"].forEach(
         letter => {
 
             const cell =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
             cell.className =
                 "bingo-header-cell";
@@ -9009,10 +9056,13 @@ if(
             cell.textContent =
                 letter;
 
-            header.appendChild(cell);
+            header.appendChild(
+                cell
+            );
 
         }
     );
+
 
     cardElement.appendChild(
         header
@@ -9023,17 +9073,21 @@ if(
     // CARD CELLS
     // ==========================================
 
-    card.forEach(
+    winningCard.forEach(
         (value, index) => {
 
             const cell =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
             cell.className =
                 "bingo-cell";
 
+
             cell.dataset.index =
                 String(index);
+
 
             cell.dataset.value =
                 String(value);
@@ -9043,7 +9097,10 @@ if(
                 value;
 
 
+            // ----------------------------------
             // FREE CENTER
+            // ----------------------------------
+
             if(
                 value === "FREE"
             ){
@@ -9055,7 +9112,10 @@ if(
             }
 
 
+            // ----------------------------------
             // CALLED NUMBER
+            // ----------------------------------
+
             if(
                 value !== "FREE" &&
                 calledNumbers.includes(
@@ -9065,6 +9125,23 @@ if(
 
                 cell.classList.add(
                     "called"
+                );
+
+            }
+
+
+            // ----------------------------------
+            // WINNING PATTERN
+            // ----------------------------------
+
+            if(
+                winningCells.includes(
+                    Number(index)
+                )
+            ){
+
+                cell.classList.add(
+                    "winning-cell"
                 );
 
             }
@@ -9094,7 +9171,8 @@ else{
         "⚠️ Server winning card is missing or invalid:",
         {
             cardNumber,
-            card
+            winningCard,
+            winningCells
         }
     );
 
@@ -9200,6 +9278,7 @@ if(
         );
 
 }
+
 function showLoserScreen(winnerCards){
 
     console.log(
