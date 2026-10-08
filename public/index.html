@@ -5448,8 +5448,13 @@ CLOSE
 
  </div>  </div>  <!-- WINNER -->  <div  
  id="winnerOverlay"  
- class="winner-overlay">   <div class="winner-box">    <div class="winner-title">  
-   🎉 BINGO! 🎉  
+ class="winner-overlay">   <div class="winner-box">    <div class="winner-title">
+   <div
+    class="winner-title"
+    id="winnerTitle"
+>
+    🎉 BINGO! 🎉
+</div>
   </div>    <div  
    class="winner-name"  
    id="winnerName">  
@@ -9293,30 +9298,9 @@ if(
 function showLoserScreen(winnerCards){
 
     console.log(
-        "🔴 LOSER winnerCards:",
+        "😢 LOSER SCREEN:",
         winnerCards
     );
-
-    console.log(
-        "🔴 LOSER winnerCards JSON:",
-        JSON.stringify(
-            winnerCards,
-            null,
-            2
-        )
-    );
-
-    console.log(
-        "🔴 WINNER CARD COUNT:",
-        Array.isArray(winnerCards)
-            ? winnerCards.length
-            : "NOT ARRAY"
-    );
-
-    // rest of your existing code
-    // ==========================================
-    // STOP GAME
-    // ==========================================
 
     winnerShown = true;
     gameRunning = false;
@@ -9324,62 +9308,32 @@ function showLoserScreen(winnerCards){
 
     stopAutoCalling();
 
-    if(
-        typeof stopSharedGameSync ===
-        "function"
-    ){
-
+    if(typeof stopSharedGameSync === "function"){
         stopSharedGameSync();
-
     }
 
-    if(
-        typeof stopSelectionTimer ===
-        "function"
-    ){
-
+    if(typeof stopSelectionTimer === "function"){
         stopSelectionTimer();
-
     }
-
-    // ==========================================
-    // REFRESH BALANCE
-    // ==========================================
-
-    refreshBalance();
-
-    // ==========================================
-    // GET ELEMENTS
-    // ==========================================
 
     const overlay =
-        document.getElementById(
-            "winnerOverlay"
-        );
+        document.getElementById("winnerOverlay");
 
     const winnerName =
-        document.getElementById(
-            "winnerName"
-        );
+        document.getElementById("winnerName");
 
     const winnerNumber =
-        document.getElementById(
-            "winnerCardNumber"
-        );
+        document.getElementById("winnerCardNumber");
 
     const winnerPrize =
-        document.getElementById(
-            "winnerPrize"
-        );
+        document.getElementById("winnerPrize");
 
     const winnerCardWrap =
-        document.getElementById(
-            "winnerCardWrap"
-        );
+        document.getElementById("winnerCardWrap");
 
-    // ==========================================
+    // ------------------------------------------
     // CLEAR OLD CONTENT
-    // ==========================================
+    // ------------------------------------------
 
     if(winnerCardWrap){
 
@@ -9387,9 +9341,9 @@ function showLoserScreen(winnerCards){
 
     }
 
-    // ==========================================
-    // GAME OVER HEADER
-    // ==========================================
+    // ------------------------------------------
+    // HEADER
+    // ------------------------------------------
 
     if(winnerName){
 
@@ -9412,32 +9366,43 @@ function showLoserScreen(winnerCards){
 
     }
 
-    // ==========================================
-    // DISPLAY WINNERS
-    // + WINNING CARD
-    // + WINNING PATTERN
-    // ==========================================
+    // ------------------------------------------
+    // WINNER DATA
+    // ------------------------------------------
 
     if(
-        winnerCardWrap &&
-        Array.isArray(winnerCards)
+        !Array.isArray(winnerCards) ||
+        winnerCards.length === 0
     ){
+
+        console.error(
+            "❌ NO WINNER DATA:",
+            winnerCards
+        );
+
+    }
+    else if(winnerCardWrap){
 
         winnerCards.forEach(
             (winner, index) => {
 
-                // ----------------------------------
+                console.log(
+                    "🏆 DISPLAYING WINNER:",
+                    winner
+                );
+
+                // ==============================
                 // WINNER NAME
-                // ----------------------------------
+                // ==============================
 
                 const name =
                     winner.firstName ||
                     winner.username ||
                     `Player ${index + 1}`;
 
-                // ----------------------------------
+                // ==============================
                 // PRIZE
-                // ----------------------------------
+                // ==============================
 
                 const prize =
                     Math.floor(
@@ -9446,70 +9411,50 @@ function showLoserScreen(winnerCards){
                         )
                     );
 
-                // ----------------------------------
-                // WINNER INFO BOX
-                // ----------------------------------
+                // ==============================
+                // WINNER INFORMATION
+                // ==============================
 
-                const winnerBox =
-                    document.createElement(
-                        "div"
-                    );
+                const info =
+                    document.createElement("div");
 
-                winnerBox.style.margin =
-                    "10px 0";
+                info.style.textAlign =
+                    "center";
 
-                winnerBox.style.padding =
-                    "12px";
+                info.style.margin =
+                    "10px 0 15px";
 
-                winnerBox.style.borderRadius =
-                    "12px";
+                info.innerHTML = `
+                    <div style="
+                        font-size:20px;
+                        font-weight:bold;
+                        margin-bottom:6px;
+                    ">
+                        🏆 ${name}
+                    </div>
 
-                winnerBox.style.background =
-                    "rgba(255,255,255,0.08)";
+                    <div style="
+                        font-size:17px;
+                        font-weight:bold;
+                    ">
+                        💰 Won: ${prize} ETB
+                    </div>
 
-                const nameElement =
-                    document.createElement(
-                        "div"
-                    );
-
-                nameElement.textContent =
-                    `🏆 ${name}`;
-
-                nameElement.style.fontSize =
-                    "18px";
-
-                nameElement.style.fontWeight =
-                    "bold";
-
-                const prizeElement =
-                    document.createElement(
-                        "div"
-                    );
-
-                prizeElement.textContent =
-                    `💰 Won: ${prize} ETB`;
-
-                prizeElement.style.fontSize =
-                    "16px";
-
-                prizeElement.style.marginTop =
-                    "5px";
-
-                winnerBox.appendChild(
-                    nameElement
-                );
-
-                winnerBox.appendChild(
-                    prizeElement
-                );
+                    <div style="
+                        font-size:14px;
+                        margin-top:5px;
+                    ">
+                        Card #${winner.cardNumber}
+                    </div>
+                `;
 
                 winnerCardWrap.appendChild(
-                    winnerBox
+                    info
                 );
 
-                // ==================================
-                // GET SERVER WINNING CARD
-                // ==================================
+                // ==============================
+                // WINNING CARD
+                // ==============================
 
                 const winningCard =
                     Array.isArray(
@@ -9522,65 +9467,60 @@ function showLoserScreen(winnerCards){
                     Array.isArray(
                         winner.winningCells
                     )
-                        ? winner.winningCells.map(
-                            Number
-                        )
+                        ? winner.winningCells.map(Number)
                         : [];
 
                 console.log(
-                    "🏆 LOSER SCREEN WINNING CARD:",
-                    {
-                        cardNumber:
-                            winner.cardNumber,
-
-                        winningCard:
-                            winningCard,
-
-                        winningCells:
-                            winningCells
-                    }
+                    "🎫 WINNING CARD:",
+                    winningCard
                 );
 
-                // ==================================
-                // CHECK CARD
-                // ==================================
+                console.log(
+                    "🎯 WINNING CELLS:",
+                    winningCells
+                );
 
                 if(
                     winningCard.length !== 25
                 ){
 
-                    console.warn(
-                        "⚠️ LOSER: WINNING CARD MISSING:",
-                        winner
+                    console.error(
+                        "❌ WINNING CARD INVALID:",
+                        winningCard
                     );
 
                     return;
 
                 }
 
-                // ==================================
-                // CARD CONTAINER
-                // ==================================
+                // ==============================
+                // CARD
+                // ==============================
 
-                const cardElement =
-                    document.createElement(
-                        "div"
-                    );
+                const card =
+                    document.createElement("div");
 
-                cardElement.className =
-                    "bingo-card winner-bingo-card";
+                card.style.display =
+                    "grid";
 
-                // ==================================
-                // BINGO HEADER
-                // ==================================
+                card.style.gridTemplateColumns =
+                    "repeat(5, 1fr)";
 
-                const header =
-                    document.createElement(
-                        "div"
-                    );
+                card.style.width =
+                    "100%";
 
-                header.className =
-                    "bingo-header";
+                card.style.maxWidth =
+                    "320px";
+
+                card.style.margin =
+                    "10px auto";
+
+                card.style.gap =
+                    "3px";
+
+                // ==============================
+                // B I N G O
+                // ==============================
 
                 [
                     "B",
@@ -9591,31 +9531,33 @@ function showLoserScreen(winnerCards){
                 ].forEach(
                     letter => {
 
-                        const cell =
+                        const header =
                             document.createElement(
                                 "div"
                             );
 
-                        cell.className =
-                            "bingo-header-cell";
-
-                        cell.textContent =
+                        header.textContent =
                             letter;
 
-                        header.appendChild(
-                            cell
+                        header.style.textAlign =
+                            "center";
+
+                        header.style.fontWeight =
+                            "bold";
+
+                        header.style.padding =
+                            "6px";
+
+                        card.appendChild(
+                            header
                         );
 
                     }
                 );
 
-                cardElement.appendChild(
-                    header
-                );
-
-                // ==================================
-                // CREATE 25 CELLS
-                // ==================================
+                // ==============================
+                // 25 CELLS
+                // ==============================
 
                 winningCard.forEach(
                     (value, cellIndex) => {
@@ -9625,20 +9567,32 @@ function showLoserScreen(winnerCards){
                                 "div"
                             );
 
-                        cell.className =
-                            "bingo-cell";
-
-                        cell.dataset.index =
-                            String(cellIndex);
-
-                        cell.dataset.value =
-                            String(value);
-
                         cell.textContent =
                             value;
 
+                        cell.style.minHeight =
+                            "38px";
+
+                        cell.style.display =
+                            "flex";
+
+                        cell.style.alignItems =
+                            "center";
+
+                        cell.style.justifyContent =
+                            "center";
+
+                        cell.style.border =
+                            "1px solid rgba(255,255,255,0.3)";
+
+                        cell.style.borderRadius =
+                            "5px";
+
+                        cell.style.fontWeight =
+                            "bold";
+
                         // --------------------------
-                        // FREE CENTER
+                        // FREE
                         // --------------------------
 
                         if(
@@ -9652,51 +9606,44 @@ function showLoserScreen(winnerCards){
                         }
 
                         // --------------------------
-                        // CALLED NUMBER
-                        // --------------------------
-
-                        if(
-                            value !== "FREE" &&
-                            calledNumbers.includes(
-                                Number(value)
-                            )
-                        ){
-
-                            cell.classList.add(
-                                "called"
-                            );
-
-                        }
-
-                        // --------------------------
-                        // WINNING PATTERN
+                        // WINNING CELL
                         // --------------------------
 
                         if(
                             winningCells.includes(
-                                Number(cellIndex)
+                                cellIndex
                             )
                         ){
 
-                            cell.classList.add(
-                                "winning-cell"
-                            );
+                            cell.style.background =
+                                "#00ff88";
+
+                            cell.style.color =
+                                "#000";
+
+                            cell.style.border =
+                                "3px solid white";
+
+                            cell.style.boxShadow =
+                                "0 0 10px #00ff88, 0 0 25px #00ff88";
+
+                            cell.style.transform =
+                                "scale(1.05)";
+
+                            cell.style.zIndex =
+                                "2";
 
                         }
 
-                        cardElement.appendChild(
+                        card.appendChild(
                             cell
                         );
 
                     }
                 );
 
-                // ==================================
-                // ADD CARD TO LOSER SCREEN
-                // ==================================
-
                 winnerCardWrap.appendChild(
-                    cardElement
+                    card
                 );
 
             }
@@ -9704,9 +9651,9 @@ function showLoserScreen(winnerCards){
 
     }
 
-    // ==========================================
-    // SHOW OVERLAY
-    // ==========================================
+    // ------------------------------------------
+    // SHOW LOSER OVERLAY
+    // ------------------------------------------
 
     if(overlay){
 
@@ -9718,9 +9665,9 @@ function showLoserScreen(winnerCards){
 
     haptic("error");
 
-    // ==========================================
+    // ------------------------------------------
     // 5 SECOND COUNTDOWN
-    // ==========================================
+    // ------------------------------------------
 
     let seconds = 5;
 
@@ -9770,10 +9717,6 @@ function showLoserScreen(winnerCards){
                     console.log(
                         "🏁 LOSER COUNTDOWN FINISHED"
                     );
-
-                    // ==================================
-                    // RESET FOR NEW ROUND
-                    // ==================================
 
                     resetAfterWinner();
 
