@@ -3631,25 +3631,31 @@ async function apiFetch(endpoint, options = {}) {
 
 /* ==================================================  
    PAGE NAVIGATION  
-================================================== */  
-function showPage(pageId){
+================================================== */ 
+
+
+function showPage(pageId) {
+
+    // Stop Page 2 refresh when leaving it
+    if (pageId !== "page2") {
+        stopPage2Sync();
+    }
 
     document
         .querySelectorAll(".page")
-        .forEach(page=>{
+        .forEach(page => {
             page.classList.remove("active");
         });
 
-    const page =
-        document.getElementById(pageId);
+    const page = document.getElementById(pageId);
 
-    if(page){
+    if (page) {
         page.classList.add("active");
     }
 
     document
         .querySelectorAll(".nav-btn")
-        .forEach(btn=>{
+        .forEach(btn => {
             btn.classList.toggle(
                 "active",
                 btn.dataset.page === pageId
@@ -3659,18 +3665,14 @@ function showPage(pageId){
     const bottomNav =
         document.getElementById("bottomNav");
 
-    if(bottomNav){
-
-        if(pageId === "page3"){
-
+    if (bottomNav) {
+        if (pageId === "page3") {
             bottomNav.style.setProperty(
                 "display",
                 "none",
                 "important"
             );
-
-        }else{
-
+        } else {
             bottomNav.style.setProperty(
                 "display",
                 "grid",
@@ -3679,53 +3681,15 @@ function showPage(pageId){
         }
     }
 
-    window.scrollTo(0,0);
-}
-  
-function navigateNav(pageId,button){  
-  
-    showPage(pageId);  
-  
-}  
-  
-  
-/* ==================================================  
-   LOAD USER  
-================================================== */  
-  
-async function loadUser() {
-
-    try {
-
-        const data =
-            await apiFetch("/api/me");
-
-        if (data.user) {
-
-            currentUser =
-                data.user;
-
-        } else if (data) {
-
-            currentUser =
-                data;
-        }
-
-        // Get latest wallet balance first
-        await refreshBalance();
-
-        // Then update every wallet display
-        updateAllDisplays();
-
-    } catch (error) {
-
-        console.log(
-            "User loading:",
-            error.message
-        );
-
+    // Start shared-state refresh on Page 2
+    if (pageId === "page2") {
+        startPage2Sync();
     }
+
+    window.scrollTo(0, 0);
 }
+
+
 async function refreshBalance() {
     try {
         const data = await apiFetch("/api/balance");
@@ -6055,18 +6019,11 @@ function renderCardSelection(){
  updateSelectedCards();  
   
 }  
-  
-/* =====================================================  
-   REMOVE CARD  
-===================================================== */  
-  
-/* =====================================================  
-   UPDATE SELECTED  
-===================================================== */  
-  
+
 /* =====================================================  
    TIMER  
 ===================================================== */  
+
 function startSelectionTimer() {
     clearInterval(selectionTimer);
 
@@ -7120,6 +7077,7 @@ function stopSharedGameSync(){
     }
 
 }
+
 async function waitForSharedGameStart(matchId){
 
     console.log(
@@ -7411,6 +7369,121 @@ console.log(
     );
 
 }
+
+
+/* ==========================================
+   PAGE 2 — REFRESH SHARED MATCH EVERY SECOND
+========================================== */
+
+let page2SyncInterval = null;
+let page2SyncBusy = false;
+
+async function refreshPage2State() {
+
+    // Do not run overlapping requests
+    if (page2SyncBusy) return;
+
+    // Only refresh while Page 2 is visible
+    const page2 = document.getElementById("page2");
+
+    if (!page2 || !page2.classList.contains("active")) {
+        return;
+    }
+
+    // A match ID is required
+    if (!currentGameId) return;
+
+    page2SyncBusy = true;
+
+    try {
+
+        const data = await apiFetch(
+            "/api/match/" + currentGameId
+        );
+
+        const match = data.match || data;
+
+        console.log("🔄 PAGE 2 SHARED STATE:", data);
+
+        // Update shared player cards
+        renderSharedPlayerCards(
+            data.players ||
+            match.players ||
+            []
+        );
+
+        // Update shared countdown
+        const countdown = Number(
+            match.countdown ??
+            data.countdown ??
+            0
+        );
+
+        const timer = document.getElementById(
+            "selectionTimer"
+        );
+
+        if (timer) {
+            timer.textContent = countdown;
+        }
+
+        // Update displayed player count
+        const players = Number(
+            match.playerCount ??
+            match.player_count ??
+            data.playerCount ??
+            data.player_count ??
+            0
+        );
+
+        fakePlayers = players;
+
+        console.log("👥 SHARED PLAYERS:", players);
+
+    } catch (error) {
+
+        console.error(
+            "❌ PAGE 2 REFRESH ERROR:",
+            error
+        );
+
+    } finally {
+
+        page2SyncBusy = false;
+
+    }
+}
+
+
+/* Start refreshing Page 2 every second */
+
+function startPage2Sync() {
+
+    stopPage2Sync();
+
+    refreshPage2State();
+
+    page2SyncInterval = setInterval(
+        refreshPage2State,
+        1000
+    );
+}
+
+
+/* Stop refreshing when leaving Page 2 */
+
+function stopPage2Sync() {
+
+    if (page2SyncInterval !== null) {
+
+        clearInterval(page2SyncInterval);
+
+        page2SyncInterval = null;
+
+    }
+
+}
+
 /* =====================================================  
    FINISH SELECTION  
 ===================================================== */  
