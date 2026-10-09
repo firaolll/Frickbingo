@@ -750,65 +750,50 @@ button{
         0 0 6px var(--purple);  
 }  
 
-.winner-card-wrap{
-
-    width:100%;
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    justify-content:center;
-
-    margin:10px auto;
-
-    overflow:visible;
-
+/* Winner card container */
+.winner-card-wrap {
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 10px auto;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-
-/* Winner card created by
-   createCardElement() */
-
-.winner-card-wrap .bingo-card{
-
-    width:100%;
-
-    max-width:260px;
-
-    margin:0 auto;
-
-    display:block;
-
+/* Winner Bingo card */
+.winner-card-wrap .bingo-card {
+    width: 100% !important;
+    max-width: 300px !important;
+    min-width: 0 !important;
+    margin: 0 auto;
+    display: block;
+    box-sizing: border-box;
 }
 
-
-/* Keep the Bingo grid visible */
-
-.winner-card-wrap .bingo-grid{
-
-    width:100%;
-
+/* Force exactly 5 columns */
+.winner-card-wrap .bingo-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    gap: 3px !important;
+    box-sizing: border-box;
 }
 
-
-/* Make winner card cells
-   fit inside the overlay */
-
-.winner-card-wrap .bingo-cell{
-
-    min-width:0;
-
-    aspect-ratio:1 / 1;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
+/* Make every cell small and square */
+.winner-card-wrap .bingo-cell {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 3vw, 15px) !important;
+    box-sizing: border-box;
 }
 /* =====================================================
    BINGO CARD — PLAYER CARD
