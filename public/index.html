@@ -9249,6 +9249,7 @@ if(
         );
 
 }
+
 function showLoserScreen(winnerCards){
 
     console.log(
@@ -9447,158 +9448,78 @@ function showLoserScreen(winnerCards){
 
                 }
 
+                
                 // ==============================
-                // CARD
+                // WINNING CARD - RESPONSIVE 5x5
                 // ==============================
 
-                const card =
-                    document.createElement("div");
+                const card = document.createElement("div");
 
-                card.style.display =
-                    "grid";
-
+                card.style.display = "grid";
                 card.style.gridTemplateColumns =
-                    "repeat(5, 1fr)";
+                    "repeat(5, minmax(0, 1fr))";
+                card.style.width = "100%";
+                card.style.maxWidth = "280px";
+                card.style.minWidth = "0";
+                card.style.boxSizing = "border-box";
+                card.style.margin = "10px auto";
+                card.style.gap = "3px";
 
-                card.style.width =
-                    "100%";
+                // B I N G O headers
+                ["B", "I", "N", "G", "O"].forEach(letter => {
+                    const header = document.createElement("div");
 
-                card.style.maxWidth =
-                    "320px";
+                    header.textContent = letter;
+                    header.style.textAlign = "center";
+                    header.style.fontWeight = "bold";
+                    header.style.padding = "3px 0";
+                    header.style.minWidth = "0";
+                    header.style.fontSize = "13px";
+                    header.style.boxSizing = "border-box";
 
-                card.style.margin =
-                    "10px auto";
+                    card.appendChild(header);
+                });
 
-                card.style.gap =
-                    "3px";
+                // All 25 cells
+                winningCard.forEach((value, cellIndex) => {
+                    const cell = document.createElement("div");
 
-                // ==============================
-                // B I N G O
-                // ==============================
+                    cell.textContent = value;
+                    cell.style.width = "100%";
+                    cell.style.minWidth = "0";
+                    cell.style.minHeight = "0";
+                    cell.style.aspectRatio = "1 / 1";
+                    cell.style.padding = "0";
+                    cell.style.display = "flex";
+                    cell.style.alignItems = "center";
+                    cell.style.justifyContent = "center";
+                    cell.style.boxSizing = "border-box";
+                    cell.style.overflow = "hidden";
+                    cell.style.fontSize = "clamp(10px, 3vw, 14px)";
+                    cell.style.border =
+                        "1px solid rgba(255,255,255,0.3)";
+                    cell.style.borderRadius = "4px";
+                    cell.style.fontWeight = "bold";
 
-                [
-                    "B",
-                    "I",
-                    "N",
-                    "G",
-                    "O"
-                ].forEach(
-                    letter => {
-
-                        const header =
-                            document.createElement(
-                                "div"
-                            );
-
-                        header.textContent =
-                            letter;
-
-                        header.style.textAlign =
-                            "center";
-
-                        header.style.fontWeight =
-                            "bold";
-
-                        header.style.padding =
-                            "6px";
-
-                        card.appendChild(
-                            header
-                        );
-
+                    if (value === "FREE") {
+                        cell.classList.add("free");
+                        cell.style.fontSize = "9px";
                     }
-                );
 
-                // ==============================
-                // 25 CELLS
-                // ==============================
-
-                winningCard.forEach(
-                    (value, cellIndex) => {
-
-                        const cell =
-                            document.createElement(
-                                "div"
-                            );
-
-                        cell.textContent =
-                            value;
-
-                        cell.style.minHeight =
-                            "38px";
-
-                        cell.style.display =
-                            "flex";
-
-                        cell.style.alignItems =
-                            "center";
-
-                        cell.style.justifyContent =
-                            "center";
-
-                        cell.style.border =
-                            "1px solid rgba(255,255,255,0.3)";
-
-                        cell.style.borderRadius =
-                            "5px";
-
-                        cell.style.fontWeight =
-                            "bold";
-
-                        // --------------------------
-                        // FREE
-                        // --------------------------
-
-                        if(
-                            value === "FREE"
-                        ){
-
-                            cell.classList.add(
-                                "free"
-                            );
-
-                        }
-
-                        // --------------------------
-                        // WINNING CELL
-                        // --------------------------
-
-                        if(
-                            winningCells.includes(
-                                cellIndex
-                            )
-                        ){
-
-                            cell.style.background =
-                                "#00ff88";
-
-                            cell.style.color =
-                                "#000";
-
-                            cell.style.border =
-                                "3px solid white";
-
-                            cell.style.boxShadow =
-                                "0 0 10px #00ff88, 0 0 25px #00ff88";
-
-                            cell.style.transform =
-                                "scale(1.05)";
-
-                            cell.style.zIndex =
-                                "2";
-
-                        }
-
-                        card.appendChild(
-                            cell
-                        );
-
+                    // Highlight winning cells
+                    if (winningCells.includes(cellIndex)) {
+                        cell.style.background = "#00ff88";
+                        cell.style.color = "#000";
+                        cell.style.border = "2px solid white";
+                        cell.style.boxShadow = "0 0 8px #00ff88";
+                        cell.style.position = "relative";
+                        cell.style.zIndex = "1";
                     }
-                );
 
-                winnerCardWrap.appendChild(
-                    card
-                );
+                    card.appendChild(cell);
+                });
+
+                winnerCardWrap.appendChild(card);
 
             }
         );
