@@ -8703,551 +8703,206 @@ for(const cardNumber of selectedCards){
    SHOW WINNER  
 ===================================================== */  
 
-async function showWinner(
-    cardNumber,
-    card
-){
+async function showWinner(cardNumber, card) {
 
-    /* ONLY SHOW A CARD BELONGING TO THIS PLAYER */
-    if(
-        !selectedCards.includes(
-            Number(cardNumber)
-        )
-    ){
+    // ==========================================
+    // VERIFY THIS CARD BELONGS TO THIS PLAYER
+    // ==========================================
 
+    if (!selectedCards.includes(Number(cardNumber))) {
         console.warn(
             "⚠️ Winner card does not belong to this player:",
             cardNumber
         );
-
         return;
-        
     }
 
-    if(winnerShown){
-
+    if (winnerShown || winnerClaimInProgress) {
         return;
-
     }
 
+    // ==========================================
+    // SERVER MUST CONFIRM THE WIN
+    // ==========================================
 
-    /* ==================================================
-       SERVER MUST CONFIRM THE WIN FIRST
-       ================================================== */
+    if (!currentGameId) {
+        console.warn("⚠️ No currentGameId available.");
+        return;
+    }
 
-   if(!currentGameId){
-
-    console.warn(
-        "⚠️ No currentGameId available."
-    );
-
-    return;
-}
-
-winnerClaimInProgress = true;
-    let data;
-
-
-    try{
-
-        data =
-            await apiFetch(
-                "/api/game/finish",
-                {
-                    method:"POST",
-
-                    body:JSON.stringify({
-
-                        gameId:
-                            currentGameId,
-
-                        result:
-                            "WIN",
-
-                        cardNumber:
-                            Number(cardNumber)
-
-                    })
-                }
-            );
-
-
-       console.log(
-    "🎮 GAME FINISH RESPONSE:",
-    JSON.stringify(data, null, 2)
-);
-
-
- }   catch(error){
-
-    console.error(
-        "❌ Finish game error:",
-        error
-    );
-
-    winnerClaimInProgress = false;
-
-    showToast(
-        "Server could not verify the Bingo."
-    );
-
-    return;
-}
-
-    /* ==================================================
-       SERVER REJECTED THE WIN
- /* ==================================================
-   SERVER REJECTED WINNER
-   ================================================== */
-if(
-    !data ||
-    data.success !== true
-){
-
-    console.warn(
-        "❌ SERVER REJECTED WINNER:",
-        JSON.stringify(
-            data,
-            null,
-            2
-        )
-    );
-
-    /*
-     * Keep the claim locked.
-     *
-     * This prevents checkWinner() from repeatedly
-     * sending /api/game/finish every 500ms.
-     */
     winnerClaimInProgress = true;
 
-    showToast(
-        data?.error ||
-        "Bingo win was not verified."
-    );
+    let data;
 
-    return;
-}
-    /* ==================================================
-       SERVER CONFIRMED WIN
-       ================================================== */
+    try {
+        data = await apiFetch("/api/game/finish", {
+            method: "POST",
+            body: JSON.stringify({
+                gameId: currentGameId,
+                result: "WIN",
+                cardNumber: Number(cardNumber)
+            })
+        });
+
+        console.log(
+            "🎮 GAME FINISH RESPONSE:",
+            JSON.stringify(data, null, 2)
+        );
+
+    } catch (error) {
+        console.error("❌ Finish game error:", error);
+
+        winnerClaimInProgress = false;
+
+        showToast("Server could not verify the Bingo.");
+        return;
+    }
+
+    // ==========================================
+    // REJECT UNVERIFIED WINS
+    // ==========================================
+
+    if (!data || data.success !== true) {
+        console.warn(
+            "❌ SERVER REJECTED WINNER:",
+            JSON.stringify(data, null, 2)
+        );
+
+        // Keep the claim locked to prevent repeated requests.
+        winnerClaimInProgress = true;
+
+        showToast(
+            data?.error || "Bingo win was not verified."
+        );
+
+        return;
+    }
+
+    // ==========================================
+    // SERVER CONFIRMED THE WIN
+    // ==========================================
 
     winnerShown = true;
 
     stopAutoCalling();
 
+    const callButton = document.getElementById("callBtn");
 
-    const callButton =
-        document.getElementById(
-            "callBtn"
-        );
-
-
-    if(callButton){
-
+    if (callButton) {
         callButton.disabled = true;
-
     }
 
+    const prize = Number(data.prize || 0);
 
-    /* ==================================================
-       USE SERVER CONFIRMED PRIZE
-       ================================================== */
-
-    const prize =
-    Number(
-        data.prize || 0
-    );
-
-console.log(
-    "💰 INITIAL WIN RESPONSE:",
-    {
+    console.log("💰 WIN RESPONSE:", {
         prize,
-        matchStatus:
-            data.matchStatus,
-        payoutComplete:
-            data.payoutComplete
-    }
-);
+        matchStatus: data.matchStatus,
+        payoutComplete: data.payoutComplete
+    });
 
+    // ==========================================
+    // WINNER SCREEN ELEMENTS
+    // ==========================================
 
-    const winnerName =
-        document.getElementById(
-            "winnerName"
-        );
+    const overlay = document.getElementById("winnerOverlay");
+    const winnerName = document.getElementById("winnerName");
+    const winnerNumber = document.getElementById("winnerCardNumber");
+    const winnerPrize = document.getElementById("winnerPrize");
+    const wrapper = document.getElementById("winnerCardWrap");
 
+    // ==========================================
+    // SHOW MESSAGE ONLY — NO BINGO CARD
+    // ==========================================
 
-    const winnerNumber =
-        document.getElementById(
-            "winnerCardNumber"
-        );
-
-
-    const winnerPrize =
-        document.getElementById(
-            "winnerPrize"
-        );
-
-
-    if(winnerName){
-
-        winnerName.textContent =
-            profileData.name ||
-            "Winner";
-
+    if (winnerName) {
+        winnerName.textContent = "🎉 BINGO! YOU WON THE GAME! 🎉";
+        winnerName.style.display = "block";
     }
 
-
-    if(winnerNumber){
-
-        winnerNumber.textContent =
-            String(cardNumber);
-
+    // Hide card number and card display.
+    if (winnerNumber) {
+        winnerNumber.style.display = "none";
     }
 
-
-    if(winnerPrize){
-
-    if(
-        data.payoutComplete === true &&
-        prize > 0
-    ){
-
-        winnerPrize.textContent =
-            Math.floor(prize) + " ETB";
-
-    }else{
-
-        winnerPrize.textContent =
-            "Calculating...";
-
+    if (wrapper) {
+        wrapper.innerHTML = "";
+        wrapper.style.display = "none";
     }
 
-}
-/* ==================================================
-   SHOW WINNING CARD
-   ================================================== */
+    // ==========================================
+    // SHOW SERVER-CONFIRMED PRIZE
+    // ==========================================
 
-const wrapper =
-    document.getElementById(
-        "winnerCardWrap"
-    );
+    if (winnerPrize) {
+        winnerPrize.style.display = "block";
 
-
-// ------------------------------------------
-// USE SERVER CONFIRMED WINNING CARD
-// ------------------------------------------
-
-const winningCard =
-    Array.isArray(data.winningCard)
-        ? data.winningCard
-        : [];
-
-
-// ------------------------------------------
-// USE SERVER CONFIRMED WINNING CELLS
-// ------------------------------------------
-
-const winningCells =
-    Array.isArray(data.winningCells)
-        ? data.winningCells.map(Number)
-        : [];
-
-
-console.log(
-    "🏆 SERVER WINNING CARD:",
-    winningCard
-);
-
-console.log(
-    "🎯 SERVER WINNING CELLS:",
-    winningCells
-);
-
-
-if(
-    wrapper &&
-    winningCard.length === 25
-){
-
-    console.log(
-        "🏆 DISPLAYING SERVER WINNING CARD:",
-        {
-            cardNumber,
-            winningCard,
-            winningCells
+        if (data.payoutComplete === true && prize > 0) {
+            winnerPrize.textContent =
+                "💰 You won " + Math.floor(prize) + " ETB!";
+        } else {
+            winnerPrize.textContent =
+                "💰 Calculating your prize...";
         }
-    );
-
-
-    // ==========================================
-    // CLEAR OLD CARD
-    // ==========================================
-
-    wrapper.innerHTML = "";
-
+    }
 
     // ==========================================
-    // CREATE CARD
+    // SHOW WINNER OVERLAY
     // ==========================================
 
-    const cardElement =
-        document.createElement(
-            "div"
-        );
-
-    cardElement.className =
-        "bingo-card winner-bingo-card";
-
-
-    // ==========================================
-    // BINGO HEADER
-    // ==========================================
-
-    const header =
-        document.createElement(
-            "div"
-        );
-
-    header.className =
-        "bingo-header";
-
-
-    ["B","I","N","G","O"].forEach(
-        letter => {
-
-            const cell =
-                document.createElement(
-                    "div"
-                );
-
-            cell.className =
-                "bingo-header-cell";
-
-            cell.textContent =
-                letter;
-
-            header.appendChild(
-                cell
-            );
-
-        }
-    );
-
-
-    cardElement.appendChild(
-        header
-    );
-
-
-    // ==========================================
-    // CARD CELLS
-    // ==========================================
-
-    winningCard.forEach(
-        (value, index) => {
-
-            const cell =
-                document.createElement(
-                    "div"
-                );
-
-            cell.className =
-                "bingo-cell";
-
-
-            cell.dataset.index =
-                String(index);
-
-
-            cell.dataset.value =
-                String(value);
-
-
-            cell.textContent =
-                value;
-
-
-            // ----------------------------------
-            // FREE CENTER
-            // ----------------------------------
-
-            if(
-                value === "FREE"
-            ){
-
-                cell.classList.add(
-                    "free"
-                );
-
-            }
-
-
-            // ----------------------------------
-            // CALLED NUMBER
-            // ----------------------------------
-
-            if(
-                value !== "FREE" &&
-                calledNumbers.includes(
-                    Number(value)
-                )
-            ){
-
-                cell.classList.add(
-                    "called"
-                );
-
-            }
-
-
-            // ----------------------------------
-            // WINNING PATTERN
-            // ----------------------------------
-
-            if(
-                winningCells.includes(
-                    Number(index)
-                )
-            ){
-
-                cell.classList.add(
-                    "winning-cell"
-                );
-
-            }
-
-
-            cardElement.appendChild(
-                cell
-            );
-
-        }
-    );
-
-
-    wrapper.appendChild(
-        cardElement
-    );
-
-
-    console.log(
-        "🎫 WINNER CARD DISPLAYED"
-    );
-
-}
-else{
-
-    console.warn(
-        "⚠️ Server winning card is missing or invalid:",
-        {
-            cardNumber,
-            winningCard,
-            winningCells
-        }
-    );
-
-}
-    /* ==================================================
-       SHOW WINNER OVERLAY
-       ================================================== */
-
-    document
-        .getElementById(
-            "winnerOverlay"
-        )
-        ?.classList.add("show");
-
+    if (overlay) {
+        overlay.classList.add("show");
+    }
 
     haptic("success");
 
+    // ==========================================
+    // PAYOUT STATUS AND BALANCE REFRESH
+    // ==========================================
 
-    /* ==================================================
-   PAYOUT IS DELAYED BY 3 SECONDS
-   ================================================== */
-if(
-    data.payoutComplete === true
-){
+    if (data.payoutComplete === true) {
+        console.log("💰 PAYOUT COMPLETE");
 
-    console.log(
-        "💰 PAYOUT ALREADY COMPLETE"
-    );
+        await refreshBalance();
+        updateAllDisplays();
 
+    } else {
+        console.log(
+            "⏳ Waiting for server payout confirmation."
+        );
+    }
 
-    await refreshBalance();
-
-    updateAllDisplays();
-
-}else{
-
-    console.log(
-        "⏳ CLAIM WINDOW ACTIVE — WAITING FOR SERVER PAYOUT"
-    );
-
-}
-    /* ==================================================
-       WINNER COUNTDOWN
-       ================================================== */
+    // ==========================================
+    // WINNER COUNTDOWN
+    // ==========================================
 
     let seconds = 5;
 
+    const countdown = document.getElementById("winnerCountdown");
 
-    const countdown =
-        document.getElementById(
-            "winnerCountdown"
-        );
-
-
-    if(countdown){
-
-        countdown.textContent =
-            String(seconds);
-
+    if (countdown) {
+        countdown.textContent = String(seconds);
     }
 
+    clearInterval(winnerResetInterval);
 
-    clearInterval(
-        winnerResetInterval
-    );
+    winnerResetInterval = setInterval(() => {
+        seconds--;
 
+        if (countdown) {
+            countdown.textContent = String(
+                Math.max(0, seconds)
+            );
+        }
 
-    winnerResetInterval =
-        setInterval(
-            () => {
+        if (seconds <= 0) {
+            clearInterval(winnerResetInterval);
+            winnerResetInterval = null;
 
-                seconds--;
+            console.log("🏁 WINNER COUNTDOWN FINISHED");
 
-
-                if(countdown){
-
-                    countdown.textContent =
-                        String(
-                            Math.max(
-                                0,
-                                seconds
-                            )
-                        );
-
-                }
-
-
-                if(seconds <= 0){
-
-                    clearInterval(
-                        winnerResetInterval
-                    );
-
-                    winnerResetInterval =
-                        null;
-
-                    resetAfterWinner();
-
-                }
-
-            },
-            1000
-        );
-
+            resetAfterWinner();
+        }
+    }, 1000);
 }
 
 function showLoserScreen(winnerCards){
