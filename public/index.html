@@ -3462,32 +3462,7 @@ button{
 
 </div>  <!-- ==================================================  
      WINNER  
-================================================== -->  <div  
-    id="winnerOverlay"  
-    class="winner-overlay">  <div class="winner-box">  
-
-    <div class="winner-title">  
-        🎉 BINGO! 🎉  
-    </div>  
-
-    <div  
-        id="winnerName"  
-        class="winner-name">  
-        Winner  
-    </div>  
-
-    <div  
-        id="winnerPrize"  
-        class="winner-prize">  
-        0 ETB  
-    </div>  
-
-    <button  
-        class="close-btn"  
-        onclick="closeWinner()">  
-        CONTINUE  
-    </button>  
-
+================================================== --> 
 </div>
 
 </div>  <!-- ==================================================  
@@ -7239,26 +7214,20 @@ async function waitForSharedGameStart(matchId){
             // PLAYER COUNT
             // ==========================================
 
-            const players =
-                Number(
-                    match.playerCount ??
-                    match.player_count ??
-                    data.playerCount ??
-                    data.player_count ??
-                    1
-                );
+           const players = Number(
+    match.playerCount ??
+    match.player_count ??
+    data.playerCount ??
+    data.player_count ??
+    0
+);
 
+fakePlayers = players;
 
-            console.log(
-                "👥 PLAYERS:",
-                players
-            );
-
-
-            fakePlayers =
-                players;
-
-
+console.log(
+    "👥 ACTUAL SHARED MATCH PLAYERS:",
+    players
+);
             // ==========================================
             // GET SERVER MATCH STATUS
             // ==========================================
