@@ -6885,6 +6885,7 @@ async function syncSharedGameState(){
     }
 
 }
+
 function handleSharedWinners(winnerCards){
 
     if(
@@ -7004,35 +7005,59 @@ function handleSharedWinners(winnerCards){
 
     }
 
-
-    // -----------------------------------------
-    // SOMEONE ELSE WON
-    // -----------------------------------------
-
-    console.log(
-        "😢 ANOTHER PLAYER WON:",
-        winnerCards
-    );
-
-
-    winnerShown = false;
+// -----------------------------------------
+// SOMEONE ELSE WON
+// -----------------------------------------
 
 console.log(
-    "🔴 SENDING WINNERS TO LOSER SCREEN:",
+    "😢 CHECKING WHETHER THIS PLAYER LOST:",
     winnerCards
 );
 
-console.log(
-    "🔴 WINNER DATA JSON:",
-    JSON.stringify(
-        winnerCards,
-        null,
-        2
-    )
+// Do not show the loser screen if the user ID
+// is unavailable. We cannot safely identify a loser.
+if (!myUserId) {
+    console.error(
+        "❌ Current user ID is missing. Cannot classify player as loser."
+    );
+    return;
+}
+
+// Check winner IDs carefully.
+const winnerIds = winnerCards.map(
+    winner => Number(winner.userId)
 );
-    showLoserScreen(
+
+console.log("👤 CURRENT USER ID:", myUserId);
+console.log("🏆 WINNER USER IDS:", winnerIds);
+
+// Safety check: if any winner has no valid user ID,
+// do not incorrectly show the loser screen.
+if (winnerIds.some(id => !Number.isFinite(id) || id <= 0)) {
+    console.error(
+        "❌ Invalid winner user ID. Not showing loser screen.",
         winnerCards
     );
+    return;
+}
+
+// If the current user is a winner, never show loser screen.
+if (winnerIds.includes(myUserId)) {
+    console.log(
+        "🎉 Current player is a winner. Loser screen blocked."
+    );
+    return;
+}
+
+// Only confirmed non-winners reach this point.
+console.log(
+    "😢 Confirmed loser. Showing winning card."
+);
+
+winnerShown = true;
+
+showLoserScreen(winnerCards);
+
 
 }
 /* ==================================================
