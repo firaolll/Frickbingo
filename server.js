@@ -372,7 +372,7 @@ app.get("/api/match/active", auth, (req, res) => {
     try {
         const stake = Number(req.query.stake);
 
-        if (!Number.isFinite(stake) || !STAKES.includes(stake)) {
+       if (!Number.isFinite(stake) || ![10, 20].includes(stake)) {
             return res.status(400).json({
                 success: false,
                 error: "Invalid stake"
