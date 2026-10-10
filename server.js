@@ -7426,6 +7426,22 @@ bot.onText(
     }
 );
 
+bot.onText(/^\/withdraw$|^💸 Withdraw$/i, async (msg) => {
+    userState[msg.chat.id] = {
+        step: "withdraw_phone"
+    };
+
+    await sendBotMessage(
+        msg.chat.id,
+        `💸 Withdrawal
+
+Minimum withdrawal: ${MIN_WITHDRAW} ETB
+
+እባኮ ገንዘብ የሚቀበሉበትን
+የTelebirr ስልክ ቁጥር ያስገቡ።`
+    );
+});
+
 
 // ======================================================
 // DEPOSIT MESSAGE HANDLER
@@ -7445,6 +7461,174 @@ bot.on(
         const state = userState[chatId];
 
         if (!state) return;
+       
+        // ==================================================
+        // WITHDRAWAL STEP 1 — TELEBIRR PHONE NUMBER
+        // ==================================================
+
+        if (state.step === "withdraw_phone") {
+            const phone = text.replace(/[\s-]/g, "");
+
+            if (!/^(09|07)\d{8}$|^\+251[97]\d{8}$/.test(phone)) {
+                await sendBotMessage(
+                    chatId,
+                    "❌ እባክዎ ትክክለኛ የTelebirr ስልክ ቁጥር ያስገቡ።"
+                );
+                return;
+            }
+
+            userState[chatId] = {
+                step: "withdraw_amount",
+                phone: phone
+            };
+
+            await sendBotMessage(
+                chatId,
+                `እባኮ ማውጣት የሚፈልጉትን መጠን ያስገቡ።
+
+💰 ትንሹ ${MIN_WITHDRAW} ብር (ETB)`
+            );
+            return;
+        }
+
+        // ==================================================
+        // WITHDRAWAL STEP 2 — AMOUNT, DEDUCT AND SAVE
+        // ==================================================
+
+        if (state.step === "withdraw_amount") {
+            const amount = Number(text.replace(/,/g, ""));
+
+            if (
+                !Number.isFinite(amount) ||
+                amount < MIN_WITHDRAW ||
+                Math.round(amount * 100) !== amount * 100
+            ) {
+                await sendBotMessage(
+                    chatId,
+                    `❌ እባክዎ ${MIN_WITHDRAW} ብር ወይም ከዚያ በላይ ያስገቡ።`
+                );
+                return;
+            }
+
+            const user = getUserByTelegramId(chatId);
+
+            if (!user) {
+                delete userState[chatId];
+
+                await sendBotMessage(
+                    chatId,
+                    "❌ መለያዎ አልተገኘም። እባክዎ /start ይጫኑ።"
+                );
+                return;
+            }
+
+            try {
+                // Deduct balance and create request atomically.
+                const createWithdrawal = db.transaction(() => {
+                    const currentUser = db.prepare(`
+                        SELECT id, balance
+                        FROM users
+                        WHERE id = ?
+                    `).get(user.id);
+
+                    if (!currentUser) {
+                        throw new Error("USER_NOT_FOUND");
+                    }
+
+                    if (Number(currentUser.balance) < amount) {
+                        throw new Error("INSUFFICIENT_BALANCE");
+                    }
+
+                    db.prepare(`
+                        UPDATE users
+                        SET balance = ROUND(balance - ?, 2)
+                        WHERE id = ? AND balance >= ?
+                    `).run(amount, user.id, amount);
+
+                    const result = db.prepare(`
+                        INSERT INTO withdrawals (
+                            user_id,
+                            amount,
+                            account_details,
+                            status
+                        )
+                        VALUES (?, ?, ?, 'pending')
+                    `).run(user.id, amount, state.phone);
+
+                    return Number(result.lastInsertRowid);
+                });
+
+                const withdrawalId = createWithdrawal();
+
+                // Prevent the same conversation being submitted twice.
+                delete userState[chatId];
+
+                await sendBotMessage(
+                    chatId,
+                    `✅ የማውጣት ጥያቄዎ ተቀብሏል።
+
+💵 መጠን: ${amount.toFixed(2)} ETB
+
+⏳ እባኮ ከ1-5 ደቂቃ ይጠብቁ።`
+                );
+
+                const username = msg.from.username
+                    ? `@${msg.from.username}`
+                    : "No username";
+
+                await sendBotMessage(
+                    ADMIN_CHAT_ID,
+                    `💸 NEW WITHDRAWAL REQUEST
+
+🆔 Request ID: ${withdrawalId}
+👤 Name: ${user.first_name || msg.from.first_name || ""}
+📛 Username: ${username}
+🆔 Telegram ID: ${user.telegram_id}
+
+📱 Telebirr: ${state.phone}
+💵 Amount: ${amount.toFixed(2)} ETB
+📌 Status: PENDING
+
+⚠️ Amount already deducted from Main Wallet.`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                {
+                                    text: "✅ Approve",
+                                    callback_data:
+                                        `approve_withdrawal:${withdrawalId}`
+                                },
+                                {
+                                    text: "❌ Reject",
+                                    callback_data:
+                                        `reject_withdrawal:${withdrawalId}`
+                                }
+                            ]]
+                        }
+                    }
+                );
+
+            } catch (error) {
+                console.error("Withdrawal submission error:", error);
+
+                if (error.message === "INSUFFICIENT_BALANCE") {
+                    delete userState[chatId];
+
+                    await sendBotMessage(
+                        chatId,
+                        "❌ በMain Wallet ውስጥ በቂ ቀሪ ሂሳብ የለዎትም።"
+                    );
+                    return;
+                }
+
+                await sendBotMessage(
+                    chatId,
+                    "❌ ጥያቄዎን ማስኬድ አልተቻለም። እባክዎ አስተዳዳሪውን ያነጋግሩ።"
+                );
+            }
+
+            return;
+        }
 
 
         // ==================================================
@@ -7603,38 +7787,31 @@ ${sms}
 // /WITHDRAW
 // ======================================================
 
-bot.onText(  
-    /^(\/withdraw|💸 Withdraw)$/,
-    async msg => {  
+bot.onText(/^\/withdraw$|^💸 Withdraw$/i, async (msg) => {
+    try {
+        const chatId = msg.chat.id;
 
-        await sendBotMessage(  
+        userState[chatId] = {
+            step: "withdraw_phone"
+        };
 
+        await sendBotMessage(
+            chatId,
+            `💸 ማውጣት (Withdrawal)
+
+Minimum withdrawal: ${MIN_WITHDRAW} ETB
+
+እባኮ ገንዘብ የሚቀበሉበትን
+የTelebirr ስልክ ቁጥር ያስገቡ።`
+        );
+    } catch (error) {
+        console.error("Withdraw start error:", error);
+        await sendBotMessage(
             msg.chat.id,
-            
-
-`💸 Withdrawal
-
-Minimum withdrawal:
-${MIN_WITHDRAW} ETB
-
-Withdrawal is taken from your Main Wallet only.
-
-When you submit a withdrawal:
-
-⏳ The amount is reserved.
-
-Admin APPROVE:
-The withdrawal remains deducted.
-
-Admin REJECT:
-The amount is returned to your Main Wallet.
-
-Please submit your withdrawal account/payment details through the game.`
-
-);  
-
-    }  
-);
+            "❌ Unable to start withdrawal. Please try again."
+        );
+    }
+});
 
 // ======================================================
 // ADMIN APPROVE DEPOSIT
