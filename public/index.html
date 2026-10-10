@@ -1020,21 +1020,7 @@ button{
     gap: 8px;
     margin: 10px 0 12px;
 }
-<div id="debugGameStatus"
-     style="
-        position:fixed;
-        top:70px;
-        left:5px;
-        z-index:9999;
-        background:#111;
-        color:#00ff88;
-        padding:6px 10px;
-        font-size:11px;
-        border:1px solid #00ff88;
-        border-radius:6px;
-     ">
-    DEBUG: loading...
-</div>
+
 #page3 .game-stat {
     min-height: 58px;
     padding: 8px 6px;
@@ -2867,7 +2853,21 @@ button{
      PAGE 3 LIVE GAME  
 ================================================== -->
 <section id="page3" class="page game-page">
-
+<div id="debugGameStatus"
+     style="
+        position:fixed;
+        top:70px;
+        left:5px;
+        z-index:9999;
+        background:#111;
+        color:#00ff88;
+        padding:6px 10px;
+        font-size:11px;
+        border:1px solid #00ff88;
+        border-radius:6px;
+     ">
+    DEBUG: loading...
+</div>
     <!-- GAME HEADER -->
     <header class="app-header game-live-header">
 
@@ -3718,7 +3718,32 @@ async function refreshBalance() {
         console.error("❌ Balance refresh:", error);
     }
 }  
-  
+
+async function loadUser() {
+    try {
+        const data = await apiFetch("/api/me");
+
+        console.log("👤 /api/me RESPONSE:", data);
+
+        if (data && data.user) {
+            currentUser = data.user;
+        } else if (data && data.id != null) {
+            currentUser = data;
+        } else {
+            console.error("❌ User ID not found in /api/me response:", data);
+            return;
+        }
+
+        console.log("👤 LOADED USER:", currentUser);
+        console.log("👤 LOADED USER ID:", currentUser.id);
+
+        await refreshBalance();
+
+    } catch (error) {
+        console.error("❌ LOAD USER ERROR:", error);
+    }
+}
+ 
 /* ==================================================  
    BALANCE HELPERS  
 ================================================== */  
@@ -10011,6 +10036,7 @@ document.addEventListener(
   
  }  
 );  
-  
+
 </script>  </body>  
+
 </html>
