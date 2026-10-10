@@ -4470,6 +4470,8 @@ return res.json({
 // ============================================================
 // FINALIZE SHARED MATCH PAYOUT
 // ============================================================
+
+
 function finalizeMatchPayout(matchId) {
 
     console.log(
@@ -4526,6 +4528,15 @@ function finalizeMatchPayout(matchId) {
             // ==================================================
             // GET ALL WINNERS
             // ==================================================
+
+console.log(
+    "🔎 PAYOUT DIAGNOSTIC:",
+    db.prepare(`
+        SELECT id, user_id, status, result, prize
+        FROM games
+        WHERE match_id = ?
+    `).all(matchId)
+);
 
             const winners =
                 db.prepare(`
@@ -4828,7 +4839,7 @@ if(
         });
 
 
-    return transaction;
+    return transaction();
 }
 // ======================================================
 /* ==================================================
