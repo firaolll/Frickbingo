@@ -406,7 +406,15 @@ app.get("/api/match/active", auth, (req, res) => {
             WHERE g.match_id = ?
             ORDER BY g.id ASC
         `).all(match.id);
-
+console.log("🎮 ACTIVE MATCH ID:", match.id);
+console.log("👥 PLAYER ROWS:", players.length);
+console.log(
+    "👤 PLAYERS IN MATCH:",
+    players.map(p => ({
+        userId: p.user_id,
+        cards: p.card_numbers
+    }))
+);
         const formattedPlayers = players.map(player => {
             let cardNumbers = [];
 
