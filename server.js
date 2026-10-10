@@ -290,6 +290,7 @@ Number(cards) <= MAX_CARDS
 // ======================================================
 // FIND WAITING MATCH
 // ======================================================
+
 function findActiveMatch(stake) {
 
     return db.prepare(`
@@ -365,6 +366,86 @@ try {
     }
 
 }
+
+
+app.get("/api/match/active", auth, (req, res) => {
+    try {
+        const stake = Number(req.query.stake);
+
+        if (!Number.isFinite(stake) || !STAKES.includes(stake)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid stake"
+            });
+        }
+
+        // Find an existing active match only.
+        // This endpoint never creates a match or charges money.
+        const match = findActiveMatch(stake);
+
+        if (!match) {
+            return res.json({
+                success: true,
+                match: null,
+                players: []
+            });
+        }
+
+        // Get every player's selected cards in this match.
+        const players = db.prepare(`
+            SELECT
+                g.id,
+                g.user_id,
+                g.stake,
+                g.cards,
+                g.card_numbers,
+                u.username,
+                u.first_name
+            FROM games g
+            LEFT JOIN users u ON u.id = g.user_id
+            WHERE g.match_id = ?
+            ORDER BY g.id ASC
+        `).all(match.id);
+
+        const formattedPlayers = players.map(player => {
+            let cardNumbers = [];
+
+            try {
+                cardNumbers = JSON.parse(player.card_numbers || "[]");
+            } catch (error) {
+                cardNumbers = [];
+            }
+
+            return {
+                ...player,
+                cardNumbers: Array.isArray(cardNumbers)
+                    ? cardNumbers
+                    : []
+            };
+        });
+
+        return res.json({
+            success: true,
+            match: {
+                id: Number(match.id),
+                stake: Number(match.stake),
+                status: match.status,
+                countdown: getMatchCountdown(match),
+                playerCount: formattedPlayers.length
+            },
+            players: formattedPlayers
+        });
+
+    } catch (error) {
+        console.error("ACTIVE MATCH ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            error: "Could not load active match"
+        });
+    }
+});
+
 // ======================================================
 // PROCESS WAITING MATCHES
 // ======================================================
