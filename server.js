@@ -7426,23 +7426,6 @@ bot.onText(
     }
 );
 
-bot.onText(/^\/withdraw$|^💸 Withdraw$/i, async (msg) => {
-    userState[msg.chat.id] = {
-        step: "withdraw_phone"
-    };
-
-    await sendBotMessage(
-        msg.chat.id,
-        `💸 Withdrawal
-
-Minimum withdrawal: ${MIN_WITHDRAW} ETB
-
-እባኮ ገንዘብ የሚቀበሉበትን
-የTelebirr ስልክ ቁጥር ያስገቡ።`
-    );
-});
-
-
 // ======================================================
 // DEPOSIT MESSAGE HANDLER
 // ======================================================
