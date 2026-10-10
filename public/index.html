@@ -7430,78 +7430,90 @@ let page2SyncInterval = null;
 let page2SyncBusy = false;
 
 async function refreshPage2State() {
-
-    // Do not run overlapping requests
+    console.log("🔄 REFRESH PAGE 2 CALLED");
     if (page2SyncBusy) return;
 
-    // Only refresh while Page 2 is visible
     const page2 = document.getElementById("page2");
 
     if (!page2 || !page2.classList.contains("active")) {
         return;
     }
 
-    // A match ID is required
-    if (!currentGameId) return;
+    // Need a valid stake before finding the shared match.
+    const stake = Number(selectedStake);
+
+    if (!STAKES.includes(stake)) {
+        console.log("⏳ Select a stake to find the shared match.");
+        return;
+    }
 
     page2SyncBusy = true;
 
     try {
+        let data;
 
-        const data = await apiFetch(
-            "/api/match/" + currentGameId
-        );
+        // If we already know the match ID, refresh that match.
+        if (currentGameId) {
+            data = await apiFetch(
+                "/api/match/" + encodeURIComponent(currentGameId)
+            );
+        } else {
+            // Find the active match even before selecting a card.
+            data = await apiFetch(
+                "/api/match/active?stake=" + encodeURIComponent(stake)
+            );
 
-        const match = data.match || data;
+            if (data.match && data.match.id) {
+                currentGameId = Number(data.match.id);
+                console.log("✅ Found active match:", currentGameId);
+            }
+        }
 
-        console.log("🔄 PAGE 2 SHARED STATE:", data);
+        if (!data || data.success === false) {
+            console.warn("⚠️ Could not refresh shared match:", data);
+            return;
+        }
 
-        // Update shared player cards
+        const match = data.match || null;
+
+        // No active match exists yet.
+        if (!match) {
+            otherPlayersSelectedCards = [];
+
+            renderSharedPlayerCards([]);
+
+            console.log("⏳ No active match found for stake:", stake);
+            return;
+        }
+
+        // Display all players' selected cards.
         renderSharedPlayerCards(
-            data.players ||
-            match.players ||
-            []
+            Array.isArray(data.players) ? data.players : []
         );
 
-        // Update shared countdown
-        const countdown = Number(
-            match.countdown ??
-            data.countdown ??
-            0
-        );
-
-        const timer = document.getElementById(
-            "selectionTimer"
-        );
+        // Update the shared countdown.
+        const countdown = Number(match.countdown ?? 0);
+        const timer = document.getElementById("selectionTimer");
 
         if (timer) {
             timer.textContent = countdown;
         }
 
-        // Update displayed player count
-        const players = Number(
-            match.playerCount ??
-            match.player_count ??
-            data.playerCount ??
-            data.player_count ??
-            0
-        );
-
+        // Update player count.
+        const players = Number(match.playerCount ?? data.players?.length ?? 0);
         fakePlayers = players;
 
-        console.log("👥 SHARED PLAYERS:", players);
+        console.log("🔄 PAGE 2 SHARED STATE:", {
+            matchId: match.id,
+            status: match.status,
+            stake: match.stake,
+            players
+        });
 
     } catch (error) {
-
-        console.error(
-            "❌ PAGE 2 REFRESH ERROR:",
-            error
-        );
-
+        console.error("❌ PAGE 2 REFRESH ERROR:", error);
     } finally {
-
         page2SyncBusy = false;
-
     }
 }
 
@@ -7509,7 +7521,7 @@ async function refreshPage2State() {
 /* Start refreshing Page 2 every second */
 
 function startPage2Sync() {
-
+console.log("🟢 PAGE 2 SYNC STARTED");
     stopPage2Sync();
 
     refreshPage2State();
