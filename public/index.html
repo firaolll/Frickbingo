@@ -2853,6 +2853,7 @@ button{
      PAGE 3 LIVE GAME  
 ================================================== -->
 <section id="page3" class="page game-page">
+
 <div id="debugGameStatus"
      style="
         position:fixed;
@@ -2868,6 +2869,7 @@ button{
      ">
     DEBUG: loading...
 </div>
+
     <!-- GAME HEADER -->
     <header class="app-header game-live-header">
 
@@ -4655,23 +4657,22 @@ function renderSharedPlayerCards(players){
         ==========================================
         */
 
-        const currentTelegramUserId =
-    Number(
-        window.Telegram?.WebApp
-            ?.initDataUnsafe
-            ?.user
-            ?.id || 0
+        
+const currentUserId =
+    Number(window.currentUser?.id ?? currentUser?.id ?? 0);
+
+const isAnotherPlayer =
+    currentUserId > 0 &&
+    playerId > 0 &&
+    playerId !== currentUserId;
+
+if (isAnotherPlayer) {
+    otherPlayersSelectedCards.push(
+        ...cardNumbers
+            .map(Number)
+            .filter(n => Number.isInteger(n) && n >= 1 && n <= 200)
     );
-
-if(
-    playerId !== currentTelegramUserId
-){
-
-            otherPlayersSelectedCards.push(
-                ...cardNumbers.map(Number)
-            );
-
-        }
+}
 
         const card =
             document.createElement("div");
