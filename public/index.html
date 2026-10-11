@@ -2744,19 +2744,16 @@ button{
         </div>  
     </div>  
 
-    <div class="info-box">  
-        <div class="info-label">PLAYERS</div>  
-        <div  
-            class="info-value"  
-            id="playerCount2">  
-            1  
-        </div>  
+   <div class="info-box">
+    <div class="info-label">PLAYERS</div>
+    <div class="info-value" id="playerCount2">0</div>
+</div>
     </div>  
 
 </div>  
 
 
-<div class="cost-panel">  
+<div class="cost-panel">   
 
     <span>  
         Card cost  
@@ -2906,12 +2903,9 @@ button{
         </div>
 
         <div class="game-stat">
-            <div class="game-stat-label">PLAYERS</div>
-            <div
-                class="game-stat-value"
-                id="gamePlayers">
-                1
-            </div>
+    <div class="game-stat-label">PLAYERS</div>
+    <div class="game-stat-value" id="gamePlayers">0</div>
+</div>
         </div>
 
         <div class="game-stat">
@@ -3587,7 +3581,17 @@ if (tg) {
     );
 
 }
+function updatePlayerCountDisplay() {
+    const count = Number(fakePlayers) || 0;
 
+    ["playerCount2", "gamePlayers"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = String(count);
+        }
+    });
+}
+}  
 /* ==================================================  
    API  
 ================================================== */  
@@ -4655,9 +4659,9 @@ function updateSelectedCards(){
     }  
   
   
-    updateAllDisplays();  
+    updateAllDisplays(); 
+
   
-}  
 function renderSharedPlayerCards(players){
 
     const container =
@@ -6491,7 +6495,16 @@ async function syncSharedGameState() {
         }
 
         const match = data.match || data;
+const count = Number(
+    match.playerCount ??
+    match.player_count ??
+    data.playerCount ??
+    data.player_count ??
+    0
+);
 
+fakePlayers = Number.isFinite(count) ? count : 0;
+updatePlayerCountDisplay();
         const matchStatus = String(
             match.status ??
             data.status ??
@@ -7083,7 +7096,7 @@ async function waitForSharedGameStart(matchId){
 );
 
 fakePlayers = players;
-
+updatePlayerCountDisplay();
 console.log(
     "👥 ACTUAL SHARED MATCH PLAYERS:",
     players
@@ -7376,7 +7389,7 @@ async function refreshPage2State() {
         // Update player count.
         const players = Number(match.playerCount ?? data.players?.length ?? 0);
         fakePlayers = players;
-
+updatePlayerCountDisplay();
         console.log("🔄 PAGE 2 SHARED STATE:", {
             matchId: match.id,
             status: match.status,
