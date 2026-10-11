@@ -2749,7 +2749,7 @@ button{
         <div  
             class="info-value"  
             id="playerCount2">  
-            1  
+            0  
         </div>  
     </div>  
 
@@ -2910,7 +2910,7 @@ button{
             <div
                 class="game-stat-value"
                 id="gamePlayers">
-                1
+                0
             </div>
         </div>
 
@@ -3535,7 +3535,7 @@ let gameTimer = null;
   
 let gameInterval = null;  
 let playerReady = false    
-let fakePlayers = 1;  
+let fakePlayers = 0;  
 let mainBalance = 0;
 let playBalance = 0;
 let telegramInitData = "";
@@ -3788,6 +3788,14 @@ function money(value){
    DISPLAY UPDATE  
 ================================================== */  
   
+function updatePlayerCountDisplay() {
+    const count = Number(fakePlayers) || 0;
+
+    for (const id of ["playerCount2", "gamePlayers"]) {
+        const element = document.getElementById(id);
+        if (element) element.textContent = String(count);
+    }
+}
 function updateAllDisplays(){  
   
     const main =  
@@ -6397,6 +6405,19 @@ async function readyForGame(){
          * the shared match.
          */
 
+        const latestMainBalance = data.mainBalance ?? data.balance;
+        const latestPlayBalance = data.playBalance ?? data.play_balance;
+        if (!currentUser) currentUser = {};
+        if (latestMainBalance !== undefined && Number.isFinite(Number(latestMainBalance))) {
+            mainBalance = Number(latestMainBalance);
+            currentUser.mainBalance = mainBalance;
+            currentUser.balance = mainBalance;
+        }
+        if (latestPlayBalance !== undefined && Number.isFinite(Number(latestPlayBalance))) {
+            playBalance = Number(latestPlayBalance);
+            currentUser.playBalance = playBalance;
+            currentUser.play_balance = playBalance;
+        }
         playerReady = true;
 
 
@@ -6491,6 +6512,28 @@ async function syncSharedGameState() {
         }
 
         const match = data.match || data;
+        const playerCountValue = Number(
+            match.playerCount ??
+            match.player_count ??
+            data.playerCount ??
+            data.player_count ??
+            0
+        );
+        fakePlayers = Number.isFinite(playerCountValue)
+            ? Math.max(0, playerCountValue)
+            : 0;
+        updatePlayerCountDisplay();
+
+        const prizePoolValue = Number(
+            match.prizePool ??
+            match.prize_pool ??
+            data.prizePool ??
+            0
+        );
+        const gamePotDisplay = document.getElementById("gamePot");
+        if (gamePotDisplay && Number.isFinite(prizePoolValue)) {
+            gamePotDisplay.textContent = money(prizePoolValue);
+        }
 
         const matchStatus = String(
             match.status ??
@@ -7083,6 +7126,7 @@ async function waitForSharedGameStart(matchId){
 );
 
 fakePlayers = players;
+updatePlayerCountDisplay();
 
 console.log(
     "👥 ACTUAL SHARED MATCH PLAYERS:",
@@ -7376,6 +7420,7 @@ async function refreshPage2State() {
         // Update player count.
         const players = Number(match.playerCount ?? data.players?.length ?? 0);
         fakePlayers = players;
+updatePlayerCountDisplay();
 
         console.log("🔄 PAGE 2 SHARED STATE:", {
             matchId: match.id,
