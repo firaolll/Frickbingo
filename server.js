@@ -279,34 +279,6 @@ Number(stake)
 );
 }
 
-function countPlayersWithSelectedCards(matchId) {
-    const rows = db.prepare(`
-        SELECT user_id, cards, card_numbers
-        FROM games
-        WHERE match_id = ?
-    `).all(matchId);
-
-    const playerIds = new Set();
-
-    for (const row of rows) {
-        if (Number(row.cards || 0) <= 0 || row.user_id == null) {
-            continue;
-        }
-
-        let cardNumbers;
-        try {
-            cardNumbers = JSON.parse(row.card_numbers || "[]");
-        } catch (error) {
-            continue;
-        }
-
-        if (Array.isArray(cardNumbers) && cardNumbers.length > 0) {
-            playerIds.add(String(row.user_id));
-        }
-    }
-
-    return playerIds.size;
-}
 function validCards(cards) {
 return (
 Number.isInteger(Number(cards)) &&
@@ -432,10 +404,6 @@ app.get("/api/match/active", auth, (req, res) => {
             FROM games g
             LEFT JOIN users u ON u.id = g.user_id
             WHERE g.match_id = ?
-              AND COALESCE(g.cards, 0) > 0
-              AND g.card_numbers IS NOT NULL
-              AND TRIM(g.card_numbers) != ''
-              AND TRIM(g.card_numbers) != '[]'
             ORDER BY g.id ASC
         `).all(match.id);
 console.log("🎮 ACTIVE MATCH ID:", match.id);
@@ -480,7 +448,7 @@ console.log(
                 stake: Number(match.stake),
                 status: match.status,
                 countdown: getMatchCountdown(match),
-                playerCount: new Set(formattedPlayers.map(player => String(player.user_id))).size
+                playerCount: formattedPlayers.length
             },
             players: formattedPlayers
         });
@@ -515,7 +483,15 @@ function processWaitingMatches() {
         for (const match of waitingMatches) {
 
            
-const playerCount = countPlayersWithSelectedCards(match.id);
+const playerCount = db.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS count
+    FROM games
+    WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
+`).get(match.id).count;
 
 
             const countdown =
@@ -1623,7 +1599,15 @@ app.post("/api/match/create", auth, (req, res) => {
             ["PLAYING", "CLAIM_WINDOW"].includes(matchStatus)
         ) {
             
-const playerCount = countPlayersWithSelectedCards(matchId);
+const playerCount = db.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS count
+    FROM games
+    WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
+`).get(matchId).count;
 
             console.log("👀 SPECTATOR MODE:", {
                 userId,
@@ -2550,7 +2534,15 @@ console.log(
         // ============================================================
 
  
-const playerCount = countPlayersWithSelectedCards(matchId);
+const playerCount = db.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS count
+    FROM games
+    WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
+`).get(matchId).count;
 
 
         // ============================================================
@@ -2712,7 +2704,6 @@ const playerCount = countPlayersWithSelectedCards(matchId);
 
 app.get("/api/match/:matchId", auth, (req, res) => {
 
-
     try {
 
         const matchId =
@@ -2780,10 +2771,6 @@ app.get("/api/match/:matchId", auth, (req, res) => {
         LEFT JOIN users u
             ON u.id = g.user_id
         WHERE g.match_id = ?
-          AND COALESCE(g.cards, 0) > 0
-          AND g.card_numbers IS NOT NULL
-          AND TRIM(g.card_numbers) != ''
-          AND TRIM(g.card_numbers) != '[]'
         ORDER BY g.id ASC
     `).all(matchId);
 
@@ -3059,10 +3046,6 @@ console.log("👥 ACTIVE PLAYER COUNT:", {
         LEFT JOIN users u
             ON u.id = g.user_id
         WHERE g.match_id = ?
-          AND COALESCE(g.cards, 0) > 0
-          AND g.card_numbers IS NOT NULL
-          AND TRIM(g.card_numbers) != ''
-          AND TRIM(g.card_numbers) != '[]'
         ORDER BY g.id ASC
     `).all(matchId);
         const myGame =
@@ -4378,7 +4361,7 @@ if (match.status === "PLAYING") {
 
     if (existingGame) {  
        const players= db.prepare(`  
-        SELECT COUNT(DISTINCT user_id) AS count FROM games WHERE match_id = ? AND COALESCE(cards, 0) > 0 AND card_numbers IS NOT NULL AND TRIM(card_numbers) != '' AND TRIM(card_numbers) != '[]'
+        SELECT COUNT(*) AS count FROM games WHERE match_id = ?  
       `).get(matchId);  
 
       return res.json({  
@@ -4491,7 +4474,11 @@ const updatedMatch = db.prepare(`
     WHERE id = ?
 `).get(matchId);
 
-const playerCount = countPlayersWithSelectedCards(matchId);
+const playerCount = db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM games
+    WHERE match_id = ?
+`).get(matchId).count;
 
 const newBalance = db.prepare(`
     SELECT
@@ -6223,7 +6210,13 @@ winningPattern:
                 ),
 
             playerCount:
-                countPlayersWithSelectedCards(matchId),
+                db.prepare(`
+                    SELECT COUNT(*) AS count
+                    FROM games
+                    WHERE match_id = ?
+                `).get(
+                    matchId
+                ).count,
 
             matchStatus:
                 updatedMatch.status,
@@ -7398,38 +7391,29 @@ bot.onText(
             }  
 
             let text =  
-                "🎮 Your Recent Games
-
-";  
+                "🎮 Your Recent Games\n\n";  
 
             games.forEach(  
                 (game, index) => {  
 
                     text +=  
                         `${index + 1}. ` +  
-                        `Game #${game.match_id || game.id}
-`;  
+                        `Game #${game.match_id || game.id}\n`;  
 
                     text +=  
-                        `Stake: ${num(game.stake)} ETB
-`;  
+                        `Stake: ${num(game.stake)} ETB\n`;  
 
                     text +=  
-                        `Cards: ${game.cards}
-`;  
+                        `Cards: ${game.cards}\n`;  
 
                     text +=  
-                        `Result: ${game.result}
-`;  
+                        `Result: ${game.result}\n`;  
 
                     text +=  
-                        `Prize: ${num(game.prize)} ETB
-`;  
+                        `Prize: ${num(game.prize)} ETB\n`;  
 
                     text +=  
-                        `Status: ${game.status}
-
-`;  
+                        `Status: ${game.status}\n\n`;  
                 }  
             );  
 
@@ -8858,8 +8842,7 @@ signal
 ) {
 
 console.log(  
-    `
-⚠️ ${signal} received. Shutting down...`  
+    `\n⚠️ ${signal} received. Shutting down...`  
 );  
 
 try {  
@@ -8979,9 +8962,3 @@ app.listen(PORT,"0.0.0.0",() => {
 
     console.log("");
 })};
-
-
-
-
-
-
