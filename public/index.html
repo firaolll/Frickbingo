@@ -5932,7 +5932,7 @@ async function goToCardSelection() {
         // NO RUNNING MATCH: CONTINUE NORMAL CARD SELECTION
         // ==================================================
 
-        window.isSpectator = true;
+        window.isSpectator =true ;
 
         if (
             !Number.isFinite(mainBalance) ||
@@ -6467,377 +6467,50 @@ async function readyForGame(){
 ================================================== */
 let sharedSyncInterval = null;
 
-async function syncSharedGameState(){
 
-    if(
-        !currentGameId ||
-        !actualGameStarted
-    ){
+async function syncSharedGameState() {
+
+    if (!currentGameId || !actualGameStarted) {
         return;
     }
 
+    try {
 
-    try{
-
-        const data =
-            await apiFetch(
-                "/api/match/" +
-                currentGameId
-            );
-
-
-        if(!data){
-            return;
-        }
-
-
-        // =====================================================
-        // GET MATCH
-        // =====================================================
-
-        const match =
-            data.match ||
-            data;
-
-
-        // =====================================================
-        // MATCH STATUS
-        // =====================================================
-
-        const matchStatus =
-            String(
-                match.status ??
-                data.status ??
-                match.matchStatus ??
-                data.matchStatus ??
-                ""
-            ).toUpperCase();
-
-
-        // =====================================================
-        // WINNER INFORMATION
-        // =====================================================
-
-        const winnerCards =
-            Array.isArray(match.winnerCards)
-                ? match.winnerCards
-                : (
-                    Array.isArray(data.winnerCards)
-                        ? data.winnerCards
-                        : []
-                );
-
-
-        console.log(
-            "🔄 SHARED MATCH SYNC:",
-            {
-                matchId: currentGameId,
-                matchStatus: matchStatus,
-                calledCount: Array.isArray(
-                    match.calledBalls ??
-                    data.calledBalls
-                )
-                    ? (
-                        match.calledBalls ??
-                        data.calledBalls
-                    ).length
-                    : 0,
-                winnerCount: winnerCards.length,
-                winnerCards: winnerCards
-            }
+        const data = await apiFetch(
+            "/api/match/" + currentGameId
         );
 
-
-        // =====================================================
-        // CLAIM WINDOW
-        // =====================================================
-
-        if(
-            matchStatus ===
-            "CLAIM_WINDOW"
-        ){
-
-            console.log(
-                "🛑 CLAIM WINDOW ACTIVE"
-            );
-
-            console.log(
-                "🏆 SHARED WINNERS:",
-                winnerCards
-            );
-
-
-            // -----------------------------------------------
-            // STOP GAME
-            // -----------------------------------------------
-
-            gameRunning = false;
-
-            stopAutoCalling();
-
-
-            // -----------------------------------------------
-            // SYNC CALLED BALLS
-            // -----------------------------------------------
-
-            let serverCalled =
-                match.calledBalls ??
-                match.called_balls ??
-                data.calledBalls ??
-                data.called_balls ??
-                [];
-
-
-            if(
-                typeof serverCalled ===
-                "string"
-            ){
-
-                try{
-
-                    serverCalled =
-                        JSON.parse(
-                            serverCalled
-                        );
-
-                }catch(error){
-
-                    console.error(
-                        "❌ CLAIM BALL PARSE ERROR:",
-                        error
-                    );
-
-                    serverCalled = [];
-
-                }
-
-            }
-
-
-            if(
-                Array.isArray(serverCalled)
-            ){
-
-                calledNumbers =
-                    serverCalled
-                        .map(Number)
-                        .filter(
-                            number =>
-                                Number.isInteger(number) &&
-                                number >= 1 &&
-                                number <= 75
-                        );
-
-            }
-
-
-            // -----------------------------------------------
-            // CURRENT BALL
-            // -----------------------------------------------
-
-            const rawServerBall =
-                match.currentBall ??
-                match.current_ball ??
-                data.currentBall ??
-                data.current_ball;
-
-
-            const serverBall =
-                Number(rawServerBall);
-
-
-            if(
-                Number.isInteger(serverBall) &&
-                serverBall >= 1 &&
-                serverBall <= 75
-            ){
-
-                lastCalledNumber =
-                    serverBall;
-
-
-                const letter =
-                    getBingoLetter(
-                        serverBall
-                    );
-
-
-                const ballText =
-                    `${letter}-${serverBall}`;
-
-
-                const display =
-                    document.getElementById(
-                        "gameBall"
-                    );
-
-
-                if(display){
-
-                    display.textContent =
-                        ballText;
-
-                }
-
-
-                const lastCalled =
-                    document.getElementById(
-                        "lastCalled"
-                    );
-
-
-                if(lastCalled){
-
-                    lastCalled.textContent =
-                        ballText;
-
-                }
-
-            }
-
-
-            // -----------------------------------------------
-            // UPDATE BOARD
-            // -----------------------------------------------
-
-            renderBigBoard();
-
-            markPlayerCards();
-
-            updateAllDisplays();
-
-
-            const calledCount =
-                document.getElementById(
-                    "calledCount"
-                );
-
-
-            if(calledCount){
-
-                calledCount.textContent =
-                    calledNumbers.length;
-
-            }
-
-
-            const calledProgress =
-                document.getElementById(
-                    "calledProgress"
-                );
-
-
-            if(calledProgress){
-
-                calledProgress.style.width =
-                    (
-                        calledNumbers.length /
-                        75 *
-                        100
-                    ) + "%";
-
-            }
-
-
-            // -----------------------------------------------
-            // SHOW SHARED RESULT
-            // -----------------------------------------------
-
-          if (winnerCards.length > 0) {
-
-    console.log(
-        "🏆 SERVER WINNERS CONFIRMED:",
-        winnerCards
-    );
-
-    if (window.isSpectator !== true) {
-        handleSharedWinners(winnerCards);
-    } else {
-        console.log(
-            "👀 Spectator sees winners but cannot claim prizes."
-        );
-    }
-
-} else {
-
-    console.warn(
-        "⚠️ CLAIM_WINDOW BUT NO WINNER DATA YET"
-    );
-
-}
-
+        if (!data) {
             return;
-
         }
 
+        const match = data.match || data;
 
-        // =====================================================
-        // FINISHED
-        // =====================================================
+        const matchStatus = String(
+            match.status ??
+            data.status ??
+            match.matchStatus ??
+            data.matchStatus ??
+            ""
+        ).toUpperCase();
 
-        if(
-            matchStatus ===
-            "FINISHED"
-        ){
-
-            console.log(
-                "🏁 SHARED MATCH FINISHED:",
-                currentGameId
+        const winnerCards = Array.isArray(match.winnerCards)
+            ? match.winnerCards
+            : (
+                Array.isArray(data.winnerCards)
+                    ? data.winnerCards
+                    : []
             );
 
-
-            gameRunning = false;
-
-            stopSharedGameSync();
-
-            stopAutoCalling();
-
-
-            if(
-                typeof stopSelectionTimer ===
-                "function"
-            ){
-
-                stopSelectionTimer();
-
-            }
-
-
-            actualGameStarted = false;
-
-
-            console.log(
-                "🏆 FINAL WINNERS:",
-                winnerCards
-            );
-
-
-           if (window.isSpectator === true) {
-
-    console.log(
-        "👀 Spectator match finished. No claim or payout."
-    );
-
-} else if (winnerCards.length > 0) {
-
-    handleSharedWinners(winnerCards);
-
-} else if (!winnerShown) {
-
-    showLoserScreen([]);
-
-}
-
-            }
-
-
-            return;
-
-        }
-
+        console.log("🔄 SHARED MATCH SYNC:", {
+            matchId: currentGameId,
+            matchStatus,
+            winnerCount: winnerCards.length,
+            winnerCards
+        });
 
         // =====================================================
-        // SYNC CALLED NUMBERS
+        // PARSE SERVER CALLED BALLS
         // =====================================================
 
         let serverCalled =
@@ -6847,49 +6520,27 @@ async function syncSharedGameState(){
             data.called_balls ??
             [];
 
-
-        if(
-            typeof serverCalled ===
-            "string"
-        ){
-
-            try{
-
-                serverCalled =
-                    JSON.parse(
-                        serverCalled
-                    );
-
-            }catch(error){
-
+        if (typeof serverCalled === "string") {
+            try {
+                serverCalled = JSON.parse(serverCalled);
+            } catch (error) {
                 console.error(
                     "❌ CALLED BALL PARSE ERROR:",
                     error
                 );
-
                 serverCalled = [];
-
             }
-
         }
 
-
-        if(
-            Array.isArray(serverCalled)
-        ){
-
-            calledNumbers =
-                serverCalled
-                    .map(Number)
-                    .filter(
-                        number =>
-                            Number.isInteger(number) &&
-                            number >= 1 &&
-                            number <= 75
-                    );
-
+        if (Array.isArray(serverCalled)) {
+            calledNumbers = serverCalled
+                .map(Number)
+                .filter(number =>
+                    Number.isInteger(number) &&
+                    number >= 1 &&
+                    number <= 75
+                );
         }
-
 
         // =====================================================
         // CURRENT BALL
@@ -6901,121 +6552,182 @@ async function syncSharedGameState(){
             data.currentBall ??
             data.current_ball;
 
+        const serverBall = Number(rawServerBall);
 
-        const serverBall =
-            Number(rawServerBall);
-
-
-        if(
+        if (
+            rawServerBall !== null &&
+            rawServerBall !== undefined &&
+            rawServerBall !== "" &&
             Number.isInteger(serverBall) &&
             serverBall >= 1 &&
             serverBall <= 75
-        ){
-
-            lastCalledNumber =
-                serverBall;
-
-
-            const letter =
-                getBingoLetter(
-                    serverBall
-                );
-
+        ) {
+            lastCalledNumber = serverBall;
 
             const ballText =
-                `${letter}-${serverBall}`;
+                `${getBingoLetter(serverBall)}-${serverBall}`;
 
-
-            const display =
-                document.getElementById(
-                    "gameBall"
-                );
-
-
-            if(display){
-
-                display.textContent =
-                    ballText;
-
+            const display = document.getElementById("gameBall");
+            if (display) {
+                display.textContent = ballText;
             }
 
-
-            const lastCalled =
-                document.getElementById(
-                    "lastCalled"
-                );
-
-
-            if(lastCalled){
-
-                lastCalled.textContent =
-                    ballText;
-
+            const lastCalled = document.getElementById("lastCalled");
+            if (lastCalled) {
+                lastCalled.textContent = ballText;
             }
-
         }
 
-
         // =====================================================
-        // CALLED COUNT
+        // UPDATE BOARD AND PROGRESS
         // =====================================================
 
-        const calledCount =
-            document.getElementById(
-                "calledCount"
-            );
+        const calledCountElement =
+            document.getElementById("calledCount");
 
-
-        if(calledCount){
-
-            calledCount.textContent =
+        if (calledCountElement) {
+            calledCountElement.textContent =
                 calledNumbers.length;
-
         }
-
 
         const calledProgress =
-            document.getElementById(
-                "calledProgress"
-            );
+            document.getElementById("calledProgress");
 
-
-        if(calledProgress){
-
+        if (calledProgress) {
             calledProgress.style.width =
-                (
-                    calledNumbers.length /
-                    75 *
-                    100
-                ) + "%";
-
+                (calledNumbers.length / 75 * 100) + "%";
         }
 
+        // =====================================================
+        // CLAIM WINDOW
+        // =====================================================
+
+        if (matchStatus === "CLAIM_WINDOW") {
+
+            console.log("🛑 CLAIM WINDOW ACTIVE");
+            console.log("🏆 SHARED WINNERS:", winnerCards);
+
+            gameRunning = false;
+
+            if (typeof stopAutoCalling === "function") {
+                stopAutoCalling();
+            }
+
+            renderBigBoard();
+            markPlayerCards();
+            updateAllDisplays();
+
+            if (winnerCards.length > 0) {
+
+                if (window.isSpectator === true) {
+
+                    console.log(
+                        "👀 Spectator: displaying shared match; " +
+                        "cannot claim prizes."
+                    );
+
+                    // Do not call the player's claim handler.
+
+                } else if (!winnerShown) {
+
+                    handleSharedWinners(winnerCards);
+
+                }
+
+            } else {
+
+                console.warn(
+                    "⚠️ CLAIM_WINDOW BUT NO WINNER DATA YET"
+                );
+
+            }
+
+            return;
+        }
 
         // =====================================================
-        // REDRAW GAME
+        // FINISHED
+        // =====================================================
+
+        if (matchStatus === "FINISHED") {
+
+            console.log(
+                "🏁 SHARED MATCH FINISHED:",
+                currentGameId
+            );
+
+            console.log(
+                "🏆 FINAL WINNERS:",
+                winnerCards
+            );
+
+            gameRunning = false;
+
+            if (typeof stopAutoCalling === "function") {
+                stopAutoCalling();
+            }
+
+            if (typeof stopSelectionTimer === "function") {
+                stopSelectionTimer();
+            }
+
+            if (typeof stopSharedGameSync === "function") {
+                stopSharedGameSync();
+            }
+
+            // IMPORTANT:
+            // Keep window.isSpectator unchanged while the
+            // result screen processes the finished match.
+
+            if (window.isSpectator === true) {
+
+                console.log(
+                    "👀 Spectator match finished. " +
+                    "Showing results without claiming prizes."
+                );
+
+                showLoserScreen(winnerCards);
+
+            } else if (
+                winnerCards.length > 0 &&
+                !winnerShown
+            ) {
+
+                handleSharedWinners(winnerCards);
+
+            } else if (!winnerShown) {
+
+                showLoserScreen(winnerCards);
+
+            }
+
+            // Stop the active-game state only after the
+            // result handler has been called.
+            actualGameStarted = false;
+
+            return;
+        }
+
+        // =====================================================
+        // REDRAW SHARED GAME
         // =====================================================
 
         renderBigBoard();
-
         markPlayerCards();
-
         updateAllDisplays();
 
-
         // =====================================================
-        // PLAYING
-        // ONLY CHECK OWN CARDS HERE
+        // PLAYING: ONLY PLAYERS CHECK THEIR OWN CARDS
         // =====================================================
 
-       if (
-    matchStatus === "PLAYING" &&
-    window.isSpectator !== true
-) {
-    checkWinner();
-}
+        if (
+            matchStatus === "PLAYING" &&
+            window.isSpectator !== true
+        ) {
+            checkWinner();
+        }
 
-    }catch(error){
+    } catch (error) {
 
         console.error(
             "❌ SHARED SYNC ERROR:",
@@ -7025,6 +6737,7 @@ async function syncSharedGameState(){
     }
 
 }
+
 
 
 function handleSharedWinners(winnerCards) {
