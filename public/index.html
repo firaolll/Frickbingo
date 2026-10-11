@@ -4265,59 +4265,65 @@ async function joinSharedMatch(){
         // LATE ARRIVAL: WATCH AS SPECTATOR
         // ============================================================
 
-        if (data.spectator === true) {
+if (data.spectator === true) {
 
-            console.log(
-                "👀 SPECTATOR MODE:",
-                data.matchId
-            );
+    console.log(
+        "👀 SPECTATOR MODE:",
+        data.matchId
+    );
 
-            // Do not select or purchase cards
-            selectedCards = [];
+    // Do not select or purchase cards
+    selectedCards = [];
+    serverGeneratedCards = {};
 
-            serverGeneratedCards = {};
+    // Use the existing match ID
+    currentGameId = Number(
+        data.matchId ??
+        data.sharedGameId ??
+        data.gameId
+    );
 
-            // Use the existing match ID
-            currentGameId =
-                data.matchId ??
-                data.sharedGameId ??
-                data.gameId;
+    // Mark this player as a spectator
+    window.isSpectator = true;
 
-            // Mark this player as a spectator
-            window.isSpectator = true;
+    // Stop any previous selection timer
+    if (typeof stopSelectionTimer === "function") {
+        stopSelectionTimer();
+    }
 
-            // Update the card UI
-            updateSelectedCards();
+    // Update the UI
+    updateSelectedCards();
 
-            // Show the current countdown if available
-            const timer =
-                document.getElementById("selectionTimer");
+    const timer =
+        document.getElementById("selectionTimer");
 
-            if (timer) {
-                timer.textContent =
-                    data.countdown ?? "";
-            }
+    if (timer) {
+        timer.textContent = "";
+    }
 
-            console.log(
-                "🎮 Watching match:",
-                currentGameId
-            );
+    console.log(
+        "🎮 Watching match:",
+        currentGameId
+    );
 
-            console.log(
-                "👥 Players:",
-                data.playerCount
-            );
+    console.log(
+        "👥 Players:",
+        data.playerCount
+    );
 
-            haptic("success");
+    haptic("success");
 
-            // Watch the existing match
-            waitForSharedGameStart(currentGameId);
+    // IMPORTANT: Go directly to Page 3
+    showPage("page3");
 
-            return;
-        }
+    // Watch the existing match
+    waitForSharedGameStart(currentGameId);
 
-        // Normal players are not spectators
-        window.isSpectator = false;
+    return;
+}
+
+// Normal players are not spectators
+window.isSpectator = false;
 
         // ============================================================
         // GET SERVER-ASSIGNED CARD NUMBERS
