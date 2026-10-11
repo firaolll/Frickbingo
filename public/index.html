@@ -3585,16 +3585,7 @@ if (tg) {
 /* ==================================================  
    API  
 ================================================== */   
-  function updatePlayerCountDisplay() {
-    const count = Number(fakePlayers) || 0;
-
-    ["playerCount2", "gamePlayers"].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = String(count);
-        }
-    });
-}
+  
 async function apiFetch(endpoint, options = {}) {
 
     const tg = window.Telegram?.WebApp;
@@ -4661,6 +4652,19 @@ function updateSelectedCards(){
   
     updateAllDisplays(); 
 }  
+
+function updatePlayerCountDisplay() {
+    const count = Number(fakePlayers) || 0;
+
+    ["playerCount2", "gamePlayers"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            
+            element.textContent = String(count);
+        }
+    });
+}
+
 function renderSharedPlayerCards(players){
 
     const container =
