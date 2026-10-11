@@ -3178,7 +3178,6 @@ currentBall:
 
     }
 
-
 });
 
 
@@ -7400,7 +7399,9 @@ bot.onText(
             }  
 
             let text =  
-                "🎮 Your Recent Games";  
+                "🎮 Your Recent Games
+
+";  
 
             games.forEach(  
                 (game, index) => {  
