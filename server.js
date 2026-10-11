@@ -2972,6 +2972,7 @@ winnerCards.push({
     );
 
 }
+
 players.forEach(game => {
 
     try {
@@ -2999,6 +3000,25 @@ players.forEach(game => {
             ? null
             : Number(game.winner_card_number);
 });
+
+
+const activePlayerCount = new Set(
+    players
+        .filter(game =>
+            Number(game.cards || 0) > 0 &&
+            Array.isArray(game.cardNumbers) &&
+            game.cardNumbers.length > 0
+        )
+        .map(game => Number(game.user_id))
+).size;
+
+console.log("👥 ACTIVE PLAYER COUNT:", {
+    matchId,
+    totalGameRecords: players.length,
+    activePlayerCount
+});
+
+
 
      const games =
     db.prepare(`
@@ -3082,8 +3102,8 @@ winnerCards:
 
 paid:
     Boolean(match.paid),
-                playerCount:
-                    players.length,
+               playerCount:
+    activePlayerCount,
                 isCaller:
                     isCaller,
                 minPlayers:
