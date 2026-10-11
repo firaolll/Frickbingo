@@ -2713,16 +2713,6 @@ const playerCount = countPlayersWithSelectedCards(matchId);
 
 app.get("/api/match/:matchId", auth, (req, res) => {
 
-    try {
-                const parsed = JSON.parse(p.card_numbers || "[]");
-                return Array.isArray(parsed) ? parsed : [];
-            } catch {
-                return [];
-            }
-        })()
-    }))
-);
-
 
     try {
 
@@ -3187,6 +3177,7 @@ currentBall:
         });
 
     }
+
 
 });
 
@@ -7409,9 +7400,7 @@ bot.onText(
             }  
 
             let text =  
-                "🎮 Your Recent Games
-
-";  
+                "🎮 Your Recent Games";  
 
             games.forEach(  
                 (game, index) => {  
