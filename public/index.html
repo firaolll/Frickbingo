@@ -6649,64 +6649,55 @@ async function syncSharedGameState() {
         // FINISHED
         // =====================================================
 
-        if (matchStatus === "FINISHED") {
+        
+if (matchStatus === "FINISHED") {
 
-            console.log(
-                "🏁 SHARED MATCH FINISHED:",
-                currentGameId
-            );
+    console.log(
+        "🏁 SHARED MATCH FINISHED:",
+        currentGameId
+    );
 
-            console.log(
-                "🏆 FINAL WINNERS:",
-                winnerCards
-            );
+    console.log("🏆 FINAL WINNERS:", winnerCards);
 
-            gameRunning = false;
+    gameRunning = false;
 
-            if (typeof stopAutoCalling === "function") {
-                stopAutoCalling();
-            }
+    if (typeof stopAutoCalling === "function") {
+        stopAutoCalling();
+    }
 
-            if (typeof stopSelectionTimer === "function") {
-                stopSelectionTimer();
-            }
+    if (typeof stopSelectionTimer === "function") {
+        stopSelectionTimer();
+    }
 
-            if (typeof stopSharedGameSync === "function") {
-                stopSharedGameSync();
-            }
+    if (typeof stopSharedGameSync === "function") {
+        stopSharedGameSync();
+    }
 
-            // IMPORTANT:
-            // Keep window.isSpectator unchanged while the
-            // result screen processes the finished match.
+    const wasSpectator = window.isSpectator === true;
 
-            if (window.isSpectator === true) {
+    if (wasSpectator) {
 
-                console.log(
-                    "👀 Spectator match finished. " +
-                    "Showing results without claiming prizes."
-                );
+        console.log(
+            "👀 Spectator match finished. Showing shared results."
+        );
 
-                showLoserScreen(winnerCards);
+        // Keep spectator status until the result screen closes.
+        showLoserScreen(winnerCards);
 
-            } else if (
-                winnerCards.length > 0 &&
-                !winnerShown
-            ) {
+    } else if (winnerCards.length > 0 && !winnerShown) {
 
-                handleSharedWinners(winnerCards);
+        handleSharedWinners(winnerCards);
 
-            } else if (!winnerShown) {
+    } else if (!winnerShown) {
 
-                showLoserScreen(winnerCards);
+        showLoserScreen(winnerCards);
 
-            }
+    }
 
-            // Stop the active-game state only after the
-            // result handler has been called.
-            actualGameStarted = false;
+    actualGameStarted = false;
 
-            return;
-        }
+    return;
+}
 
         // =====================================================
         // REDRAW SHARED GAME
@@ -6738,6 +6729,41 @@ async function syncSharedGameState() {
 
 }
 
+
+function returnFromMatchResult() {
+
+    console.log("↩️ Returning to card selection");
+
+    if (typeof stopSharedGameSync === "function") {
+        stopSharedGameSync();
+    }
+
+    if (typeof stopAutoCalling === "function") {
+        stopAutoCalling();
+    }
+
+    if (typeof stopSelectionTimer === "function") {
+        stopSelectionTimer();
+    }
+
+    gameRunning = false;
+    actualGameStarted = false;
+    winnerShown = false;
+
+    window.isSpectator = false;
+
+    currentGameId = null;
+    selectedCards = [];
+    serverGeneratedCards = {};
+
+    if (typeof resetSelection === "function") {
+        resetSelection();
+    }
+
+    showPage("page2");
+    renderCardSelection();
+    updateSelectedCards();
+}
 
 
 function handleSharedWinners(winnerCards) {
@@ -9231,7 +9257,7 @@ if (winnerPrize) {
 
                 }
 
-                
+
 if (seconds <= 0) {
 
     clearInterval(winnerResetInterval);
@@ -9239,16 +9265,25 @@ if (seconds <= 0) {
 
     console.log("🏁 RESULTS COUNTDOWN FINISHED");
 
-    if (window.isSpectator === true) {
-        // Keep the result visible for spectators.
-        // Do not reset the match or return to Page 2.
-        if (countdown) {
-            countdown.textContent = "✓";
-        }
-        return;
+    // Hide the result overlay
+    if (overlay) {
+        overlay.classList.remove("show");
     }
 
-    resetAfterWinner();
+    // Spectator and player both leave the result screen.
+    if (window.isSpectator === true) {
+
+        console.log(
+            "👀 Spectator returning to Page 2"
+        );
+
+        returnFromMatchResult();
+
+    } else {
+
+        resetAfterWinner();
+
+    }
 }
 
             },
