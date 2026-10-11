@@ -408,6 +408,15 @@ app.get("/api/match/active", auth, (req, res) => {
         `).all(match.id);
 console.log("🎮 ACTIVE MATCH ID:", match.id);
 console.log("👥 PLAYER ROWS:", players.length);
+
+console.log(
+    "👤 PAGE 2 — PLAYERS:",
+    players.map(p => ({
+        userId: p.user_id,
+        cards: p.card_numbers
+    }))
+);
+
 console.log(
     "👤 PLAYERS IN MATCH:",
     players.map(p => ({
