@@ -2744,16 +2744,19 @@ button{
         </div>  
     </div>  
 
-   <div class="info-box">
-    <div class="info-label">PLAYERS</div>
-    <div class="info-value" id="playerCount2">0</div>
-</div>
+    <div class="info-box">  
+        <div class="info-label">PLAYERS</div>  
+        <div  
+            class="info-value"  
+            id="playerCount2">  
+            1  
+        </div>  
     </div>  
 
 </div>  
 
 
-<div class="cost-panel">   
+<div class="cost-panel">  
 
     <span>  
         Card cost  
@@ -2903,9 +2906,12 @@ button{
         </div>
 
         <div class="game-stat">
-    <div class="game-stat-label">PLAYERS</div>
-    <div class="game-stat-value" id="gamePlayers">0</div>
-</div>
+            <div class="game-stat-label">PLAYERS</div>
+            <div
+                class="game-stat-value"
+                id="gamePlayers">
+                1
+            </div>
         </div>
 
         <div class="game-stat">
@@ -3529,7 +3535,7 @@ let gameTimer = null;
   
 let gameInterval = null;  
 let playerReady = false    
-let fakePlayers = 0;  
+let fakePlayers = 1;  
 let mainBalance = 0;
 let playBalance = 0;
 let telegramInitData = "";
@@ -3584,8 +3590,7 @@ if (tg) {
 
 /* ==================================================  
    API  
-================================================== */   
-  
+================================================== */  
 async function apiFetch(endpoint, options = {}) {
 
     const tg = window.Telegram?.WebApp;
@@ -4650,21 +4655,9 @@ function updateSelectedCards(){
     }  
   
   
-    updateAllDisplays(); 
+    updateAllDisplays();  
+  
 }  
-
-function updatePlayerCountDisplay() {
-    const count = Number(fakePlayers) || 0;
-
-    ["playerCount2", "gamePlayers"].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            
-            element.textContent = String(count);
-        }
-    });
-}
-
 function renderSharedPlayerCards(players){
 
     const container =
@@ -7090,7 +7083,7 @@ async function waitForSharedGameStart(matchId){
 );
 
 fakePlayers = players;
-updatePlayerCountDisplay();
+
 console.log(
     "👥 ACTUAL SHARED MATCH PLAYERS:",
     players
@@ -7383,7 +7376,7 @@ async function refreshPage2State() {
         // Update player count.
         const players = Number(match.playerCount ?? data.players?.length ?? 0);
         fakePlayers = players;
-updatePlayerCountDisplay();
+
         console.log("🔄 PAGE 2 SHARED STATE:", {
             matchId: match.id,
             status: match.status,
