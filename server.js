@@ -404,6 +404,10 @@ app.get("/api/match/active", auth, (req, res) => {
             FROM games g
             LEFT JOIN users u ON u.id = g.user_id
             WHERE g.match_id = ?
+            AND COALESCE(g.cards, 0) > 0
+AND g.card_numbers IS NOT NULL
+AND TRIM(g.card_numbers) != ''
+AND TRIM(g.card_numbers) != '[]'
             ORDER BY g.id ASC
         `).all(match.id);
 console.log("🎮 ACTIVE MATCH ID:", match.id);
@@ -448,7 +452,9 @@ console.log(
                 stake: Number(match.stake),
                 status: match.status,
                 countdown: getMatchCountdown(match),
-                playerCount: formattedPlayers.length
+               playerCount: new Set(
+    formattedPlayers.map(player => String(player.user_id))
+).size
             },
             players: formattedPlayers
         });
@@ -595,7 +601,32 @@ setInterval(
     1000
 );
 
+function countPlayersWithSelectedCards(matchId) {
+    const rows = db.prepare(`
+        SELECT user_id, cards, card_numbers
+        FROM games
+        WHERE match_id = ?
+    `).all(matchId);
 
+    const playerIds = new Set();
+
+    for (const row of rows) {
+        if (Number(row.cards || 0) <= 0 || row.user_id == null) continue;
+
+        let cardNumbers;
+        try {
+            cardNumbers = JSON.parse(row.card_numbers || "[]");
+        } catch {
+            continue;
+        }
+
+        if (Array.isArray(cardNumbers) && cardNumbers.length > 0) {
+            playerIds.add(String(row.user_id));
+        }
+    }
+
+    return playerIds.size;
+}
 // ======================================================
 // SERVER-CONTROLLED BINGO BALL CALLING
 // ======================================================
