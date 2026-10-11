@@ -3581,7 +3581,11 @@ if (tg) {
     );
 
 }
-function updatePlayerCountDisplay() {
+
+/* ==================================================  
+   API  
+================================================== */   
+  function updatePlayerCountDisplay() {
     const count = Number(fakePlayers) || 0;
 
     ["playerCount2", "gamePlayers"].forEach(id => {
@@ -3591,10 +3595,6 @@ function updatePlayerCountDisplay() {
         }
     });
 }
-}  
-/* ==================================================  
-   API  
-================================================== */  
 async function apiFetch(endpoint, options = {}) {
 
     const tg = window.Telegram?.WebApp;
@@ -4660,8 +4660,7 @@ function updateSelectedCards(){
   
   
     updateAllDisplays(); 
-
-  
+}  
 function renderSharedPlayerCards(players){
 
     const container =
@@ -6495,16 +6494,7 @@ async function syncSharedGameState() {
         }
 
         const match = data.match || data;
-const count = Number(
-    match.playerCount ??
-    match.player_count ??
-    data.playerCount ??
-    data.player_count ??
-    0
-);
 
-fakePlayers = Number.isFinite(count) ? count : 0;
-updatePlayerCountDisplay();
         const matchStatus = String(
             match.status ??
             data.status ??
