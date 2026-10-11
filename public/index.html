@@ -5851,55 +5851,121 @@ function closeRules(){
 /* =====================================================  
    PLAY  
 ===================================================== */  
-  
-function goToCardSelection(){  
-  
- if(actualGameStarted){  
-  
-  return;  
-  
- }  
-  
-  
- if(!selectedStake){  
-  
-  showToast(  
-   "Please choose your stake first."  
-  );  
-  
-  haptic("error");  
-  
-  return;  
-  
- }  
-  
-  
- if(  
-  !Number.isFinite(mainBalance) ||  
-  mainBalance < selectedStake  
- ){  
-  
-  showToast(  
-   "Insufficient Main Balance."  
-  );  
-  
-  haptic("error");  
-  
-  return;  
-  
- }  
-  
-  
- resetSelection();  
-  
- showPage("page2");  
-  
- renderCardSelection();  
-  
- haptic("success");  
-  
-}  
-  
+
+async function goToCardSelection() {
+
+    if (actualGameStarted) {
+        return;
+    }
+
+    if (!selectedStake) {
+        showToast("Please choose your stake first.");
+        haptic("error");
+        return;
+    }
+
+    try {
+
+        // ==================================================
+        // CHECK WHETHER THIS STAKE HAS A RUNNING MATCH
+        // ==================================================
+
+        const activeResponse = await apiFetch(
+            `/api/match/active?stake=${encodeURIComponent(selectedStake)}`
+        );
+
+        console.log(
+            "🔎 ACTIVE MATCH RESPONSE:",
+            activeResponse
+        );
+
+        const activeMatch =
+            activeResponse?.match ||
+            activeResponse?.activeMatch ||
+            activeResponse;
+
+        const matchStatus = String(
+            activeMatch?.status ||
+            activeResponse?.status ||
+            ""
+        ).toUpperCase();
+
+        const runningMatchId =
+            activeMatch?.matchId ??
+            activeMatch?.sharedGameId ??
+            activeMatch?.id ??
+            activeResponse?.matchId ??
+            activeResponse?.sharedGameId;
+
+        // ==================================================
+        // RUNNING MATCH: GO DIRECTLY TO PAGE 3 AS SPECTATOR
+        // ==================================================
+
+        if (
+            ["PLAYING", "CLAIM_WINDOW"].includes(matchStatus) &&
+            runningMatchId != null
+        ) {
+
+            console.log(
+                "👀 ENTERING SPECTATOR MODE:",
+                runningMatchId
+            );
+
+            window.isSpectator = true;
+
+            currentGameId = Number(runningMatchId);
+
+            selectedCards = [];
+
+            serverGeneratedCards = {};
+
+            updateSelectedCards();
+
+            showPage("page3");
+
+            waitForSharedGameStart(currentGameId);
+
+            return;
+        }
+
+        // ==================================================
+        // NO RUNNING MATCH: CONTINUE NORMAL CARD SELECTION
+        // ==================================================
+
+        window.isSpectator = true;
+
+        if (
+            !Number.isFinite(mainBalance) ||
+            mainBalance < selectedStake
+        ) {
+            showToast("Insufficient Main Balance.");
+            haptic("error");
+            return;
+        }
+
+        resetSelection();
+
+        showPage("page2");
+
+        renderCardSelection();
+
+        haptic("success");
+
+    } catch (error) {
+
+        console.error(
+            "❌ ACTIVE MATCH CHECK FAILED:",
+            error
+        );
+
+        showToast(
+            "Could not check the active match. Please try again."
+        );
+
+        haptic("error");
+    }
+}
+
   
 /* =====================================================  
    BACK HOME  
@@ -6677,28 +6743,28 @@ async function syncSharedGameState(){
             // SHOW SHARED RESULT
             // -----------------------------------------------
 
-            if(
-                winnerCards.length > 0
-            ){
+          if (winnerCards.length > 0) {
 
-                console.log(
-                    "🏆 SERVER WINNERS CONFIRMED:",
-                    winnerCards
-                );
+    console.log(
+        "🏆 SERVER WINNERS CONFIRMED:",
+        winnerCards
+    );
 
+    if (window.isSpectator !== true) {
+        handleSharedWinners(winnerCards);
+    } else {
+        console.log(
+            "👀 Spectator sees winners but cannot claim prizes."
+        );
+    }
 
-                handleSharedWinners(
-                    winnerCards
-                );
+} else {
 
-            }else{
+    console.warn(
+        "⚠️ CLAIM_WINDOW BUT NO WINNER DATA YET"
+    );
 
-                console.warn(
-                    "⚠️ CLAIM_WINDOW BUT NO WINNER DATA YET"
-                );
-
-            }
-
+}
 
             return;
 
@@ -6746,28 +6812,21 @@ async function syncSharedGameState(){
             );
 
 
-            if(
-                winnerCards.length > 0
-            ){
+           if (window.isSpectator === true) {
 
-                handleSharedWinners(
-                    winnerCards
-                );
+    console.log(
+        "👀 Spectator match finished. No claim or payout."
+    );
 
-            }else{
+} else if (winnerCards.length > 0) {
 
-                console.log(
-                    "😢 MATCH FINISHED — NO WINNER"
-                );
+    handleSharedWinners(winnerCards);
 
+} else if (!winnerShown) {
 
-                if(!winnerShown){
+    showLoserScreen([]);
 
-                    showLoserScreen(
-                        []
-                    );
-
-                }
+}
 
             }
 
@@ -6949,15 +7008,12 @@ async function syncSharedGameState(){
         // ONLY CHECK OWN CARDS HERE
         // =====================================================
 
-        if(
-            matchStatus ===
-            "PLAYING"
-        ){
-
-            checkWinner();
-
-        }
-
+       if (
+    matchStatus === "PLAYING" &&
+    window.isSpectator !== true
+) {
+    checkWinner();
+}
 
     }catch(error){
 
@@ -6970,21 +7026,28 @@ async function syncSharedGameState(){
 
 }
 
-function handleSharedWinners(winnerCards){
 
-    if(
+function handleSharedWinners(winnerCards) {
+
+    if (
         !Array.isArray(winnerCards) ||
         winnerCards.length === 0
-    ){
-
-        console.warn(
-            "⚠️ NO SHARED WINNERS:",
-            winnerCards
-        );
-
+    ) {
+        console.warn("⚠️ NO SHARED WINNERS:", winnerCards);
         return;
-
     }
+
+    // Spectators can see the winners and prizes.
+    if (window.isSpectator === true) {
+        console.log("👀 SPECTATOR — WINNERS:", winnerCards);
+
+        // Display the shared results without claiming
+        // Bingo or entering the normal payout flow.
+        showLoserScreen(winnerCards);
+        return;
+    }
+
+    // Keep the rest of your existing function below.
 
 
     // ==================================================
@@ -7303,8 +7366,13 @@ console.log(
              * THE ACTUAL SHARED GAME.
              */
 
-            if(status === "PLAYING"){
-
+           if (
+    status === "PLAYING" ||
+    (
+        status === "CLAIM_WINDOW" &&
+        window.isSpectator === true
+    )
+) {
                 console.log(
                     "🟢 SHARED GAME STARTED:",
                     matchId
@@ -7330,9 +7398,10 @@ console.log(
                     isCaller
                 );
 
-
-                window.isSharedCaller =
-                    isCaller;
+window.isSharedCaller =
+    window.isSpectator === true
+        ? false
+        : isCaller;
 
 
                 // ==========================================
@@ -7383,8 +7452,10 @@ console.log(
                             calledNumbers.push(ball);
 
 
-                            // Check winner immediately
-                            checkWinner();
+                           // Spectators can watch, but cannot claim Bingo.
+if (window.isSpectator !== true) {
+    checkWinner();
+}
 
                         }
 
@@ -7500,7 +7571,7 @@ async function refreshPage2State() {
     // Need a valid stake before finding the shared match.
     const stake = Number(selectedStake);
 
-    if (!STAKES.includes(stake)) {
+    if (![10, 20].includes(stake)) {
         console.log("⏳ Select a stake to find the shared match.");
         return;
     }
@@ -7687,13 +7758,20 @@ async function finishSelectionPeriod(){
    BEGIN GAME  
 ===================================================== */  
 window.sharedWinnerHandled = false; 
-function beginActualGame(){
+function beginActualGame() {
 
-    if(actualGameStarted){
+    if (actualGameStarted) {
         return;
     }
 
-    if(!selectedCards.length){
+    const isSpectator =
+        window.isSpectator === true;
+
+    // Normal players must have selected cards.
+    if (
+        !isSpectator &&
+        !selectedCards.length
+    ) {
         return;
     }
 
@@ -7703,25 +7781,32 @@ function beginActualGame(){
     stopAutoCalling();
 
     showPage("page3");
-const callButton =
-    document.getElementById(
-        "callBtn"
-    );
-    if(callButton){
-        callButton.disabled = false;
+
+    const callButton =
+        document.getElementById("callBtn");
+
+    if (callButton) {
+        // Spectators cannot call balls.
+        callButton.disabled = isSpectator;
     }
 
-   renderPlayingPage();
+    renderPlayingPage();
 
-startSharedGameSync();
+    // Both players and spectators synchronize
+    // with the same server-controlled match.
+    startSharedGameSync();
 
-console.log(
-    "🎱 SERVER-CONTROLLED CALLING STARTED"
-);
-haptic("success");
+    console.log(
+        isSpectator
+            ? "👀 SPECTATOR WATCHING SHARED GAME"
+            : "🎱 SERVER-CONTROLLED CALLING STARTED"
+    );
+
+    if (!isSpectator) {
+        haptic("success");
+    }
 }
-  
-  
+
 /* =====================================================  
    RANGE  
 ===================================================== */  
@@ -8764,7 +8849,9 @@ function isWinningCard(card){
    CHECK WINNER  
 ===================================================== */  
 function checkWinner(){
-
+if (window.isSpectator === true) {
+    return;
+}
     if(winnerShown){
         return;
     }
@@ -8898,7 +8985,10 @@ for(const cardNumber of selectedCards){
 ===================================================== */  
 
 async function showWinner(cardNumber, card) {
-
+if (window.isSpectator === true) {
+    console.log("👀 Spectator cannot claim Bingo.");
+    return;
+}
     // ==========================================
     // VERIFY THIS CARD BELONGS TO THIS PLAYER
     // ==========================================
@@ -9149,26 +9239,25 @@ function showLoserScreen(winnerCards){
     // HEADER
     // ------------------------------------------
 
-    if(winnerName){
+    
+const isSpectator = window.isSpectator === true;
 
-        winnerName.textContent =
-            "GAME OVER";
+if (winnerName) {
+    winnerName.textContent = isSpectator
+        ? "🏆 MATCH RESULTS"
+        : "GAME OVER";
+}
 
-    }
+if (winnerNumber) {
+    winnerNumber.textContent = "WINNER";
+}
 
-    if(winnerNumber){
+if (winnerPrize) {
+    winnerPrize.textContent = isSpectator
+        ? "Winning results"
+        : "You Lose";
+}
 
-        winnerNumber.textContent =
-            "WINNER";
-
-    }
-
-    if(winnerPrize){
-
-        winnerPrize.textContent =
-            "You Lose";
-
-    }
 
     // ------------------------------------------
     // WINNER DATA
@@ -9429,22 +9518,25 @@ function showLoserScreen(winnerCards){
 
                 }
 
-                if(seconds <= 0){
+                
+if (seconds <= 0) {
 
-                    clearInterval(
-                        winnerResetInterval
-                    );
+    clearInterval(winnerResetInterval);
+    winnerResetInterval = null;
 
-                    winnerResetInterval =
-                        null;
+    console.log("🏁 RESULTS COUNTDOWN FINISHED");
 
-                    console.log(
-                        "🏁 LOSER COUNTDOWN FINISHED"
-                    );
+    if (window.isSpectator === true) {
+        // Keep the result visible for spectators.
+        // Do not reset the match or return to Page 2.
+        if (countdown) {
+            countdown.textContent = "✓";
+        }
+        return;
+    }
 
-                    resetAfterWinner();
-
-                }
+    resetAfterWinner();
+}
 
             },
             1000
