@@ -473,14 +473,16 @@ function processWaitingMatches() {
 
         for (const match of waitingMatches) {
 
-            const playerCount =
-                db.prepare(`
-                    SELECT COUNT(*) AS count
-                    FROM games
-                    WHERE match_id = ?
-                `).get(
-                    match.id
-                ).count;
+           
+const playerCount = db.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS count
+    FROM games
+    WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
+`).get(match.id).count;
 
 
             const countdown =
@@ -1587,14 +1589,16 @@ app.post("/api/match/create", auth, (req, res) => {
             !existingGame &&
             ["PLAYING", "CLAIM_WINDOW"].includes(matchStatus)
         ) {
-            const playerCount = db.prepare(`
-                SELECT COUNT(DISTINCT user_id) AS count
-                FROM games
-                WHERE match_id = ?
-                  AND card_numbers IS NOT NULL
-                  AND TRIM(card_numbers) != ''
-                  AND TRIM(card_numbers) != '[]'
-            `).get(matchId).count;
+            
+const playerCount = db.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS count
+    FROM games
+    WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
+`).get(matchId).count;
 
             console.log("👀 SPECTATOR MODE:", {
                 userId,
@@ -2520,11 +2524,12 @@ console.log(
         // GET PLAYER COUNT
         // ============================================================
 
-        
+ 
 const playerCount = db.prepare(`
     SELECT COUNT(DISTINCT user_id) AS count
     FROM games
     WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
       AND card_numbers IS NOT NULL
       AND TRIM(card_numbers) != ''
       AND TRIM(card_numbers) != '[]'
