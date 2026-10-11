@@ -1574,6 +1574,51 @@ app.post("/api/match/create", auth, (req, res) => {
                 userId
             );
 
+        
+        // ============================================================
+        // LATE ARRIVAL: WATCH WITHOUT JOINING OR PAYING
+        // ============================================================
+
+        const matchStatus = String(
+            match.status || ""
+        ).toUpperCase();
+
+        if (
+            !existingGame &&
+            ["PLAYING", "CLAIM_WINDOW"].includes(matchStatus)
+        ) {
+            const playerCount = db.prepare(`
+                SELECT COUNT(DISTINCT user_id) AS count
+                FROM games
+                WHERE match_id = ?
+                  AND card_numbers IS NOT NULL
+                  AND TRIM(card_numbers) != ''
+                  AND TRIM(card_numbers) != '[]'
+            `).get(matchId).count;
+
+            console.log("👀 SPECTATOR MODE:", {
+                userId,
+                matchId,
+                matchStatus,
+                playerCount
+            });
+
+            return res.json({
+                success: true,
+                spectator: true,
+                matchId,
+                gameId: matchId,
+                sharedGameId: matchId,
+                stake: Number(match.stake),
+                status: matchStatus,
+                playerCount,
+                minPlayers: MIN_PLAYERS,
+                countdown: getMatchCountdown(match),
+                cardNumbers: [],
+                generatedCards: {},
+                message: "Match already started. Watching as spectator."
+            });
+        }
 
         // ============================================================
         // NEW PLAYER
@@ -2475,13 +2520,15 @@ console.log(
         // GET PLAYER COUNT
         // ============================================================
 
-        const playerCount =
-            db.prepare(`
-                SELECT COUNT(*) AS count
-                FROM games
-                WHERE match_id = ?
-                  AND status = 'WAITING'
-            `).get(matchId).count;
+        
+const playerCount = db.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS count
+    FROM games
+    WHERE match_id = ?
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
+`).get(matchId).count;
 
 
         // ============================================================
@@ -4546,7 +4593,6 @@ console.log(
                       AND status = 'WIN'
                       AND result = 'WIN'
                 `).all(matchId);
-
 
             console.log(
                 "🏆 VERIFIED WINNERS:",
