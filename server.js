@@ -1028,8 +1028,7 @@ const dataCheckString =
             ([key, value]) =>  
                 `${key}=${value}`  
         )  
-        .join("
-");  
+        .join("\n");  
 
 const secretKey =  
     crypto  
