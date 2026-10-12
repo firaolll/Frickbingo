@@ -439,7 +439,14 @@ console.log(
                     ? cardNumbers
                     : []
             };
-        });
+        }).filter(player =>
+            Number(player.cards || 0) > 0 &&
+            player.cardNumbers.length > 0
+        );
+
+        const playerCount = new Set(
+            formattedPlayers.map(player => String(player.user_id))
+        ).size;
 
         return res.json({
             success: true,
@@ -448,7 +455,7 @@ console.log(
                 stake: Number(match.stake),
                 status: match.status,
                 countdown: getMatchCountdown(match),
-                playerCount: formattedPlayers.length
+                playerCount
             },
             players: formattedPlayers
         });
@@ -2771,6 +2778,10 @@ app.get("/api/match/:matchId", auth, (req, res) => {
         LEFT JOIN users u
             ON u.id = g.user_id
         WHERE g.match_id = ?
+          AND COALESCE(g.cards, 0) > 0
+          AND g.card_numbers IS NOT NULL
+          AND TRIM(g.card_numbers) != ''
+          AND TRIM(g.card_numbers) != '[]'
         ORDER BY g.id ASC
     `).all(matchId);
 
@@ -4360,9 +4371,15 @@ if (match.status === "PLAYING") {
     `).get(matchId, userId);  
 
     if (existingGame) {  
-       const players= db.prepare(`  
-        SELECT COUNT(*) AS count FROM games WHERE match_id = ?  
-      `).get(matchId);  
+       const players= db.prepare(`
+        SELECT COUNT(DISTINCT user_id) AS count
+        FROM games
+        WHERE match_id = ?
+          AND COALESCE(cards, 0) > 0
+          AND card_numbers IS NOT NULL
+          AND TRIM(card_numbers) != ''
+          AND TRIM(card_numbers) != '[]'
+      `).get(matchId);
 
       return res.json({  
         success: true,  
@@ -4455,8 +4472,21 @@ if (match.status === "PLAYING") {
 
         db.prepare(`  
           UPDATE matches SET prize_pool = ? WHERE id = ?  
-        `).run(num(totalCost * WIN_RATE), matchId);  
+        `).run(num(totalCost * WIN_RATE), matchId);
       }  
+
+      // Recalculate the prize pool after every join, including the first.
+      const eligibleTotal = db.prepare(`
+        SELECT COALESCE(SUM(stake * cards), 0) AS total
+        FROM games
+        WHERE match_id = ?
+          AND COALESCE(cards, 0) > 0
+          AND card_numbers IS NOT NULL
+          AND TRIM(card_numbers) != ''
+          AND TRIM(card_numbers) != '[]'
+      `).get(matchId).total;
+      db.prepare(`UPDATE matches SET prize_pool = ? WHERE id = ?`)
+        .run(num(eligibleTotal * WIN_RATE), matchId);
 
       return Number(gameResult.lastInsertRowid);  
     });  
@@ -4475,9 +4505,13 @@ const updatedMatch = db.prepare(`
 `).get(matchId);
 
 const playerCount = db.prepare(`
-    SELECT COUNT(*) AS count
+    SELECT COUNT(DISTINCT user_id) AS count
     FROM games
     WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
 `).get(matchId).count;
 
 const newBalance = db.prepare(`
@@ -6211,9 +6245,13 @@ winningPattern:
 
             playerCount:
                 db.prepare(`
-                    SELECT COUNT(*) AS count
+                    SELECT COUNT(DISTINCT user_id) AS count
                     FROM games
                     WHERE match_id = ?
+                      AND COALESCE(cards, 0) > 0
+                      AND card_numbers IS NOT NULL
+                      AND TRIM(card_numbers) != ''
+                      AND TRIM(card_numbers) != '[]'
                 `).get(
                     matchId
                 ).count,
