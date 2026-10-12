@@ -3399,17 +3399,33 @@ button{
 
 </div>
 
-</div>  <!-- ==================================================  
-     WINNER  
-================================================== --> 
+</div>  <!-- ==================================================
+     WINNER
+================================================== -->
+<div id="winnerOverlay" class="winner-overlay">
+    <div class="winner-box">
+        <div class="winner-title" id="winnerTitle">🎉 BINGO! 🎉</div>
+        <div class="winner-name" id="winnerName">Winner</div>
+        <div class="winner-info">
+            Card Number: <strong id="winnerCardNumber">--</strong>
+            <br>
+            Winner Count: <strong id="winnerCount">1</strong>
+        </div>
+        <div class="winner-prize">
+            Prize: <span id="winnerPrize">0.00</span> ETB
+        </div>
+        <div id="winnerCardWrap" class="winner-card-wrap"></div>
+        <div class="reset-count">
+            Next game in <strong id="winnerCountdown">5</strong> seconds
+        </div>
+    </div>
 </div>
 
-</div>  <!-- ==================================================  
-     TOAST  
-================================================== -->  <div  
-    id="toast"  
-    class="toast">  
-</div>  <!-- ==================================================  
+<!-- ==================================================
+     TOAST
+================================================== -->
+<div id="toast" class="toast"></div>
+<!-- ==================================================  
      LOADING  
 ================================================== -->  <div  
     id="loading"  
