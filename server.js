@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 53700)
-Total output lines: 9134
-
 require("dotenv").config();
 
 const express = require("express");
@@ -4236,7 +4233,589 @@ if(
 
         console.error(
             "❌ CALL NUMBER ERROR:",
-    …3700 tokens truncated…=======================================
+            error
+        );
+
+        console.error(
+            "❌ ERROR MESSAGE:",
+            error?.message
+        );
+
+        console.error(
+            "❌ ERROR STACK:",
+            error?.stack
+        );
+
+        return res.status(500).json({
+
+            success: false,
+
+            error:
+                "Could not call Bingo number",
+
+            debug:
+                error?.message ||
+                "Unknown error"
+
+        });
+
+    }
+
+});
+// ======================================================
+// JOIN / START GAME
+// ======================================================
+
+app.post("/api/game/start", auth, async (req, res) => {
+  try {
+    const stake = num(req.body.stake);
+const cards = Number(req.body.cards);
+
+const cardNumbers = Array.isArray(req.body.cardNumbers)
+    ? req.body.cardNumbers.map(Number)
+    : [];
+    if (cardNumbers.length !== cards) {
+    return res.status(400).json({
+        success: false,
+        error: "Card numbers do not match card count"
+    });
+}
+
+if (cardNumbers.some(card => !Number.isInteger(card) || card < 1 || card > 200)) {
+    return res.status(400).json({
+        success: false,
+        error: "Invalid card number"
+    });
+}
+
+
+    if (!validStake(stake)) {  
+      return res.status(400).json({  
+        success: false,  
+        error: "Invalid stake"  
+      });  
+    }  
+
+   if (
+    !Number.isInteger(cards) ||
+    cards < 0 ||
+    cards > MAX_CARDS
+) {
+    return res.status(400).json({
+        success: false,
+        error: "Invalid number of cards"
+    });
+}
+
+    const userId = req.user.id;  
+
+    // -----------------------------  
+    // FIND OR CREATE WAITING MATCH  
+    // -----------------------------  
+    let match = findActiveMatch(stake);  
+
+    if (!match) {  
+      const result = db.prepare(`  
+        INSERT INTO matches (  
+          stake, status, prize_pool, winner_count, paid, countdown_seconds, called_balls, current_ball  
+        ) VALUES (?, 'WAITING', 0, 0, 0, ?, '[]', '')  
+      `).run(stake, COUNTDOWN_SECONDS);  
+
+      const matchId = Number(result.lastInsertRowid);  
+      match = db.prepare(`SELECT * FROM matches WHERE id = ?`).get(matchId);  
+    }  
+
+    const matchId = Number(match.id);  
+
+    // -----------------------------  
+    // CHECK MATCH STATUS  
+    // -----------------------------  
+    if (match.status === "FINISHED") {  
+      return res.status(400).json({  
+        success: false,  
+        error: "This game has already finished"  
+      });  
+    }  
+
+
+    // ==================================================
+// LATE PLAYER JOINING A PLAYING MATCH
+// ==================================================
+
+if (match.status === "PLAYING") {
+
+    // ----------------------------------------------
+    // Check whether this player already has a record
+    // ----------------------------------------------
+
+    const existingLateGame = db.prepare(`
+        SELECT *
+        FROM games
+        WHERE match_id = ?
+          AND user_id = ?
+        LIMIT 1
+    `).get(matchId, userId);
+
+    if (existingLateGame) {
+
+        return res.json({
+
+            success: true,
+
+            gameId: matchId,
+            sharedGameId: matchId,
+            matchId: matchId,
+
+            playerGameId:
+                existingLateGame.id,
+
+            stake: stake,
+
+            cards:
+                existingLateGame.cards || 0,
+
+            status: "PLAYING",
+
+            playerStatus:
+                existingLateGame.status,
+
+            lateJoin: true,
+
+            started: true,
+
+            message:
+                "Game already playing. Waiting for next round."
+
+        });
+
+    }
+
+    // ----------------------------------------------
+    // DO NOT charge this player
+    // DO NOT select cards
+    // DO NOT start a new match
+    // ----------------------------------------------
+
+    const lateGame = db.prepare(`
+        INSERT INTO games (
+            match_id,
+            user_id,
+            stake,
+            cards,
+            result,
+            prize,
+            status,
+            play_spent,
+            main_spent
+        )
+        VALUES (
+            ?,
+            ?,
+            ?,
+            0,
+            'WAITING_NEXT_ROUND',
+            0,
+            'WAITING_NEXT_ROUND',
+            0,
+            0
+        )
+    `).run(
+        matchId,
+        userId,
+        stake
+    );
+
+    return res.json({
+
+        success: true,
+
+        gameId: matchId,
+        sharedGameId: matchId,
+        matchId: matchId,
+
+        playerGameId:
+            Number(
+                lateGame.lastInsertRowid
+            ),
+
+        stake: stake,
+
+        cards: 0,
+
+        status: "PLAYING",
+
+        playerStatus:
+            "WAITING_NEXT_ROUND",
+
+        lateJoin: true,
+
+        started: true,
+
+        message:
+            "Game is already playing. " +
+            "Wait for the next card selection."
+
+    });
+}
+    // -----------------------------  
+    // CHECK IF PLAYER ALREADY JOINED  
+    // -----------------------------  
+    const existingGame = db.prepare(`  
+      SELECT * FROM games WHERE match_id = ? AND user_id = ? LIMIT 1  
+    `).get(matchId, userId);  
+
+    if (existingGame) {  
+       const players= db.prepare(`
+        SELECT COUNT(DISTINCT user_id) AS count
+        FROM games
+        WHERE match_id = ?
+          AND COALESCE(cards, 0) > 0
+          AND card_numbers IS NOT NULL
+          AND TRIM(card_numbers) != ''
+          AND TRIM(card_numbers) != '[]'
+      `).get(matchId);
+
+      return res.json({  
+        success: true,  
+        gameId: matchId,  
+        sharedGameId: matchId,  
+        matchId,  
+        playerGameId: existingGame.id,  
+        stake: existingGame.stake,  
+        cards: existingGame.cards,  
+        playerCount: players.count,  
+        minPlayers: MIN_PLAYERS,  
+        countdown: getMatchCountdown(match),  
+        status: match.status,  
+        alreadyJoined: true  
+      });  
+    }  
+
+    const cost = num(stake * cards);  
+    const user = db.prepare(`  
+      SELECT id, balance, play_balance FROM users WHERE id = ?  
+    `).get(userId);  
+
+    if (!user) {  
+      return res.status(404).json({  
+        success: false,  
+        error: "User not found"  
+      });  
+    }  
+
+    const totalBalance = num(Number(user.balance) + Number(user.play_balance));  
+    if (totalBalance < cost) {  
+      return res.status(400).json({  
+        success: false,  
+        error: "Insufficient balance",  
+        required: cost,  
+        balance: totalBalance  
+      });  
+    }  
+
+    const playSpent = Math.min(Number(user.play_balance), cost);  
+    const mainSpent = num(cost - playSpent);  
+
+    // -----------------------------  
+    // TRANSACTION  
+    // -----------------------------  
+    const transaction = db.transaction(() => {  
+      const updateBalance = db.prepare(`  
+        UPDATE users  
+        SET balance = balance - ?, play_balance = play_balance - ?  
+        WHERE id = ? AND balance >= ? AND play_balance >= ?  
+      `).run(mainSpent, playSpent, userId, mainSpent, playSpent);  
+
+      if (updateBalance.changes !== 1) {  
+        throw new Error("Balance changed. Please try again.");  
+      }  
+
+     const gameResult = db.prepare(`
+  INSERT INTO games (
+    match_id,
+    user_id,
+    stake,
+    cards,
+    card_numbers,
+    result,
+    prize,
+    status,
+    play_spent,
+    main_spent
+  )
+  VALUES (?, ?, ?, ?, ?, 'STARTED', 0, 'STARTED', ?, ?)
+`).run(
+    matchId,
+    userId,
+    stake,
+    cards,
+    JSON.stringify(cardNumbers),
+    playSpent,
+    mainSpent
+);
+      if (!match.countdown_started_at) {  
+        db.prepare(`  
+          UPDATE matches  
+          SET countdown_started_at = CURRENT_TIMESTAMP, countdown_seconds = ?, prize_pool = ?  
+          WHERE id = ? AND status = 'WAITING'  
+        `).run(COUNTDOWN_SECONDS, 0, matchId);  
+      } else {  
+        const totalCost = db.prepare(`  
+          SELECT COALESCE(SUM(stake * cards), 0) AS total FROM games WHERE match_id = ?  
+        `).get(matchId).total;  
+
+        db.prepare(`  
+          UPDATE matches SET prize_pool = ? WHERE id = ?  
+        `).run(num(totalCost * WIN_RATE), matchId);
+      }  
+
+      // Recalculate the prize pool after every join, including the first.
+      const eligibleTotal = db.prepare(`
+        SELECT COALESCE(SUM(stake * cards), 0) AS total
+        FROM games
+        WHERE match_id = ?
+          AND COALESCE(cards, 0) > 0
+          AND card_numbers IS NOT NULL
+          AND TRIM(card_numbers) != ''
+          AND TRIM(card_numbers) != '[]'
+      `).get(matchId).total;
+      db.prepare(`UPDATE matches SET prize_pool = ? WHERE id = ?`)
+        .run(num(eligibleTotal * WIN_RATE), matchId);
+
+      return Number(gameResult.lastInsertRowid);  
+    });  
+
+    // Execute transaction  
+   const playerGameId = transaction();
+
+// -----------------------------
+// RESPONSE
+// -----------------------------
+
+const updatedMatch = db.prepare(`
+    SELECT *
+    FROM matches
+    WHERE id = ?
+`).get(matchId);
+
+const playerCount = db.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS count
+    FROM games
+    WHERE match_id = ?
+      AND COALESCE(cards, 0) > 0
+      AND card_numbers IS NOT NULL
+      AND TRIM(card_numbers) != ''
+      AND TRIM(card_numbers) != '[]'
+`).get(matchId).count;
+
+const newBalance = db.prepare(`
+    SELECT
+        balance,
+        play_balance
+    FROM users
+    WHERE id = ?
+`).get(userId);
+
+return res.json({
+
+    success: true,
+
+    // SHARED GAME ID
+    gameId: matchId,
+    sharedGameId: matchId,
+    matchId: matchId,
+
+    // THIS PLAYER'S OWN GAME RECORD
+    playerGameId: playerGameId,
+
+    stake: stake,
+    cards: cards,
+
+    // SHARED MATCH INFORMATION
+    playerCount: playerCount,
+    minPlayers: MIN_PLAYERS,
+
+    countdown:
+        getMatchCountdown(updatedMatch),
+
+    status:
+        updatedMatch.status,
+
+    ready:
+        playerCount >= MIN_PLAYERS,
+
+    started:
+        updatedMatch.status === "PLAYING",
+
+    balance:
+        num(newBalance.balance),
+
+    playBalance:
+        num(newBalance.play_balance),
+
+    totalBalance:
+        num(
+            Number(newBalance.balance) +
+            Number(newBalance.play_balance)
+        )
+});
+
+} catch (err) {
+
+    console.error(
+        "GAME START ERROR:",
+        err
+    );
+
+    return res.status(500).json({
+        success: false,
+        error:
+            err.message ||
+            "Failed to start/join game"
+    });
+}
+
+});
+// ============================================================
+// FINALIZE SHARED MATCH PAYOUT
+// ============================================================
+
+
+function finalizeMatchPayout(matchId) {
+
+    console.log(
+        "💰 FINALIZING MATCH PAYOUT:",
+        matchId
+    );
+
+    const transaction =
+        db.transaction(() => {
+
+            // ==================================================
+            // GET MATCH
+            // ==================================================
+
+            const match =
+                db.prepare(`
+                    SELECT *
+                    FROM matches
+                    WHERE id = ?
+                `).get(matchId);
+
+            if (!match) {
+
+                throw new Error(
+                    "Match not found: " + matchId
+                );
+
+            }
+
+
+            // ==================================================
+            // PREVENT DOUBLE PAYOUT
+            // ==================================================
+
+            if (Number(match.paid) === 1) {
+
+                console.log(
+                    "⚠️ MATCH ALREADY PAID:",
+                    matchId
+                );
+
+                return {
+                    complete: true,
+                    alreadyPaid: true,
+                    totalCost: 0,
+                    totalPrize: 0,
+                    winnerCount: 0,
+                    winnerPrize: 0
+                };
+
+            }
+
+
+            // ==================================================
+            // GET ALL WINNERS
+            // ==================================================
+
+console.log(
+    "🔎 PAYOUT DIAGNOSTIC:",
+    db.prepare(`
+        SELECT id, user_id, status, result, prize
+        FROM games
+        WHERE match_id = ?
+    `).all(matchId)
+);
+
+            const winners =
+                db.prepare(`
+                    SELECT *
+                    FROM games
+                    WHERE match_id = ?
+                      AND status = 'WIN'
+                      AND result = 'WIN'
+                    ORDER BY id ASC
+                `).all(matchId);
+
+            console.log(
+                "🏆 VERIFIED WINNERS:",
+                winners.map(w => ({
+                    gameId: w.id,
+                    userId: w.user_id,
+                    cardNumbers: w.card_numbers,
+                    winnerCardNumber:
+                        w.winner_card_number,
+                    playSpent:
+                        Number(w.play_spent || 0),
+                    mainSpent:
+                        Number(w.main_spent || 0)
+                }))
+            );
+
+
+            // ==================================================
+            // NO WINNERS
+            // ==================================================
+
+            if (winners.length === 0) {
+
+                console.log(
+                    "⚠️ NO WINNERS FOUND:",
+                    matchId
+                );
+
+                return {
+                    complete: false,
+                    alreadyPaid: false,
+                    totalCost: 0,
+                    totalPrize: 0,
+                    winnerCount: 0,
+                    winnerPrize: 0
+                };
+
+            }
+
+
+            // ==================================================
+            // GET ALL MATCH GAMES
+            // ==================================================
+
+            const matchGames =
+                db.prepare(`
+                    SELECT
+                        id,
+                        user_id,
+                        stake,
+                        cards,
+                        card_numbers,
+                        status,
+                        result
+                    FROM games
+                    WHERE match_id = ?
+                `).all(matchId);
+
+
+            // ==================================================
             // TOTAL MONEY USED
             // ==================================================
 
