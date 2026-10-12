@@ -6662,7 +6662,6 @@ if (matchStatus === "FINISHED") {
     if (myFinalWin && window.isSpectator !== true) {
         winnerShown = true;
         const winnerName = document.getElementById("winnerName");
-        const winnerPrize = document.getElementById("winnerPrize");
         const winnerNumber = document.getElementById("winnerCardNumber");
         const winnerCardWrap = document.getElementById("winnerCardWrap");
         const overlay = document.getElementById("winnerOverlay");
@@ -6673,10 +6672,7 @@ if (matchStatus === "FINISHED") {
             winnerCardWrap.innerHTML = "";
             winnerCardWrap.style.display = "none";
         }
-        if (winnerPrize) {
-            winnerPrize.style.display = "block";
-            winnerPrize.textContent = "💰 You won " + money(myFinalWin.prize) + " ETB!";
-        }
+        setWinnerPrize("💰 You won " + money(myFinalWin.prize) + " ETB!");
         if (overlay) overlay.classList.add("show");
         await refreshBalance();
 
@@ -8840,7 +8836,6 @@ if (window.isSpectator === true) {
     const overlay = document.getElementById("winnerOverlay");
     const winnerName = document.getElementById("winnerName");
     const winnerNumber = document.getElementById("winnerCardNumber");
-    const winnerPrize = document.getElementById("winnerPrize");
     const wrapper = document.getElementById("winnerCardWrap");
 
     // ==========================================
@@ -8866,20 +8861,10 @@ if (window.isSpectator === true) {
     // SHOW SERVER-CONFIRMED PRIZE
     // ==========================================
 
-    if (winnerPrize) {
-        winnerPrize.style.display = "block";
-
-        if (data.payoutComplete === true && prize > 0) {
-            winnerPrize.textContent =
-                "💰 You won " + money(prize) + " ETB!";
-        } else if (prize > 0) {
-            winnerPrize.textContent =
-                "💰 Estimated winnings: " + money(prize) + " ETB (payout pending)";
-        } else {
-            winnerPrize.textContent =
-                "💰 Calculating your prize...";
-        }
-    }
+    const prizeMessage = data.payoutComplete === true && prize > 0
+        ? "💰 You won " + money(prize) + " ETB!"
+        : "✅ Bingo verified. Payout pending for Main Balance...";
+    setWinnerPrize(prizeMessage);
 
     // ==========================================
     // SHOW WINNER OVERLAY
@@ -8941,6 +8926,16 @@ if (window.isSpectator === true) {
     }, 1000);
 }
 
+function setWinnerPrize(message, show = true){
+    const winnerPrize = document.getElementById("winnerPrize");
+    if (winnerPrize) {
+        if (show) {
+            winnerPrize.style.display = "block";
+        }
+        winnerPrize.textContent = message;
+    }
+}
+
 function showLoserScreen(winnerCards){
 
     console.log(
@@ -8970,9 +8965,6 @@ function showLoserScreen(winnerCards){
 
     const winnerNumber =
         document.getElementById("winnerCardNumber");
-
-    const winnerPrize =
-        document.getElementById("winnerPrize");
 
     const winnerCardWrap =
         document.getElementById("winnerCardWrap");
@@ -9004,11 +8996,10 @@ if (winnerNumber) {
     winnerNumber.textContent = "WINNER";
 }
 
-if (winnerPrize) {
-    winnerPrize.textContent = isSpectator
-        ? "Winning results"
-        : "You Lose";
-}
+setWinnerPrize(
+    isSpectator ? "Winning results" : "You Lose",
+    false
+);
 
 
     // ------------------------------------------
