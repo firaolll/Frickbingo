@@ -4757,6 +4757,18 @@ console.log(
                     ORDER BY id ASC
                 `).all(matchId);
 
+            // A player receives one equal share even if multiple winning
+            // game rows exist for that same account.
+            const winnersByUser = new Map();
+            for (const winner of winners) {
+                const userId = String(winner.user_id);
+                if (!winnersByUser.has(userId)) {
+                    winnersByUser.set(userId, []);
+                }
+                winnersByUser.get(userId).push(winner);
+            }
+            const winningPlayers = [...winnersByUser.values()];
+
             console.log(
                 "🏆 VERIFIED WINNERS:",
                 winners.map(w => ({
@@ -4777,7 +4789,7 @@ console.log(
             // NO WINNERS
             // ==================================================
 
-            if (winners.length === 0) {
+            if (winningPlayers.length === 0) {
 
                 console.log(
                     "⚠️ NO WINNERS FOUND:",
@@ -4860,7 +4872,7 @@ console.log(
             // ==================================================
 
             const winnerCount =
-                winners.length;
+                winningPlayers.length;
 
 
             // ==================================================
@@ -4889,7 +4901,8 @@ console.log(
             // PAY ALL WINNERS
             // ==================================================
 
-            for (const [winnerIndex, winner] of winners.entries()) {
+            for (const [winnerIndex, playerWinningGames] of winningPlayers.entries()) {
+                const winner = playerWinningGames[0];
 
                 // Split the exact 85% pot into cents and distribute any
                 // remaining cents so total payouts equal the displayed pot.
@@ -4950,29 +4963,26 @@ console.log(
                 // SAVE WINNER PRIZE
                 // ------------------------------------------------
 
-                const paidGame =
-    db.prepare(`
-        UPDATE games
-        SET
-            prize = ?,
-            status = 'PAID'
-        WHERE id = ?
-          AND status = 'WIN'
-    `).run(
-        individualPrize,
-        winner.id
-    );
+                for (const [gameIndex, winningGame] of playerWinningGames.entries()) {
+                    const paidGame = db.prepare(`
+                        UPDATE games
+                        SET
+                            prize = ?,
+                            status = 'PAID'
+                        WHERE id = ?
+                          AND status = 'WIN'
+                          AND result = 'WIN'
+                    `).run(
+                        gameIndex === 0 ? individualPrize : 0,
+                        winningGame.id
+                    );
 
-
-if(
-    paidGame.changes !== 1
-){
-
-    throw new Error(
-        `Could not mark winner game ${winner.id} as PAID`
-    );
-
-}
+                    if (paidGame.changes !== 1) {
+                        throw new Error(
+                            `Could not mark winner game ${winningGame.id} as PAID`
+                        );
+                    }
+                }
 
                 console.log(
                     "🏆 WINNER PAID:",
