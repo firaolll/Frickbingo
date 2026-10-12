@@ -9019,7 +9019,33 @@ setWinnerPrize(
     }
     else if(winnerCardWrap){
 
-        winnerCards.forEach(
+        const seenWinnerUsers = new Set();
+        const uniqueWinners = winnerCards.filter((winner, index) => {
+            const rawUserId = Number(winner.userId);
+            const key = Number.isInteger(rawUserId) && rawUserId > 0
+                ? `user:${rawUserId}`
+                : `card:${winner.cardNumber ?? index}`;
+            if (seenWinnerUsers.has(key)) return false;
+            seenWinnerUsers.add(key);
+            return true;
+        });
+        const displayedCardWinner =
+            uniqueWinners.find(winner =>
+                Array.isArray(winner.winningCard) &&
+                winner.winningCard.length === 25
+            ) || uniqueWinners[0];
+        const winnerList = document.createElement("div");
+        winnerList.style.width = "100%";
+
+        const listTitle = document.createElement("div");
+        listTitle.textContent = "🏆 WINNERS";
+        listTitle.style.textAlign = "center";
+        listTitle.style.fontSize = "18px";
+        listTitle.style.fontWeight = "bold";
+        listTitle.style.margin = "10px 0";
+        winnerList.appendChild(listTitle);
+
+        uniqueWinners.forEach(
             (winner, index) => {
 
                 console.log(
@@ -9080,9 +9106,12 @@ setWinnerPrize(
                     </div>
                 `;
 
-                winnerCardWrap.appendChild(
+                winnerList.appendChild(
                     info
                 );
+
+                // List every winner, but show only one winning card.
+                if (winner !== displayedCardWinner) return;
 
                 // ==============================
                 // WINNING CARD
@@ -9200,6 +9229,8 @@ setWinnerPrize(
 
             }
         );
+
+        winnerCardWrap.prepend(winnerList);
 
     }
 
