@@ -1385,16 +1385,10 @@ const rows =
         db.prepare(`  
             SELECT  
                 u.id,  
-                u.telegram_id,  
                 u.username,  
                 u.first_name,  
 
-                COUNT(  
-                    CASE  
-                        WHEN g.result = 'WIN'  
-                        THEN 1  
-                    END  
-                ) AS wins,  
+                COUNT(DISTINCT CASE WHEN g.result = 'WIN' THEN g.match_id END) AS wins,  
 
                 COALESCE(  
                     SUM(  
@@ -1412,10 +1406,13 @@ const rows =
             LEFT JOIN games g  
                 ON g.user_id = u.id  
 
-            GROUP BY u.id  
+            GROUP BY u.id
 
-            ORDER BY wins DESC,  
-                     total_prize DESC  
+            HAVING COUNT(DISTINCT CASE WHEN g.result = 'WIN' THEN g.match_id END) > 0
+
+            ORDER BY wins DESC,
+                     total_prize DESC,
+                     u.id ASC  
 
             LIMIT 10  
         `).all();  
@@ -8570,8 +8567,6 @@ bot.onText(
                     d.amount,  
                     d.reference,  
                     d.created_at,  
-
-                    u.telegram_id,  
                     u.username,  
                     u.first_name  
 
@@ -8697,8 +8692,6 @@ bot.onText(
                     w.amount,  
                     w.account_details,  
                     w.created_at,  
-
-                    u.telegram_id,  
                     u.username,  
                     u.first_name  
 
