@@ -3506,6 +3506,7 @@ let hasServerSelectionRecord = false;
 let cardSelectionRevision = 0;
 let otherPlayersSelectedCards = [];
 let currentGameId = null;  
+let sharedResultHandledMatchId = null;
   
 let calledNumbers = [];  
   
@@ -5895,7 +5896,7 @@ async function goToCardSelection() {
         // NO RUNNING MATCH: CONTINUE NORMAL CARD SELECTION
         // ==================================================
 
-        window.isSpectator =true ;
+        window.isSpectator = false;
 
         if (
             !Number.isFinite(mainBalance) ||
@@ -6658,6 +6659,12 @@ async function syncSharedGameState() {
         
 if (matchStatus === "FINISHED") {
 
+    const finishedMatchKey = String(currentGameId ?? match.id ?? "");
+    if (sharedResultHandledMatchId === finishedMatchKey) {
+        return;
+    }
+    sharedResultHandledMatchId = finishedMatchKey;
+
     console.log(
         "🏁 SHARED MATCH FINISHED:",
         currentGameId
@@ -6778,6 +6785,7 @@ function returnFromMatchResult() {
     gameRunning = false;
     actualGameStarted = false;
     winnerShown = false;
+    sharedResultHandledMatchId = null;
 
     window.isSpectator = false;
 
@@ -6808,10 +6816,8 @@ function handleSharedWinners(winnerCards) {
     // Spectators can see the winners and prizes.
     if (window.isSpectator === true) {
         console.log("👀 SPECTATOR — WINNERS:", winnerCards);
-
-        // Display the shared results without claiming
-        // Bingo or entering the normal payout flow.
-        showLoserScreen(winnerCards);
+        // Keep watching through the claim window. The final result screen
+        // appears only after the server changes the match to FINISHED.
         return;
     }
 
@@ -7946,6 +7952,7 @@ function getAmharicLetter(letter){
 async function callNumber(){
 
     if(!actualGameStarted || winnerShown) return;
+    if (window.isSpectator === true) return;
 
     if(!currentGameId){
         console.error("❌ No current game ID");
@@ -9355,6 +9362,7 @@ async function resetAfterWinner(){
         "🔄 RESETTING FOR NEW ROUND..."
     );
 window.sharedWinnerHandledKey = null;
+    sharedResultHandledMatchId = null;
 
     // ==========================================
     // HIDE WINNER OVERLAY
