@@ -2870,13 +2870,7 @@ button{
     </div>
 </div>
 
-<button  
-    id="readyButton"  
-    class="ready-button"  
-    onclick="readyForGame()"  
-    disabled>  
-    READY  
-</button>  
+  
 
 <div  
     id="watchMessage"  
@@ -7135,6 +7129,7 @@ if (window.isSpectator !== true) {
 
 let page2SyncInterval = null;
 let page2SyncBusy = false;
+let page2AutoReadyMatchId = null;
 
 async function refreshPage2State() {
     console.log("🔄 REFRESH PAGE 2 CALLED");
@@ -7209,7 +7204,23 @@ async function refreshPage2State() {
         // Update player count.
         const players = Number(match.playerCount ?? data.players?.length ?? 0);
         fakePlayers = players;
-updatePlayerCountDisplay();
+        updatePlayerCountDisplay();
+
+        // Automatically submit selected cards when the shared countdown ends.
+        // This replaces the removed READY button.
+        const matchId = Number(match.id);
+        if (
+            countdown <= 0 &&
+            selectedCards.length > 0 &&
+            hasServerSelectionRecord &&
+            !playerReady &&
+            window.isSpectator !== true &&
+            Number.isFinite(matchId) &&
+            page2AutoReadyMatchId !== matchId
+        ) {
+            page2AutoReadyMatchId = matchId;
+            void finishSelectionPeriod();
+        }
 
         console.log("🔄 PAGE 2 SHARED STATE:", {
             matchId: match.id,
