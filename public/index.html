@@ -6682,22 +6682,7 @@ async function syncSharedGameState() {
             updateAllDisplays();
 
             if (winnerCards.length > 0) {
-
-                if (window.isSpectator === true) {
-
-                    console.log(
-                        "👀 Spectator: displaying shared match; " +
-                        "cannot claim prizes."
-                    );
-
-                    // Do not call the player's claim handler.
-
-                } else if (!winnerShown) {
-
-                    handleSharedWinners(winnerCards);
-
-                }
-
+                console.log("🏆 Estimated winnings while claims close:", winnerCards);
             } else {
 
                 console.warn(
@@ -6737,25 +6722,34 @@ if (matchStatus === "FINISHED") {
         stopSharedGameSync();
     }
 
-    const wasSpectator = window.isSpectator === true;
+    const myUserId = Number(currentUser?.id || 0);
+    const myFinalWin = winnerCards.find(
+        winner => Number(winner.userId) === myUserId
+    );
 
-    if (wasSpectator) {
+    if (myFinalWin && window.isSpectator !== true) {
+        winnerShown = true;
+        const winnerName = document.getElementById("winnerName");
+        const winnerPrize = document.getElementById("winnerPrize");
+        const winnerNumber = document.getElementById("winnerCardNumber");
+        const winnerCardWrap = document.getElementById("winnerCardWrap");
+        const overlay = document.getElementById("winnerOverlay");
 
-        console.log(
-            "👀 Spectator match finished. Showing shared results."
-        );
-
-        // Keep spectator status until the result screen closes.
+        if (winnerName) winnerName.textContent = "🎉 BINGO! YOU WON THE GAME! 🎉";
+        if (winnerNumber) winnerNumber.style.display = "none";
+        if (winnerCardWrap) {
+            winnerCardWrap.innerHTML = "";
+            winnerCardWrap.style.display = "none";
+        }
+        if (winnerPrize) {
+            winnerPrize.style.display = "block";
+            winnerPrize.textContent = "💰 You won " + money(myFinalWin.prize) + " ETB!";
+        }
+        if (overlay) overlay.classList.add("show");
+        await refreshBalance();
+    } else {
+        // Other players and spectators see the same persisted winner awards.
         showLoserScreen(winnerCards);
-
-    } else if (winnerCards.length > 0 && !winnerShown) {
-
-        handleSharedWinners(winnerCards);
-
-    } else if (!winnerShown) {
-
-        showLoserScreen(winnerCards);
-
     }
 
     actualGameStarted = false;
@@ -8927,7 +8921,10 @@ if (window.isSpectator === true) {
 
         if (data.payoutComplete === true && prize > 0) {
             winnerPrize.textContent =
-                "💰 You won " + Math.floor(prize) + " ETB!";
+                "💰 You won " + money(prize) + " ETB!";
+        } else if (prize > 0) {
+            winnerPrize.textContent =
+                "💰 Estimated winnings: " + money(prize) + " ETB (payout pending)";
         } else {
             winnerPrize.textContent =
                 "💰 Calculating your prize...";
@@ -9103,11 +9100,7 @@ if (winnerPrize) {
                 // ==============================
 
                 const prize =
-                    Math.floor(
-                        Number(
-                            winner.prize || 0
-                        )
-                    );
+                    Number(winner.prize || 0);
 
                 // ==============================
                 // WINNER INFORMATION
@@ -9135,7 +9128,7 @@ if (winnerPrize) {
                         font-size:17px;
                         font-weight:bold;
                     ">
-                        💰 Won: ${prize} ETB
+                        💰 Won: ${money(prize)} ETB
                     </div>
 
                     <div style="

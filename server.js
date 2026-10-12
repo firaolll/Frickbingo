@@ -262,6 +262,29 @@ return Math.round(
 
 }
 
+function getSelectedStakeTotal(matchId) {
+    const games = db.prepare(`
+        SELECT stake, cards, card_numbers
+        FROM games
+        WHERE match_id = ?
+          AND COALESCE(cards, 0) > 0
+          AND card_numbers IS NOT NULL
+          AND TRIM(card_numbers) != ''
+          AND TRIM(card_numbers) != '[]'
+    `).all(matchId);
+
+    return games.reduce((total, game) => {
+        let selectedCards = [];
+        try {
+            selectedCards = JSON.parse(game.card_numbers || "[]");
+        } catch (error) {
+            selectedCards = [];
+        }
+        if (!Array.isArray(selectedCards) || selectedCards.length === 0) return total;
+        return total + Number(game.stake || 0) * selectedCards.length;
+    }, 0);
+}
+
 function integer(value) {
 const n = Number(value);
 
@@ -2760,6 +2783,11 @@ app.get("/api/match/:matchId", auth, (req, res) => {
             });
 
         }
+
+        // Derash is 85% of the stakes on cards actually selected.
+        const selectedStakeTotal = getSelectedStakeTotal(matchId);
+        const livePrizePool = num(selectedStakeTotal * WIN_RATE);
+
        const players =
     db.prepare(`
         SELECT
@@ -2993,6 +3021,51 @@ winnerCards.push({
 
 }
 
+if (String(match.status || "").toUpperCase() === "FINISHED") {
+    // Use persisted winner and prize records for the final result shown to
+    // winners, other players, and spectators.
+    const paidWinners = db.prepare(`
+        SELECT
+            g.id AS game_id,
+            g.user_id,
+            g.winner_card_number,
+            g.prize,
+            u.username,
+            u.first_name
+        FROM games g
+        LEFT JOIN users u ON u.id = g.user_id
+        WHERE g.match_id = ?
+          AND g.result = 'WIN'
+          AND g.status = 'PAID'
+        ORDER BY g.id ASC
+    `).all(matchId);
+
+    for (const winner of paidWinners) {
+        const cardNumber = Number(winner.winner_card_number);
+        if (!Number.isInteger(cardNumber) || cardNumber < 1 || cardNumber > 200) continue;
+        winnerCards.push({
+            gameId: Number(winner.game_id),
+            userId: Number(winner.user_id),
+            cardNumber,
+            username: winner.username || null,
+            firstName: winner.first_name || null,
+            prize: num(winner.prize),
+            winningCard: generateServerBingoNumbers(cardNumber),
+            winningCells: []
+        });
+    }
+}
+
+if (String(match.status || "").toUpperCase() === "CLAIM_WINDOW" && winnerCards.length) {
+    const currentWinnerUsers = new Set(winnerCards.map(winner => String(winner.userId)));
+    const estimatedShare = num(
+        livePrizePool / currentWinnerUsers.size
+    );
+    winnerCards.forEach(winner => {
+        winner.prize = estimatedShare;
+    });
+}
+
 players.forEach(game => {
 
     try {
@@ -3111,10 +3184,10 @@ console.log(
                     getMatchCountdown(match),
 
                 prizePool:
-                    num(match.prize_pool),
+                    livePrizePool,
 
                 winnerCount:
-    winnerCards.length ||
+    new Set(winnerCards.map(winner => String(winner.userId))).size ||
     Number(match.winner_count || 0),
 
 winnerCards:
@@ -4660,6 +4733,7 @@ console.log(
                     WHERE match_id = ?
                       AND status = 'WIN'
                       AND result = 'WIN'
+                    ORDER BY id ASC
                 `).all(matchId);
 
             console.log(
@@ -4710,8 +4784,8 @@ console.log(
                     SELECT
                         id,
                         user_id,
-                        play_spent,
-                        main_spent,
+                        stake,
+                        cards,
                         card_numbers,
                         status,
                         result
@@ -4728,13 +4802,19 @@ console.log(
                 matchGames.reduce(
                     (total, game) => {
 
-                        return total
-                            + Number(
-                                game.play_spent || 0
-                            )
-                            + Number(
-                                game.main_spent || 0
-                            );
+                        let selectedCards = [];
+                        try {
+                            selectedCards = JSON.parse(game.card_numbers || "[]");
+                        } catch (error) {
+                            selectedCards = [];
+                        }
+                        if (
+                            Number(game.cards || 0) <= 0 ||
+                            !Array.isArray(selectedCards) ||
+                            selectedCards.length === 0
+                        ) return total;
+
+                        return total + Number(game.stake || 0) * selectedCards.length;
 
                     },
                     0
@@ -4751,10 +4831,7 @@ console.log(
             // 85% PRIZE POOL
             // ==================================================
 
-            const totalPrize =
-                Math.floor(
-                    totalCost * 0.85
-                );
+            const totalPrize = num(totalCost * WIN_RATE);
 
 
             // ==================================================
@@ -4769,11 +4846,10 @@ console.log(
             // WHOLE ETB WINNER SHARE
             // ==================================================
 
-            const winnerPrize =
-                Math.floor(
-                    totalPrize /
-                    winnerCount
-                );
+            const totalPrizeCents = Math.round(totalPrize * 100);
+            const basePrizeCents = Math.floor(totalPrizeCents / winnerCount);
+            const extraCents = totalPrizeCents - basePrizeCents * winnerCount;
+            const winnerPrize = basePrizeCents / 100;
 
 
             console.log(
@@ -4792,9 +4868,12 @@ console.log(
             // PAY ALL WINNERS
             // ==================================================
 
-            for (
-                const winner of winners
-            ) {
+            for (const [winnerIndex, winner] of winners.entries()) {
+
+                // Split the exact 85% pot into cents and distribute any
+                // remaining cents so total payouts equal the displayed pot.
+                const individualPrize =
+                    (basePrizeCents + (winnerIndex < extraCents ? 1 : 0)) / 100;
 
                 const userId =
                     Number(
@@ -4806,7 +4885,7 @@ console.log(
                 // CREDIT MAIN BALANCE
                 // ------------------------------------------------
 
-                if (winnerPrize > 0) {
+                if (individualPrize > 0) {
 
                     const payment =
                         db.prepare(`
@@ -4818,7 +4897,7 @@ console.log(
                                 ) + ?
                             WHERE id = ?
                         `).run(
-                            winnerPrize,
+                            individualPrize,
                             userId
                         );
 
@@ -4839,7 +4918,7 @@ console.log(
                         {
                             userId,
                             amount:
-                                winnerPrize
+                                individualPrize
                         }
                     );
 
@@ -4859,7 +4938,7 @@ console.log(
         WHERE id = ?
           AND status = 'WIN'
     `).run(
-        winnerPrize,
+        individualPrize,
         winner.id
     );
 
@@ -4881,7 +4960,7 @@ if(
                             winner.id,
                         userId,
                         prize:
-                            winnerPrize
+                            individualPrize
                     }
                 );
 
@@ -5870,6 +5949,24 @@ app.post("/api/game/finish", auth, (req, res) => {
             game.status === "WIN"
         ) {
 
+            const calculatedPrizePool = num(
+                getSelectedStakeTotal(matchId) * WIN_RATE
+            );
+
+            const claimedWinnerCount = db.prepare(`
+                SELECT COUNT(DISTINCT user_id) AS count
+                FROM games
+                WHERE match_id = ?
+                  AND result = 'WIN'
+                  AND status IN ('WIN', 'PAID')
+            `).get(matchId).count;
+            const estimatedPrize = Number(match.paid) === 1
+                ? num(game.prize)
+                : num(
+                    calculatedPrizePool /
+                    Math.max(1, claimedWinnerCount)
+                );
+
             return res.json({
 
                 success: true,
@@ -5887,7 +5984,15 @@ app.post("/api/game/finish", auth, (req, res) => {
                 result: "WIN",
 
                 prize:
-                    num(game.prize),
+                    estimatedPrize,
+
+                totalPrize:
+                    calculatedPrizePool,
+
+                winnerCount:
+                    Number(match.paid) === 1
+                        ? Number(match.winner_count || claimedWinnerCount)
+                        : claimedWinnerCount,
 
                 matchStatus:
                     match.status,
@@ -6180,14 +6285,24 @@ const payout =
         // TOTAL GAME COST
         // ========================================================
 
-        const totalCost =
-            updatedMatch.prize_pool
-                ? num(
-                    Number(
-                        updatedMatch.prize_pool
-                    ) / WIN_RATE
-                )
-                : 0;
+        const claimedWinnerCount = db.prepare(`
+            SELECT COUNT(DISTINCT user_id) AS count
+            FROM games
+            WHERE match_id = ?
+              AND result = 'WIN'
+              AND status IN ('WIN', 'PAID')
+        `).get(matchId).count;
+        const calculatedPrizePool = num(
+            getSelectedStakeTotal(matchId) * WIN_RATE
+        );
+        const displayedPrize = Number(updatedMatch.paid) === 1
+            ? num(updatedGame.prize)
+            : num(
+                calculatedPrizePool /
+                Math.max(1, claimedWinnerCount)
+            );
+
+        const totalCost = getSelectedStakeTotal(matchId);
 
 
         // ========================================================
@@ -6226,22 +6341,18 @@ winningPattern:
         ? winningPattern || null
         : null,
             prize:
-                num(
-                    updatedGame.prize
-                ),
+                displayedPrize,
 
             totalPlayerCost:
                 totalCost,
 
             totalPrize:
-                num(
-                    updatedMatch.prize_pool
-                ),
+                calculatedPrizePool,
 
             winnerCount:
-                Number(
-                    updatedMatch.winner_count || 0
-                ),
+                Number(updatedMatch.paid) === 1
+                    ? Number(updatedMatch.winner_count || claimedWinnerCount)
+                    : claimedWinnerCount,
 
             playerCount:
                 db.prepare(`
