@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 50333)
+Total output lines: 10034
+
 <!DOCTYPE html>  <html lang="am">  
 <head>  
 <meta charset="UTF-8">  
@@ -4263,6 +4266,10 @@ async function joinSharedMatch(){
 
         }
 
+        // The match creation endpoint charges the card cost. Refresh after
+        // the successful purchase so Page 3 shows the remaining Play balance.
+        await refreshBalance();
+
 
         // ============================================================
         // LATE ARRIVAL: WATCH AS SPECTATOR
@@ -5174,79 +5181,7 @@ function speakNumber(number){
 }  
   
   
-/* ==================================================  
-   RULES  
-================================================== */  
-  
-function openRules(){  
-  
-    document  
-        .getElementById(  
-            "rulesModal"  
-        )  
-        .classList.add("show");  
-  
-}  
-  
-  
-function closeRules(){  
-  
-    document  
-        .getElementById(  
-            "rulesModal"  
-        )  
-        .classList.remove("show");  
-  
-}  
-  
-  
-function closeRulesOutside(event){  
-  
-    if(  
-        event.target.id ===  
-        "rulesModal"  
-    ){  
-  
-        closeRules();  
-  
-    }  
-  
-}  
-  
-  
-/* ==================================================  
-   DEPOSIT  
-================================================== */  
-  
-async function submitDeposit(){  
-  
-    const amount =  
-        Number(  
-            document  
-                .getElementById(  
-                    "depositAmount"  
-                )  
-                .value  
-        );  
-  
-  
-    const reference =  
-        document  
-            .getElementById(  
-                "depositReference"  
-            )  
-            .value  
-            .trim();  
-  
-  
-    if(  
-        !amount ||  
-        amount < 50 ||  
-        amount > 1000  
-    ){  
-  
-        showToast(  
-            "Deposit must be 50 - 1000 ETB."  
+/* =================…333 tokens truncated…must be 50 - 1000 ETB."  
         );  
   
         return;  
@@ -6747,6 +6682,24 @@ if (matchStatus === "FINISHED") {
         }
         if (overlay) overlay.classList.add("show");
         await refreshBalance();
+
+        // This winner screen is rendered here instead of through showWinner,
+        // so start the same five-second return countdown explicitly.
+        let seconds = 5;
+        const countdown = document.getElementById("winnerCountdown");
+        if (countdown) countdown.textContent = String(seconds);
+        clearInterval(winnerResetInterval);
+        winnerResetInterval = setInterval(() => {
+            seconds--;
+            if (countdown) {
+                countdown.textContent = String(Math.max(0, seconds));
+            }
+            if (seconds <= 0) {
+                clearInterval(winnerResetInterval);
+                winnerResetInterval = null;
+                resetAfterWinner();
+            }
+        }, 1000);
     } else {
         // Other players and spectators see the same persisted winner awards.
         showLoserScreen(winnerCards);
