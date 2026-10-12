@@ -1546,6 +1546,23 @@ app.post("/api/match/create", auth, (req, res) => {
         const userId =
             req.user.id;
 
+        const requestedCardNumbers = Array.isArray(req.body.cardNumbers)
+            ? req.body.cardNumbers.map(Number)
+            : [];
+
+        if (
+            requestedCardNumbers.length !== cards ||
+            new Set(requestedCardNumbers).size !== requestedCardNumbers.length ||
+            requestedCardNumbers.some(number =>
+                !Number.isInteger(number) || number < 1 || number > 200
+            )
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid card selection."
+            });
+        }
+
 
         // ============================================================
         // FIND OR CREATE ACTIVE MATCH
@@ -1697,35 +1714,6 @@ const playerCount = db.prepare(`
 // USE PLAYER-REQUESTED CARD NUMBERS
 // SERVER VALIDATES THEM
 // ============================================================
-
-const requestedCardNumbers =
-    Array.isArray(req.body.cardNumbers)
-        ? req.body.cardNumbers
-            .map(Number)
-            .filter(
-                n =>
-                    Number.isInteger(n) &&
-                    n >= 1 &&
-                    n <= 200
-            )
-        : [];
-
-
-if(
-    requestedCardNumbers.length !== cards
-){
-
-    return res.status(400).json({
-
-        success: false,
-
-        error:
-            "Invalid card selection."
-
-    });
-
-}
-
 
 const cardNumbers =
     requestedCardNumbers;
@@ -1938,12 +1926,6 @@ console.log(
                     );
 
 
-                const refund =
-                    num(
-                        stake * removedCards
-                    );
-
-
                 const oldPlaySpent =
                     Number(
                         existingGame.play_spent || 0
@@ -1957,20 +1939,19 @@ console.log(
 
 
                 // ====================================================
-                // REFUND USING ORIGINAL SPENDING SOURCE
+                // Refund the removed-card cost from the same wallets that
+                // funded the existing cards. Play balance was spent first.
                 // ====================================================
 
-                const playRefund =
-                    Math.min(
-                        oldPlaySpent,
-                        refund
-                    );
-
-
-                const mainRefund =
-                    num(
-                        refund - playRefund
-                    );
+                const refund = Math.min(
+                    num(stake * removedCards),
+                    Math.max(0, oldPlaySpent) + Math.max(0, oldMainSpent)
+                );
+                const totalSpent = Math.max(0, oldPlaySpent) + Math.max(0, oldMainSpent);
+                const playRefund = totalSpent > 0
+                    ? num(Math.min(Math.max(0, oldPlaySpent), refund * oldPlaySpent / totalSpent))
+                    : 0;
+                const mainRefund = num(Math.min(Math.max(0, oldMainSpent), refund - playRefund));
 
 
                 // ====================================================
@@ -2021,11 +2002,7 @@ console.log(
                 // KEEP ONLY REMAINING SERVER CARDS
                 // ====================================================
 
-                const updatedCardNumbers =
-                    oldCardNumbers.slice(
-                        0,
-                        newCards
-                    );
+                const updatedCardNumbers = requestedCardNumbers.slice();
 
 
                 const generatedCards =
@@ -2358,19 +2335,6 @@ console.log(
 // ADD PLAYER-REQUESTED NEW CARDS
 // ============================================================
 
-const requestedCardNumbers =
-    Array.isArray(req.body.cardNumbers)
-        ? req.body.cardNumbers
-            .map(Number)
-            .filter(
-                n =>
-                    Number.isInteger(n) &&
-                    n >= 1 &&
-                    n <= 200
-            )
-        : [];
-
-
 const newCardNumbers =
     requestedCardNumbers.filter(
         number =>
@@ -2539,20 +2503,29 @@ console.log(
             // ========================================================
 
             else {
+                let oldCardNumbers = [];
+                try {
+                    oldCardNumbers = existingGame.card_numbers
+                        ? JSON.parse(existingGame.card_numbers)
+                        : [];
+                } catch (error) {
+                    oldCardNumbers = [];
+                }
+                oldCardNumbers = Array.isArray(oldCardNumbers) ? oldCardNumbers.map(Number) : [];
 
-                console.log(
-                    "🎫 SAME CARD COUNT — KEEP SERVER CARDS:",
-                    {
-                        gameId:
-                            existingGame.id,
-
-                        cards:
-                            newCards,
-
-                        existingCardNumbers:
-                            existingGame.card_numbers
-                    }
-                );
+                if (JSON.stringify(oldCardNumbers) !== JSON.stringify(requestedCardNumbers)) {
+                    const generatedCards = generateServerCards(requestedCardNumbers);
+                    db.prepare(`
+                        UPDATE games
+                        SET card_numbers = ?, generated_cards = ?
+                        WHERE id = ? AND user_id = ?
+                    `).run(
+                        JSON.stringify(requestedCardNumbers),
+                        JSON.stringify(generatedCards),
+                        existingGame.id,
+                        userId
+                    );
+                }
 
             }
 
