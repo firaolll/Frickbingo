@@ -6667,6 +6667,22 @@ async function syncSharedGameState() {
 
             if (winnerCards.length > 0) {
                 console.log("🏆 Estimated winnings while claims close:", winnerCards);
+
+                // The server pauses ball calling until a winning player
+                // submits a claim. Only submit for this user's own card;
+                // other players and spectators keep syncing until payout.
+                const myUserId = Number(currentUser?.id || 0);
+                const myWinner = winnerCards.find(
+                    winner => Number(winner.userId) === myUserId
+                );
+                if (
+                    myWinner &&
+                    window.isSpectator !== true &&
+                    !winnerShown &&
+                    !winnerClaimInProgress
+                ) {
+                    showWinner(Number(myWinner.cardNumber));
+                }
             } else {
 
                 console.warn(

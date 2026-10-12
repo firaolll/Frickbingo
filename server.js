@@ -6065,7 +6065,7 @@ app.post("/api/game/finish", auth, (req, res) => {
 
                     WHERE id = ?
 
-                      AND status = 'PLAYING'
+                      AND status IN ('PLAYING', 'CLAIM_WINDOW')
 
                       AND paid = 0
                 `).run(
