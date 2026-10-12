@@ -2181,6 +2181,40 @@ button{
     border-bottom:0;  
 }  
   
+.score-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.score-item {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 11px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid #39275b;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.score-rank {
+    color: var(--yellow);
+    font-size: 15px;
+}
+
+.score-details {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.score-details span {
+    color: var(--muted);
+    font-size: 10px;
+}
 .value-green{  
     color:var(--green);  
     font-weight:1000;  
@@ -3142,78 +3176,12 @@ button{
 
 </section>  <!-- ==================================================  
      SCORE  
-================================================== -->  <section id="scorePage" class="page">  <header class="app-header">  
-
-    <div class="logo">  
-        Score  
-    </div>  
-
-</header>  
-
-<div class="content-panel">  
-
-    <div class="content-title">  
-        My Score  
-    </div>  
-
-    <div class="score-row">  
-
-        <span>  
-            Games  
-        </span>  
-
-        <strong  
-            id="scoreGames"  
-            class="value-purple">  
-            0  
-        </strong>  
-
-    </div>  
-
-    <div class="score-row">  
-
-        <span>  
-            Wins  
-        </span>  
-
-        <strong  
-            id="scoreWins"  
-            class="value-green">  
-            0  
-        </strong>  
-
-    </div>  
-
-    <div class="score-row">  
-
-        <span>  
-            Win Rate  
-        </span>  
-
-        <strong  
-            id="scoreRate"  
-            class="value-purple">  
-            0%  
-        </strong>  
-
-    </div>  
-
-    <div class="score-row">  
-
-        <span>  
-            Total Won  
-        </span>  
-
-        <strong  
-            id="scoreWon"  
-            class="value-green">  
-            0 ETB  
-        </strong>  
-
-    </div>  
-
-</div>
-
+================================================== -->  <section id="scorePage" class="page">
+    <header class="app-header"><div class="logo">Score</div></header>
+    <div class="content-panel">
+        <div class="content-title">Top 10 Players by Wins</div>
+        <div id="scoreList" class="empty-state">Loading scores...</div>
+    </div>
 </section>  <!-- ==================================================  
      WALLET  
 ================================================== --> 
@@ -3322,7 +3290,7 @@ button{
 ================================================== -->  <nav id="bottomNav" class="bottom-nav">  <button  
     class="nav-btn active"  
     data-page="page1"  
-    onclick="navigateNav('page1',this)">  
+    onclick="navPage('page1',this)">  
 
     <span class="nav-icon">⌂</span>  
     Home  
@@ -3332,7 +3300,7 @@ button{
 <button  
     class="nav-btn"  
     data-page="historyPage"  
-    onclick="navigateNav('historyPage',this)">  
+    onclick="navPage('historyPage',this)">  
 
     <span class="nav-icon">◷</span>  
     History  
@@ -3342,7 +3310,7 @@ button{
 <button  
     class="nav-btn"  
     data-page="scorePage"  
-    onclick="navigateNav('scorePage',this)">  
+    onclick="navPage('scorePage',this)">  
 
     <span class="nav-icon">★</span>  
     Score  
@@ -3352,7 +3320,7 @@ button{
 <button  
     class="nav-btn"  
     data-page="walletPage"  
-    onclick="navigateNav('walletPage',this)">  
+    onclick="navPage('walletPage',this)">  
 
     <span class="nav-icon">◈</span>  
     Wallet  
@@ -3362,7 +3330,7 @@ button{
 <button  
     class="nav-btn"  
     data-page="profilePage"  
-    onclick="navigateNav('profilePage',this)">  
+    onclick="navPage('profilePage',this)">  
 
     <span class="nav-icon">●</span>  
     Profile  
@@ -5306,152 +5274,8 @@ document.addEventListener(
     init  
 );  
   
-</script>    
-  <div class="selection-title">  
-   Frick Bingo • LIVE  
-  </div>  <button  
-class="refresh-btn"  
-type="button"  
-onclick="refreshGame()">
-🔄
-</button>
-
- </div>   <div class="game-stats">    <div class="game-stat">  
-   <small>Main</small>  
-   <b id="mainBalance3">0.00</b>  
-  </div>    <div class="game-stat">  
-   <small>Play</small>  
-   <b id="playBalance3">0.00</b>  
-  </div>    <div class="game-stat">  
-   <small>Stake</small>  
-   <b id="stakeDisplay3">0</b>  
-  </div>    <div class="game-stat">  
-   <small>Derash</small>  
-   <b id="derashDisplay">0.00</b>  
-  </div>    <div class="game-stat">  
-   <small>Potential</small>  
-   <b id="potentialDisplay">0.00</b>  
-  </div>   </div>   <div class="game-board-panel">    <div class="panel-title">  
-   BINGO BOARD  
-  </div>    <div class="big-board-header">  
-   <div>B</div>  
-   <div>I</div>  
-   <div>N</div>  
-   <div>G</div>  
-   <div>O</div>  
-  </div>    <div  
-   id="bigBingoBoard"  
-   class="big-board">  
-  </div>   </div>   <div class="live-controls">    <div class="call-display">  <small>LAST CALLED</small>
-
-   <div  
-    id="calledNumberDisplay"  
-    class="called-number">  
-    --  
-   </div>    </div>  <button  
-id="autoBtn"  
-class="control-btn on"  
-type="button"  
-onclick="toggleAuto()">
-🔄 Auto ON
-</button>
-
-<button  
-id="voiceBtn"  
-class="control-btn on"  
-type="button"  
-onclick="toggleVoice()">
-🔊 Voice ON
-</button>
-
- </div>  <button  
-id="callBtn"  
-class="call-btn"  
-type="button"  
-onclick="callNumber()"  
-disabled>
-CALL NUMBER
-</button>
-
- <div class="your-card-section">    <div class="player-card-title">  
-   YOUR 5×5 BINGO CARD  
-  </div>    <div  
-   id="playingCards"  
-   class="playing-cards">  
-  </div>   </div>  </div>  <!-- HISTORY -->  <div id="historyPage" class="page">   <div class="simple-panel">    <h2>History</h2>    <div id="historyList"></div>   </div>  </div>  <!-- SCORE -->  <div id="scorePage" class="page">   <div class="simple-panel">    <h2>Top Score</h2>    <div id="scoreList"></div>   </div>  </div>  <!-- WALLET -->  <div id="walletPage" class="page">   <div class="simple-panel">    <h2>Wallet</h2>    <div class="wallet-balance">  
-   <span>Main Balance</span>  
-   <strong id="walletMain">0.00</strong>  
-  </div>    <div class="wallet-balance">  
-   <span>Play Balance</span>  
-   <strong id="walletPlay">0.00</strong>  
-  </div>    <p style="color:var(--muted);margin-top:15px;text-align:center;line-height:1.6">  
-   Deposit and withdrawal are handled through the Telegram bot.  
-  </p>   </div>  </div>  <!-- PROFILE -->  <div id="profilePage" class="page">   <div class="simple-panel">    <h2>Profile</h2>    <div class="profile-row">  
-   <span>Telegram ID</span>  
-   <strong id="profileId">—</strong>  
-  </div>    <div class="profile-row">  
-   <span>Name</span>  
-   <strong id="profileName">Player</strong>  
-  </div>    <div class="profile-row">  
-   <span>Username</span>  
-   <strong id="profileUsername">—</strong>  
-  </div>   </div>  </div>  <!-- NAV --> </div>  <!-- RULES -->  <div  
- id="rulesModal"  
- class="modal">   <div class="modal-box">    <div class="modal-title">  
-   የቢንጎ ህግ  
-  </div>    <div class="rule">  
-   1. የመጫወቻ መጠን መርጠዉ PLAY ይጫኑ።  
-  </div>    <div class="rule">  
-   2. እስከ ሁለት ካርቴላ ቁጥሮች መምረጥ ይችላሉ።  
-  </div>    <div class="rule">  
-   3. የመረጡትን ካርቴላ ለመቀየር የተመረጠውን ቁጥር እንደገና ይንኩ።  
-  </div>    <div class="rule">  
-   4. የምርጫ ጊዜው ሲያልቅ ጨዋታው ይጀምራል።  
-  </div>    <div class="rule">  
-   5. ጨዋታው ከጀመረ በኋላ ማቋረጥ አይቻልም።  
-  </div>    <div class="rule">  
-   6. በአግድም፣ በቁም፣ በዲያጎናል ወይም በአራት ኮርነር ሲሟላ አሸናፊ ይሆናሉ።  
-  </div>  <button  
-class="close-btn"  
-type="button"  
-onclick="closeRules()">
-CLOSE
-</button>
-
- </div>  </div>  <!-- WINNER -->  <div  
- id="winnerOverlay"  
- class="winner-overlay">   <div class="winner-box">    <div class="winner-title">
-   <div
-    class="winner-title"
-    id="winnerTitle"
->
-    🎉 BINGO! 🎉
-</div>
-  </div>    <div  
-   class="winner-name"  
-   id="winnerName">  
-   Winner  
-  </div>    <div class="winner-info">  Card Number:
-<strong id="winnerCardNumber">--</strong>
-
-   <br>  Winner Count:
-<strong>1</strong>
-
-  </div>    <div class="winner-prize">  
-   Prize:  
-   <span id="winnerPrize">0.00</span>  
-   ETB  
-  </div>    <div  
-   id="winnerCardWrap"  
-   class="winner-card-wrap">  
-  </div>    <div class="reset-count">  
-   Next game in  
-   <strong id="winnerCountdown">5</strong>  
-   seconds  
-  </div>   </div>  </div>  <!-- TOAST -->  <div  
- id="toast"  
- class="toast">  
-</div>  <script>  
+</script>
+<script>  
 "use strict";  
  
 /* =====================================================  
@@ -5728,67 +5552,30 @@ setInterval(
    NAVIGATION  
 ===================================================== */  
   
-function navPage(  
- id,  
- button  
-){  
-  
- if(  
-  actualGameStarted &&  
-  id !== "page3"  
- ){  
-  
-  showToast(  
-   "ጨዋታው እየተካሄደ ነው።"  
-  );  
-  
-  haptic("error");  
-  
-  return;  
-  
- }  
-  
-  
- showPage(id);  
-  
-  
- document  
-  .querySelectorAll(".nav-btn")  
-  .forEach(  
-   item=>  
-    item.classList.remove("active")  
-  );  
-  
-  
- if(button){  
-  
-  button.classList.add("active");  
-  
- }  
-  
-  
- if(id === "historyPage"){  
-  
-  renderHistory();  
-  
- }  
-  
-  
- if(id === "scorePage"){  
-  
-  renderScore();  
-  
- }  
-  
-  
- if(id === "profilePage"){  
-  
-  renderProfile();  
-  
- }  
-}  
-  
-  
+async function navPage(id, button) {
+    if (actualGameStarted && id !== "page3") {
+        showToast("ጨዋታው እየተካሄደ ነው።");
+        haptic("error");
+        return;
+    }
+    if (!document.getElementById(id)) return;
+
+    showPage(id);
+    document.querySelectorAll(".nav-btn").forEach(item => {
+        item.classList.toggle("active", item.dataset.page === id);
+    });
+
+    if (id === "historyPage") {
+        await renderHistory();
+    } else if (id === "scorePage") {
+        await renderScore();
+    } else if (id === "walletPage" || id === "page1") {
+        await refreshBalance();
+    } else if (id === "profilePage") {
+        await loadProfile(false);
+        renderProfile();
+    }
+}
 /* =====================================================  
    RULES  
 ===================================================== */  
@@ -9751,144 +9538,66 @@ async function renderHistory(){
    SCORE  
 ===================================================== */  
   
-async function renderScore(){  
-  
- const list =  
-  document.getElementById(  
-   "scoreList"  
-  );  
-  
-  
- if(!list){  
-  
-  return;  
-  
- }  
-  
-  
- list.innerHTML =  
-  '<div class="empty">Loading...</div>';  
-  
-  
- try{  
-  
-  const data =  
-   await apiFetch(  
-    "/api/history"  
-   );  
-  
-  const games =
-   Array.isArray(data.history)
-    ? data.history
-    : [];
-  
-  
-  const wins =  
-   games.filter(  
-    game=>  
-     String(  
-      game.result || ""  
-     ).toUpperCase() === "WIN"  
-   );  
-  
-  
-  if(!wins.length){  
-  
-   list.innerHTML =  
-    '<div class="empty">No winning games yet.</div>';  
-  
-   return;  
-  
-  }  
-  
-  
-  list.innerHTML = "";  
-  
-  
-  wins  
-   .slice(0,10)  
-   .forEach(  
-    (game,index)=>{  
-  
-     const item =  
-      document.createElement(  
-       "div"  
-      );  
-  
-  
-     item.className =  
-      "score-item";  
-  
-  
-     const title =  
-      document.createElement(  
-       "strong"  
-      );  
-  
-  
-     title.textContent =  
-      `#${index+1} ${profileData.name || "Player"}`;  
-  
-  
-     item.appendChild(  
-      title  
-     );  
-  
-  
-     item.appendChild(  
-      document.createElement("br")  
-     );  
-  
-  
-     item.appendChild(  
-      document.createTextNode(  
-       `Prize: ${Number(game.prize || 0).toFixed(2)} ETB`  
-      )  
-     );  
-  
-  
-     list.appendChild(  
-      item  
-     );  
-  
-    }  
-   );  
-  
-  
- }catch(error){  
-  
-  console.error(  
-   "Score error:",  
-   error  
-  );  
-  
-  
-  list.innerHTML =  
-   '<div class="empty"></div>';  
-  
-  
-  list  
-   .querySelector(".empty")  
-   .textContent =  
-    error.message ||  
-    "Could not load score.";  
-  
- }  
-  
-}  
-  
-  
+async function renderScore() {
+    const list = document.getElementById("scoreList");
+    if (!list) return;
+
+    list.className = "empty-state";
+    list.textContent = "Loading scores...";
+    try {
+        const data = await apiFetch("/api/score");
+        const players = Array.isArray(data.players) ? data.players : [];
+        if (!players.length) {
+            list.textContent = "No completed wins yet.";
+            return;
+        }
+
+        list.className = "score-list";
+        list.replaceChildren();
+        players.slice(0, 10).forEach((player, index) => {
+            const row = document.createElement("div");
+            row.className = "score-item";
+            const rank = document.createElement("strong");
+            rank.className = "score-rank";
+            rank.textContent = `#${index + 1}`;
+            const details = document.createElement("div");
+            details.className = "score-details";
+            const name = document.createElement("strong");
+            name.textContent = player.first_name ||
+                (player.username ? `@${player.username}` : `Player ${player.id}`);
+            const wins = document.createElement("span");
+            wins.textContent = `${Number(player.wins || 0)} wins`;
+            const prize = document.createElement("strong");
+            prize.className = "value-green";
+            prize.textContent = `${money(player.total_prize)} ETB`;
+            details.append(name, wins);
+            row.append(rank, details, prize);
+            list.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Score error:", error);
+        list.className = "empty-state";
+        list.textContent = error.message || "Could not load scores.";
+    }
+}
 /* =====================================================  
    PROFILE  
 ===================================================== */  
   
-function renderProfile(){  
-  
- updateAllDisplays();  
-  
-}  
-  
-  
+function renderProfile() {
+    const user = profileData || {};
+    const values = {
+        profileName: user.name || "Player",
+        profileUsername: user.username ? `@${user.username}` : "—",
+        profileTelegram: user.id || "—",
+        profileId: user.id || "—"
+    };
+    for (const [id, value] of Object.entries(values)) {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    }
+    updateAllDisplays();
+}
 /* =====================================================  
    MODAL BACKGROUND  
 ===================================================== */  
