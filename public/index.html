@@ -3500,6 +3500,10 @@ let currentUser = null;
 let selectedStake = 10;  
   
 let selectedCards = [];  
+let cardSelectionSyncQueue = Promise.resolve();
+let lastSyncedSelectedCards = [];
+let hasServerSelectionRecord = false;
+let cardSelectionRevision = 0;
 let otherPlayersSelectedCards = [];
 let currentGameId = null;  
   
@@ -4133,36 +4137,46 @@ async function selectCard(number){
     }
 
 
-    try {
-
-        await joinSharedMatch();
-
-    } catch(error){
-
-        console.error(
-            "❌ JOIN MATCH FAILED:",
-            error
-        );
-
-        // Remove temporary frontend selection
-        selectedCards =
-            selectedCards.filter(
-                card =>
-                    Number(card) !==
-                    number
-            );
-
-        updateSelectedCards();
-
-        return;
-
-    }
+    await queueCardSelectionSync();
 
 
     haptic();
 
 }
-async function joinSharedMatch(){
+function queueCardSelectionSync(){
+    const requestedSelection = selectedCards.map(Number);
+    const revision = ++cardSelectionRevision;
+
+    cardSelectionSyncQueue = cardSelectionSyncQueue
+        .catch(() => {})
+        .then(async () => {
+            if (requestedSelection.length === 0 && !hasServerSelectionRecord) {
+                lastSyncedSelectedCards = [];
+                return;
+            }
+
+            const succeeded = await joinSharedMatch(requestedSelection);
+            if (succeeded) {
+                if (window.isSpectator === true) {
+                    hasServerSelectionRecord = false;
+                    lastSyncedSelectedCards = [];
+                } else {
+                    hasServerSelectionRecord = requestedSelection.length > 0;
+                    lastSyncedSelectedCards = requestedSelection.slice();
+                }
+            } else if (revision === cardSelectionRevision) {
+                selectedCards = lastSyncedSelectedCards.slice();
+                updateSelectedCards();
+                renderCardSelection();
+            }
+        });
+
+    return cardSelectionSyncQueue;
+}
+
+async function joinSharedMatch(cardSelection = selectedCards.slice()){
+
+    cardSelection = cardSelection.map(Number);
 
     console.log(
         "🔥 JOIN SHARED MATCH VERSION 2026-10-05-SERVER-CARDS"
@@ -4207,8 +4221,7 @@ async function joinSharedMatch(){
         // HOW MANY CARDS THE PLAYER WANTS
         // ============================================================
 
-        const requestedCards =
-            selectedCards.length;
+        const requestedCards = cardSelection.length;
 
 
         console.log(
@@ -4237,7 +4250,7 @@ async function joinSharedMatch(){
         requestedCards,
 
     cardNumbers:
-        selectedCards.map(Number)
+        cardSelection
 
 })
 
@@ -4392,8 +4405,13 @@ window.isSpectator = false;
         // REPLACE FRONTEND CARD WITH SERVER CARD
         // ============================================================
 
-        selectedCards =
-            serverCardNumbers.slice();
+        const selectionStillMatchesRequest =
+            selectedCards.length === cardSelection.length &&
+            selectedCards.every((card, index) => Number(card) === cardSelection[index]);
+
+        if (selectionStillMatchesRequest) {
+            selectedCards = serverCardNumbers.slice();
+        }
 
 
         console.log(
@@ -4493,6 +4511,8 @@ console.log(
             currentGameId
         );
 
+        return true;
+
 
     }catch(error){
 
@@ -4509,6 +4529,8 @@ console.log(
 
 
         haptic("error");
+
+        return false;
 
     }
 
@@ -4544,7 +4566,7 @@ console.log(
 
     try{
 
-        await joinSharedMatch();
+        await queueCardSelectionSync();
 
         haptic("success");
 
@@ -5941,6 +5963,9 @@ function resetSelection(){
  stopSelectionTimer();  
   
  selectedCards = [];  
+ cardSelectionRevision++;
+ lastSyncedSelectedCards = [];
+ hasServerSelectionRecord = false;
  playerReady = false;  
  actualGameStarted = false;  
  calledNumbers = [];  
