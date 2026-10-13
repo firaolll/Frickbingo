@@ -3591,6 +3591,7 @@ async function apiFetch(endpoint, options = {}) {
         SERVER_URL + endpoint,
         {
             ...options,
+            cache: options.cache || "no-store",
             headers
         }
     );
@@ -5547,7 +5548,7 @@ setInterval(
   }  
   
  },  
- 10000  
+ 5000  
 );  
 
 
