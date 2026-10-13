@@ -496,9 +496,13 @@ console.log(
         const playerCount = new Set(
             activePlayers.map(player => String(player.user_id))
         ).size;
+        const currentPlayer = activePlayers.find(
+            player => String(player.user_id) === String(req.user.id)
+        );
 
         return res.json({
             success: true,
+            isPlayer: Boolean(currentPlayer),
             match: {
                 id: Number(match.id),
                 stake: Number(match.stake),
