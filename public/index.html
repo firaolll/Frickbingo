@@ -7111,6 +7111,7 @@ let page2SyncInterval = null;
 let page2SyncBusy = false;
 let page2SyncGeneration = 0;
 let page2AutoReadyMatchId = null;
+let page2GameTransitionMatchId = null;
 
 async function refreshPage2State() {
     console.log("🔄 REFRESH PAGE 2 CALLED");
@@ -7193,9 +7194,46 @@ async function refreshPage2State() {
         fakePlayers = players;
         updatePlayerCountDisplay();
 
+        // Recover this player's purchased cards if local page state was lost.
+        if (
+            data.isPlayer === true &&
+            selectedCards.length === 0 &&
+            Array.isArray(data.myCardNumbers) &&
+            data.myCardNumbers.length > 0
+        ) {
+            selectedCards = data.myCardNumbers.map(Number);
+            updateSelectedCards();
+            renderCardSelection();
+        }
+
+        const matchId = Number(match.id);
+        const matchStatus = String(match.status || "").toUpperCase();
+
+        // A player who is still on Page 2 must follow the server transition
+        // immediately, even if the local countdown/auto-ready event was missed.
+        if (
+            matchStatus === "PLAYING" &&
+            data.isPlayer === true &&
+            selectedCards.length > 0 &&
+            window.isSpectator !== true &&
+            Number.isFinite(matchId) &&
+            page2GameTransitionMatchId !== matchId
+        ) {
+            page2GameTransitionMatchId = matchId;
+            currentGameId = matchId;
+
+            if (playerReady) {
+                void waitForSharedGameStart(matchId);
+            } else {
+                page2AutoReadyMatchId = matchId;
+                void finishSelectionPeriod();
+            }
+
+            return;
+        }
+
         // Automatically submit selected cards when the shared countdown ends.
         // This replaces the removed READY button.
-        const matchId = Number(match.id);
         if (
             countdown <= 0 &&
             selectedCards.length > 0 &&
