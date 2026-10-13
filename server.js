@@ -7238,7 +7238,7 @@ return db.prepare(`
 if (bot) {
 
 bot.onText(  
-    /^\\/start(?:@\\w+)?(?:\\s+([A-Za-z0-9_-]+))?$|^⭐ Start$/, 
+    /^\/start(?:@\w+)?(?:\s+([A-Za-z0-9_-]+))?$|^⭐ Start$/,
     async (msg, match) => {  
 
         const chatId =  
