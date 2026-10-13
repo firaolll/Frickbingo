@@ -3675,6 +3675,9 @@ async function refreshBalance() {
             // Keep the original names too
             currentUser.balance = currentUser.mainBalance;
             currentUser.play_balance = currentUser.playBalance;
+            mainBalance = currentUser.mainBalance;
+            playBalance = currentUser.playBalance;
+            window.currentUser = currentUser;
 
             updateAllDisplays();
 
@@ -3717,31 +3720,14 @@ async function loadUser() {
    BALANCE HELPERS  
 ================================================== */  
   
-function getMainBalance(){  
-  
-    if(!currentUser) return 0;  
-  
-    return Number(  
-        currentUser.mainBalance ??  
-        currentUser.main_balance ??  
-        currentUser.balance ??  
-        0  
-    );  
-  
-}  
-  
-function getPlayBalance(){  
-  
-    if(!currentUser) return 0;  
-  
-    return Number(  
-        currentUser.playBalance ??  
-        currentUser.play_balance ??  
-        0  
-    );  
-  
-}  
-  
+function getMainBalance(){
+    return Number(mainBalance || 0);
+}
+
+function getPlayBalance(){
+    return Number(playBalance || 0);
+}
+
 function money(value){  
   
     return Number(value || 0)  
@@ -5506,6 +5492,13 @@ async function loadProfile(showError = true) {
             playBalance = 0;
         }
 
+        currentUser = user;
+        currentUser.mainBalance = mainBalance;
+        currentUser.balance = mainBalance;
+        currentUser.playBalance = playBalance;
+        currentUser.play_balance = playBalance;
+        window.currentUser = currentUser;
+
         updateAllDisplays();
 
         renderProfile();
@@ -6000,23 +5993,9 @@ async function readyForGame(){
     }
 
 
-    const cost =
-        selectedStake *
-        selectedCards.length;
-
-
-    if(mainBalance < cost){
-
-        showToast(
-            `You need ${cost.toFixed(2)} ETB.`
-        );
-
-        haptic("error");
-
-        return;
-
-    }
-
+    // Refresh displayed balances before submitting. The server decides
+    // whether the already selected cards have been paid for.
+    await refreshBalance();
 
     const button =
         document.getElementById(
