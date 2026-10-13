@@ -503,6 +503,7 @@ console.log(
         return res.json({
             success: true,
             isPlayer: Boolean(currentPlayer),
+            myCardNumbers: currentPlayer?.cardNumbers || [],
             match: {
                 id: Number(match.id),
                 stake: Number(match.stake),
