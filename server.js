@@ -2770,7 +2770,7 @@ app.get("/api/match/:matchId", auth, (req, res) => {
 
         // Derash is 85% of the stakes on cards actually selected.
         const selectedStakeTotal = getSelectedStakeTotal(matchId);
-        const livePrizePool = num(selectedStakeTotal * WIN_RATE);
+        const livePrizePool = Math.floor(selectedStakeTotal * WIN_RATE);
 
        const players =
     db.prepare(`
@@ -3063,7 +3063,7 @@ if (String(match.status || "").toUpperCase() === "FINISHED") {
 
 if (String(match.status || "").toUpperCase() === "CLAIM_WINDOW" && winnerCards.length) {
     const currentWinnerUsers = new Set(winnerCards.map(winner => String(winner.userId)));
-    const estimatedShare = num(
+    const estimatedShare = Math.floor(
         livePrizePool / currentWinnerUsers.size
     );
     winnerCards.forEach(winner => {
@@ -4550,7 +4550,7 @@ if (match.status === "PLAYING") {
 
         db.prepare(`  
           UPDATE matches SET prize_pool = ? WHERE id = ?  
-        `).run(num(totalCost * WIN_RATE), matchId);
+        `).run(Math.floor(totalCost * WIN_RATE), matchId);
       }  
 
       // Recalculate the prize pool after every join, including the first.
@@ -4564,7 +4564,7 @@ if (match.status === "PLAYING") {
           AND TRIM(card_numbers) != '[]'
       `).get(matchId).total;
       db.prepare(`UPDATE matches SET prize_pool = ? WHERE id = ?`)
-        .run(num(eligibleTotal * WIN_RATE), matchId);
+        .run(Math.floor(eligibleTotal * WIN_RATE), matchId);
 
       return Number(gameResult.lastInsertRowid);  
     });  
@@ -4848,7 +4848,7 @@ console.log(
             // 85% PRIZE POOL
             // ==================================================
 
-            const totalPrize = num(totalCost * WIN_RATE);
+            const totalPrize = Math.floor(totalCost * WIN_RATE);
 
 
             // ==================================================
@@ -4863,10 +4863,7 @@ console.log(
             // WHOLE ETB WINNER SHARE
             // ==================================================
 
-            const totalPrizeCents = Math.round(totalPrize * 100);
-            const basePrizeCents = Math.floor(totalPrizeCents / winnerCount);
-            const extraCents = totalPrizeCents - basePrizeCents * winnerCount;
-            const winnerPrize = basePrizeCents / 100;
+            const winnerPrize = Math.floor(totalPrize / winnerCount);
 
 
             console.log(
@@ -4885,13 +4882,11 @@ console.log(
             // PAY ALL WINNERS
             // ==================================================
 
-            for (const [winnerIndex, playerWinningGames] of winningPlayers.entries()) {
+            for (const playerWinningGames of winningPlayers) {
                 const winner = playerWinningGames[0];
 
-                // Split the exact 85% pot into cents and distribute any
-                // remaining cents so total payouts equal the displayed pot.
-                const individualPrize =
-                    (basePrizeCents + (winnerIndex < extraCents ? 1 : 0)) / 100;
+                // Pay each winner a whole-number share, rounding down.
+                const individualPrize = winnerPrize;
 
                 const userId =
                     Number(
@@ -5964,7 +5959,7 @@ app.post("/api/game/finish", auth, (req, res) => {
             game.status === "WIN"
         ) {
 
-            const calculatedPrizePool = num(
+            const calculatedPrizePool = Math.floor(
                 getSelectedStakeTotal(matchId) * WIN_RATE
             );
 
@@ -5977,7 +5972,7 @@ app.post("/api/game/finish", auth, (req, res) => {
             `).get(matchId).count;
             const estimatedPrize = Number(match.paid) === 1
                 ? num(game.prize)
-                : num(
+                : Math.floor(
                     calculatedPrizePool /
                     Math.max(1, claimedWinnerCount)
                 );
@@ -6307,9 +6302,9 @@ const payout =
               AND result = 'WIN'
               AND status IN ('WIN', 'PAID')
         `).get(matchId).count;
-        const calculatedPrizePool = num(
-            getSelectedStakeTotal(matchId) * WIN_RATE
-        );
+        const calculatedPrizePool = Math.floor(
+                getSelectedStakeTotal(matchId) * WIN_RATE
+            );
         const displayedPrize = Number(updatedMatch.paid) === 1
             ? num(updatedGame.prize)
             : num(
