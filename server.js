@@ -4848,7 +4848,7 @@ console.log(
 
 
             // ==================================================
-            // 85% PRIZE POOL
+            // 85% PRIZE POOL — FRACTIONAL ETB IS DISCARDED
             // ==================================================
 
             const totalPrize = Math.floor(totalCost * WIN_RATE);
@@ -4866,6 +4866,7 @@ console.log(
             // WHOLE ETB WINNER SHARE
             // ==================================================
 
+            // Give every winner the same whole-ETB share; discard any remainder.
             const winnerPrize = Math.floor(totalPrize / winnerCount);
 
 
