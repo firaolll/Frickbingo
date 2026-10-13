@@ -18,6 +18,7 @@ String(process.env.DATABASE_FILE || "frickbingo.db").trim();
 
 const MIN_DEPOSIT = 10;
 const MIN_WITHDRAW = 50;
+const NEW_PLAYER_PLAY_BONUS = 10;
 
 const GAME_STAKES = [10, 20];
 const MAX_CARDS = 2;
@@ -1128,19 +1129,23 @@ let user =
         telegramId  
     );  
 
-if (!user) {  
+if (!user) {
 
-    db.prepare(`  
-        INSERT INTO users (  
-            telegram_id,  
-            username,  
-            first_name  
-        )  
-        VALUES (?, ?, ?)  
-    `).run(  
-        telegramId,  
-        telegramUser.username || "",  
-        telegramUser.first_name || ""  
+    // Award the signup bonus only to the request that creates the account.
+    // INSERT OR IGNORE prevents duplicate bonuses on simultaneous first logins.
+    db.prepare(`
+        INSERT OR IGNORE INTO users (
+            telegram_id,
+            username,
+            first_name,
+            play_balance
+        )
+        VALUES (?, ?, ?, ?)
+    `).run(
+        telegramId,
+        telegramUser.username || "",
+        telegramUser.first_name || "",
+        NEW_PLAYER_PLAY_BONUS
     );  
 
     user =  
