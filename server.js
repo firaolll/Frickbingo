@@ -7214,6 +7214,29 @@ async function createReferralLink(telegramId) {
 }
 
 // ======================================================
+function buildPlayerReplyKeyboard() {
+    const keyboard = [
+        [{ text: "⭐ Start" }, { text: "📝 Register" }],
+        [{ text: "💰 Balance" }],
+        [{ text: "➕ Deposit" }, { text: "💸 Withdraw" }],
+        [{ text: "📜 Game History" }],
+        [{ text: "👥 Invite Friends" }]
+    ];
+
+    if (WEB_APP_URL) {
+        keyboard.splice(1, 0, [
+            { text: "🎮 Play", web_app: { url: WEB_APP_URL } }
+        ]);
+    }
+
+    return {
+        keyboard,
+        resize_keyboard: true,
+        is_persistent: true,
+        one_time_keyboard: false
+    };
+}
+
 // USER TELEGRAM ID -> DATABASE USER
 // ======================================================
 
@@ -7255,78 +7278,6 @@ bot.onText(
 
             const user = getOrCreateUser(telegramUser, inviterTelegramId);  
 
-            let keyboard = [];
-
-if (WEB_APP_URL) {
-
-    console.log(
-        "WEB_APP_URL USED BY BOT:",
-        WEB_APP_URL
-    );
-
-    keyboard = [
-
-        [
-            {
-                text: "⭐ Start",
-                callback_data: "start_menu"
-            },
-            {
-                text: "📝 Register",
-                callback_data: "register"
-            }
-        ],
-
-        [
-            {
-                text: "🎮 Play",
-                 web_app: {  
-                    url: WEB_APP_URL  
-                    }   
-            },
-            {
-                text: "💰 Balance",
-                callback_data: "balance"
-            }
-        ],
-
-        [
-            {
-                text: "➕ Deposit",
-                callback_data: "deposit"
-            },
-            {
-                text: "💸 Withdraw",
-                callback_data: "withdraw"
-            }
-        ],
-
-        [
-            {
-                text: "📜 Game History",
-                callback_data: "history"
-            }
-        ]
-
-    ];
-}
-
-const referralLink = await createReferralLink(telegramUser.id);
-if (referralLink) {
-    const shareUrl =
-        "https://t.me/share/url?url=" +
-        encodeURIComponent(referralLink) +
-        "&text=" +
-        encodeURIComponent("Join me on Frick Bingo!");
-
-    keyboard.push([
-        {
-            text: "👥 Invite Friends — Earn 5 ETB",
-            url: shareUrl
-        }
-    ]);
-}
-
 await sendBotMessage(  
                 chatId,  
 
@@ -7347,12 +7298,7 @@ ${num(user.play_balance)} ETB
 
 Choose an option below.`,
 
-{  
-                    reply_markup: {   
-                         inline_keyboard: keyboard
-
-                    }  
-                }  
+{ reply_markup: buildPlayerReplyKeyboard() }  
             );  
 
         } catch (error) {  
@@ -7537,7 +7483,7 @@ bot.onText(
 // ======================================================
 
 bot.onText(  
-    /^\/games$/,  
+    /^(?:\/games|📜 Game History)$/,  
     async msg => {  
 
         try {  
@@ -7640,6 +7586,29 @@ bot.onText(
 );
 
 // ======================================================
+bot.onText(
+    /^(?:\/invite|👥 Invite Friends)$/,
+    async msg => {
+        const referralLink = await createReferralLink(msg.from.id);
+        if (!referralLink) {
+            await sendBotMessage(msg.chat.id, "❌ Could not create your invite link right now.");
+            return;
+        }
+
+        const shareUrl =
+            "https://t.me/share/url?url=" +
+            encodeURIComponent(referralLink) +
+            "&text=" +
+            encodeURIComponent("Join me on Frick Bingo!");
+
+        await sendBotMessage(
+            msg.chat.id,
+            `👥 Invite friends to Frick Bingo!\n\nWhen a friend registers using your link, you earn 5 ETB in Play Wallet.\n\nYour link:\n${referralLink}`,
+            { reply_markup: { inline_keyboard: [[{ text: "Share invite", url: shareUrl }]] } }
+        );
+    }
+);
+
 // /HELP
 // ======================================================
 
@@ -8111,38 +8080,6 @@ async function handlePlayerMenuCallback(query, data, chatId) {
 
         if (data === "start_menu") {
             user = user || getOrCreateUser(telegramUser);
-            const keyboard = [];
-
-            if (WEB_APP_URL) {
-                keyboard.push(
-                    [
-                        { text: "⭐ Start", callback_data: "start_menu" },
-                        { text: "📝 Register", callback_data: "register" }
-                    ],
-                    [
-                        { text: "🎮 Play", web_app: { url: WEB_APP_URL } },
-                        { text: "💰 Balance", callback_data: "balance" }
-                    ],
-                    [
-                        { text: "➕ Deposit", callback_data: "deposit" },
-                        { text: "💸 Withdraw", callback_data: "withdraw" }
-                    ],
-                    [{ text: "📜 Game History", callback_data: "history" }]
-                );
-            }
-
-            const referralLink = await createReferralLink(telegramUser.id);
-            if (referralLink) {
-                const shareUrl =
-                    "https://t.me/share/url?url=" +
-                    encodeURIComponent(referralLink) +
-                    "&text=" +
-                    encodeURIComponent("Join me on Frick Bingo!");
-                keyboard.push([
-                    { text: "👥 Invite Friends — Earn 5 ETB", url: shareUrl }
-                ]);
-            }
-
             await sendBotMessage(
                 chatId,
                 `🎉 Welcome to Frick Bingo!
@@ -8151,7 +8088,7 @@ async function handlePlayerMenuCallback(query, data, chatId) {
 🎮 Play Wallet: ${num(user.play_balance)} ETB
 
 Choose an option below.`,
-                { reply_markup: { inline_keyboard: keyboard } }
+                { reply_markup: buildPlayerReplyKeyboard() }
             );
         } else if (data === "register") {
             user = user || getOrCreateUser(telegramUser);
