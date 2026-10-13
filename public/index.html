@@ -7916,6 +7916,40 @@ function getAmharicNumber(number){
   : tensWords[tens];
 }
 
+function getAmharicNumberPronunciation(number){
+
+ const units = [
+  "",
+  "and",
+  "hulet",
+  "sost",
+  "arat",
+  "ammist",
+  "sidist",
+  "sebat",
+  "simint",
+  "zetegn"
+ ];
+
+ if(number <= 10) return number === 10 ? "asər" : units[number];
+ if(number < 20) return "asra " + units[number - 10];
+
+ const tens = Math.floor(number / 10) * 10;
+ const remainder = number % 10;
+ const tensWords = {
+  20: "haya",
+  30: "selasa",
+  40: "arba",
+  50: "hamisa",
+  60: "silsa",
+  70: "seba"
+ };
+
+ return remainder
+  ? tensWords[tens] + " " + units[remainder]
+  : tensWords[tens];
+}
+
 
 /* =====================================================
    VOICE
@@ -7931,359 +7965,41 @@ function speakNumber(letter, number){
  }
 
  try{
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
+
+  const voices = synth.getVoices();
+  const amharicVoice = voices.find(voice =>
+   /^am([_-]|$)/i.test(voice.lang)
+  );
 
   const letterSpeech = new SpeechSynthesisUtterance(letter);
   letterSpeech.lang = "en-US";
-  letterSpeech.rate = .85;
-  letterSpeech.pitch = 1;
-  letterSpeech.volume = 1;
+  letterSpeech.rate = .9;
 
   const numberSpeech = new SpeechSynthesisUtterance(
-   getAmharicNumber(number)
+   amharicVoice
+    ? getAmharicNumber(number)
+    : getAmharicNumberPronunciation(number)
   );
-  numberSpeech.lang = "am-ET";
+  numberSpeech.lang = amharicVoice ? amharicVoice.lang : "en-US";
   numberSpeech.rate = .85;
-  numberSpeech.pitch = 1;
-  numberSpeech.volume = 1;
 
-  window.speechSynthesis.speak(letterSpeech);
-  window.speechSynthesis.speak(numberSpeech);
+  if(amharicVoice){
+   numberSpeech.voice = amharicVoice;
+  }
+
+  letterSpeech.onend = () => {
+   if(voiceMode){
+    synth.speak(numberSpeech);
+   }
+  };
+
+  synth.speak(letterSpeech);
  }catch(error){
   console.warn("Voice error:", error);
  }
 }
-
-/* =====================================================  
-   AUTO  
-===================================================== */  
-  
-function toggleAuto(){  
-  
- autoMode =  
-  !autoMode;  
-  
-  
- const button =  
-  document.getElementById(  
-   "autoBtn"  
-  );  
-  
-  
- if(button){  
-  
-  button.textContent =  
-   autoMode  
-    ? "🔄 Auto ON"  
-    : "🔄 Auto OFF";  
-  
-  
-  button.classList.toggle(  
-   "on",  
-   autoMode  
-  );  
-  
- }  
-  
-  
- if(autoMode){  
-  
-  startAutoCalling();  
-  
- }else{  
-  
-  stopAutoCalling();  
-  
- }  
-  
-  
- haptic();  
-  
-}  
-  
-  
-/* =====================================================  
-   AUTO START  
-===================================================== */  
-function startAutoCalling(){
-
-    stopAutoCalling();
-
-    console.log(
-        "🚀 START SERVER-CONTROLLED AUTO CALLING"
-    );
-
-    console.log(
-        "autoMode:",
-        autoMode
-    );
-
-    console.log(
-        "actualGameStarted:",
-        actualGameStarted
-    );
-
-    console.log(
-        "winnerShown:",
-        winnerShown
-    );
-
-    console.log(
-        "currentGameId:",
-        currentGameId
-    );
-
-
-    if(
-        !actualGameStarted ||
-        winnerShown ||
-        !currentGameId
-    ){
-
-        console.log(
-            "⛔ AUTO CALLING NOT STARTED"
-        );
-
-        return;
-
-    }
-
-
-    autoMode = true;
-
-
-    autoInterval =
-        setInterval(
-            async () => {
-
-                if(
-                    !actualGameStarted ||
-                    winnerShown ||
-                    !currentGameId
-                ){
-
-                    return;
-
-                }
-
-
-                console.log(
-                    "⏱️ SERVER CALL TICK"
-                );
-
-
-                await callNumber();
-
-            },
-            3000
-        );
-
-
-    console.log(
-        "✅ SERVER-CONTROLLED AUTO CALLING STARTED"
-    );
-
-}
-/* =====================================================  
-   AUTO STOP  
-===================================================== */  
-  
-function stopAutoCalling(){  
-  
- if(autoInterval){  
-  
-  clearInterval(  
-   autoInterval  
-  );  
-  
-  autoInterval = null;  
-  
- }  
-  
-}  
-  
-  
-/* =====================================================  
-   VOICE TOGGLE  
-===================================================== */  
-  
-function toggleVoice(){
-
- voiceMode = !voiceMode;
-
- const voiceSwitch = document.getElementById("voiceSwitch");
- if(voiceSwitch){
-  voiceSwitch.classList.toggle("on", voiceMode);
-  voiceSwitch.setAttribute("aria-checked", String(voiceMode));
- }
-
- if(!voiceMode && "speechSynthesis" in window){
-  window.speechSynthesis.cancel();
- }
-
- haptic();
-}
-
-  function renderBigBoard(){
-
-    const board =
-        document.getElementById(
-            "bigBingoBoard"
-        );
-
-    if(!board){
-        return;
-    }
-
-    board.innerHTML = "";
-
-    const last =
-        calledNumbers[
-            calledNumbers.length - 1
-        ];
-
-    for(
-        let number = 1;
-        number <= 75;
-        number++
-    ){
-
-        const cell =
-            document.createElement("div");
-
-        cell.className =
-            "board-number";
-
-        cell.textContent =
-            number;
-
-        /* Mark every called number */
-        if(
-            calledNumbers.includes(
-                Number(number)
-            )
-        ){
-
-            cell.classList.add(
-                "called"
-            );
-
-        }
-
-        /* Highlight the newest number */
-        if(
-            last === number
-        ){
-
-            cell.classList.add(
-                "last-called"
-            );
-
-        }
-
-        board.appendChild(
-            cell
-        );
-
-    }
-
-}
-  
-  
-/* =====================================================  
-   PLAYING PAGE  
-===================================================== */  
-  
-function renderPlayingPage(){  
-  
- const container =  
-  document.getElementById(  
-   "playingCards"  
-  );  
-  
-  
- if(!container){  
-  
-  return;  
-  
- }  
-  
-  
- container.innerHTML = "";  
-  
-  
- selectedCards.forEach(  
-  number=>{  
-  
-   container.appendChild(  
-    createCardElement(number)  
-   );  
-  
-  }  
- );  
-  
-  
- renderBigBoard();  
-  
- markPlayerCards();  
-  
- updateAllDisplays();  
-  
-}  
- 
-  function markPlayerCards(){
-
-    const cells =
-        document.querySelectorAll(
-            "#playingCards .bingo-cell"
-        );
-
-    cells.forEach(
-        cell => {
-
-            const value =
-                cell.dataset.value ??
-                cell.dataset.number ??
-                cell.textContent.trim();
-
-            if(
-                value === "FREE"
-            ){
-
-                cell.classList.add(
-                    "marked"
-                );
-
-                return;
-
-            }
-
-            const number =
-                Number(value);
-
-            if(
-                calledNumbers.includes(
-                    number
-                )
-            ){
-
-                cell.classList.add(
-                    "marked"
-                );
-
-            }else{
-
-                cell.classList.remove(
-                    "marked"
-                );
-
-            }
-
-        }
-    );
-
-}
-
 
 
 /* =====================================================  
