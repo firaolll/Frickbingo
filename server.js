@@ -18,6 +18,7 @@ String(process.env.DATABASE_FILE || "frickbingo.db").trim();
 
 const MIN_DEPOSIT = 10;
 const MIN_WITHDRAW = 50;
+const REFERRAL_PLAY_BONUS = 5;
 const NEW_PLAYER_PLAY_BONUS = 10;
 
 const GAME_STAKES = [10, 20];
@@ -67,6 +68,17 @@ first_name TEXT DEFAULT '',
 balance REAL NOT NULL DEFAULT 0,
 play_balance REAL NOT NULL DEFAULT 0,
 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS referral_rewards (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+inviter_user_id INTEGER NOT NULL,
+invited_user_id INTEGER NOT NULL UNIQUE,
+bonus REAL NOT NULL DEFAULT 5,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY(inviter_user_id) REFERENCES users(id),
+FOREIGN KEY(invited_user_id) REFERENCES users(id),
+CHECK(inviter_user_id != invited_user_id)
 );
 
 CREATE TABLE IF NOT EXISTS deposits (
@@ -1111,82 +1123,79 @@ return verifyTelegramInitData(
 // FIND / CREATE USER
 // ======================================================
 
-function getOrCreateUser(
-telegramUser
-) {
+function getOrCreateUser(telegramUser, referralTelegramId = null) {
 
-const telegramId =  
-    String(  
-        telegramUser.id  
-    );  
+    const telegramId = String(telegramUser.id);
+    let user = db.prepare(`
+        SELECT * FROM users WHERE telegram_id = ?
+    `).get(telegramId);
 
-let user =  
-    db.prepare(`  
-        SELECT *  
-        FROM users  
-        WHERE telegram_id = ?  
-    `).get(  
-        telegramId  
-    );  
+    if (!user) {
+        const referralId = String(referralTelegramId || "").trim();
 
-if (!user) {
+        user = db.transaction(() => {
+            // Grant the signup bonus only when this request creates the account.
+            const inserted = db.prepare(`
+                INSERT OR IGNORE INTO users (
+                    telegram_id, username, first_name, play_balance
+                )
+                VALUES (?, ?, ?, ?)
+            `).run(
+                telegramId,
+                telegramUser.username || "",
+                telegramUser.first_name || "",
+                NEW_PLAYER_PLAY_BONUS
+            );
 
-    // Award the signup bonus only to the request that creates the account.
-    // INSERT OR IGNORE prevents duplicate bonuses on simultaneous first logins.
-    db.prepare(`
-        INSERT OR IGNORE INTO users (
-            telegram_id,
-            username,
-            first_name,
-            play_balance
-        )
-        VALUES (?, ?, ?, ?)
-    `).run(
-        telegramId,
-        telegramUser.username || "",
-        telegramUser.first_name || "",
-        NEW_PLAYER_PLAY_BONUS
-    );  
+            const newUser = db.prepare(`
+                SELECT * FROM users WHERE telegram_id = ?
+            `).get(telegramId);
 
-    user =  
-        db.prepare(`  
-            SELECT *  
-            FROM users  
-            WHERE telegram_id = ?  
-        `).get(  
-            telegramId  
-        );  
+            // Pay the inviter only for a genuinely new account and only once.
+            if (inserted.changes === 1 && referralId && referralId !== telegramId) {
+                const inviter = db.prepare(`
+                    SELECT id FROM users WHERE telegram_id = ?
+                `).get(referralId);
 
-} else {  
+                if (inviter && inviter.id !== newUser.id) {
+                    const reward = db.prepare(`
+                        INSERT OR IGNORE INTO referral_rewards (
+                            inviter_user_id, invited_user_id, bonus
+                        )
+                        VALUES (?, ?, ?)
+                    `).run(inviter.id, newUser.id, REFERRAL_PLAY_BONUS);
 
-    db.prepare(`  
-        UPDATE users  
+                    if (reward.changes === 1) {
+                        db.prepare(`
+                            UPDATE users
+                            SET play_balance = COALESCE(play_balance, 0) + ?
+                            WHERE id = ?
+                        `).run(REFERRAL_PLAY_BONUS, inviter.id);
+                    }
+                }
+            }
 
-        SET username = ?,  
-            first_name = ?  
+            return newUser;
+        })();
+    } else {
+        db.prepare(`
+            UPDATE users
+            SET username = ?, first_name = ?
+            WHERE id = ?
+        `).run(
+            telegramUser.username || "",
+            telegramUser.first_name || "",
+            user.id
+        );
 
-        WHERE id = ?  
-    `).run(  
-        telegramUser.username || "",  
-        telegramUser.first_name || "",  
-        user.id  
-    );  
+        user = db.prepare(`
+            SELECT * FROM users WHERE id = ?
+        `).get(user.id);
+    }
 
-    user =  
-        db.prepare(`  
-            SELECT *  
-            FROM users  
-            WHERE id = ?  
-        `).get(  
-            user.id  
-        );  
-}  
-
-return user;
-
+    return user;
 }
 
-// ======================================================
 // AUTH MIDDLEWARE
 // ======================================================
 
@@ -7184,6 +7193,26 @@ try {
 
 }
 
+let cachedTelegramBotUsername = "";
+
+async function createReferralLink(telegramId) {
+    if (!bot) return null;
+
+    try {
+        if (!cachedTelegramBotUsername) {
+            const botInfo = await bot.getMe();
+            cachedTelegramBotUsername = String(botInfo.username || "").replace(/^@/, "");
+        }
+
+        if (!cachedTelegramBotUsername) return null;
+
+        return `https://t.me/${cachedTelegramBotUsername}?start=ref_${encodeURIComponent(String(telegramId))}`;
+    } catch (error) {
+        console.error("Could not create referral link:", error.message);
+        return null;
+    }
+}
+
 // ======================================================
 // USER TELEGRAM ID -> DATABASE USER
 // ======================================================
@@ -7209,8 +7238,8 @@ return db.prepare(`
 if (bot) {
 
 bot.onText(  
-    /^(\/start|⭐ Start)$/, 
-    async msg => {  
+    /^\\/start(?:@\\w+)?(?:\\s+([A-Za-z0-9_-]+))?$|^⭐ Start$/, 
+    async (msg, match) => {  
 
         const chatId =  
             msg.chat.id;  
@@ -7220,10 +7249,11 @@ bot.onText(
 
         try {  
 
-            const user =  
-                getOrCreateUser(  
-                    telegramUser  
-                );  
+            const startPayload = String(match?.[1] || "");
+            const referralMatch = /^ref_(\d+)$/.exec(startPayload);
+            const inviterTelegramId = referralMatch ? referralMatch[1] : null;
+
+            const user = getOrCreateUser(telegramUser, inviterTelegramId);  
 
             let keyboard = [];
 
@@ -7279,6 +7309,22 @@ if (WEB_APP_URL) {
         ]
 
     ];
+}
+
+const referralLink = await createReferralLink(telegramUser.id);
+if (referralLink) {
+    const shareUrl =
+        "https://t.me/share/url?url=" +
+        encodeURIComponent(referralLink) +
+        "&text=" +
+        encodeURIComponent("Join me on Frick Bingo!");
+
+    keyboard.push([
+        {
+            text: "👥 Invite Friends — Earn 5 ETB",
+            url: shareUrl
+        }
+    ]);
 }
 
 await sendBotMessage(  
