@@ -8089,6 +8089,145 @@ Minimum withdrawal: ${MIN_WITHDRAW} ETB
 });
 
 // ======================================================
+// ======================================================
+// PLAYER BOT MENU CALLBACKS
+// ======================================================
+
+async function handlePlayerMenuCallback(query, data, chatId) {
+    const playerMenuActions = new Set([
+        "start_menu",
+        "register",
+        "balance",
+        "deposit",
+        "withdraw",
+        "history"
+    ]);
+
+    if (!playerMenuActions.has(data)) return false;
+
+    try {
+        const telegramUser = query.from;
+        let user = getUserByTelegramId(telegramUser.id);
+
+        if (data === "start_menu") {
+            user = user || getOrCreateUser(telegramUser);
+            const keyboard = [];
+
+            if (WEB_APP_URL) {
+                keyboard.push(
+                    [
+                        { text: "⭐ Start", callback_data: "start_menu" },
+                        { text: "📝 Register", callback_data: "register" }
+                    ],
+                    [
+                        { text: "🎮 Play", web_app: { url: WEB_APP_URL } },
+                        { text: "💰 Balance", callback_data: "balance" }
+                    ],
+                    [
+                        { text: "➕ Deposit", callback_data: "deposit" },
+                        { text: "💸 Withdraw", callback_data: "withdraw" }
+                    ],
+                    [{ text: "📜 Game History", callback_data: "history" }]
+                );
+            }
+
+            const referralLink = await createReferralLink(telegramUser.id);
+            if (referralLink) {
+                const shareUrl =
+                    "https://t.me/share/url?url=" +
+                    encodeURIComponent(referralLink) +
+                    "&text=" +
+                    encodeURIComponent("Join me on Frick Bingo!");
+                keyboard.push([
+                    { text: "👥 Invite Friends — Earn 5 ETB", url: shareUrl }
+                ]);
+            }
+
+            await sendBotMessage(
+                chatId,
+                `🎉 Welcome to Frick Bingo!
+
+💰 Main Wallet: ${num(user.balance)} ETB
+🎮 Play Wallet: ${num(user.play_balance)} ETB
+
+Choose an option below.`,
+                { reply_markup: { inline_keyboard: keyboard } }
+            );
+        } else if (data === "register") {
+            user = user || getOrCreateUser(telegramUser);
+            await sendBotMessage(
+                chatId,
+                `✅ Registration successful!
+
+Player: ${user.first_name || "Player"}
+Telegram ID: ${user.telegram_id}
+Main Wallet: ${num(user.balance)} ETB
+Play Wallet: ${num(user.play_balance)} ETB`
+            );
+        } else if (data === "balance") {
+            if (!user) {
+                await sendBotMessage(chatId, "❌ Please use /start first.");
+            } else {
+                await sendBotMessage(
+                    chatId,
+                    `💰 Your Balance
+
+Main Wallet: ${num(user.balance)} ETB
+Play Wallet: ${num(user.play_balance)} ETB
+Total: ${num(Number(user.balance) + Number(user.play_balance))} ETB`
+                );
+            }
+        } else if (data === "deposit") {
+            userState[chatId] = { step: "deposit_amount" };
+            await sendBotMessage(
+                chatId,
+                `1. ከዚህ በታች በተቀመጠው የቴሌ ብር አካውንት ገቢ ያድርጉ።
+ከ${MIN_DEPOSIT} ብር ጀምሮ የሚፈልጉትን መጠን ይላኩ።
+
+ስም = Mulualem
+ስልክ = 0940521110
+
+2. 💰 ገቢ የሚያደርጉትን መጠን ያስገቡ።`
+            );
+        } else if (data === "withdraw") {
+            userState[chatId] = { step: "withdraw_phone" };
+            await sendBotMessage(
+                chatId,
+                `እባኮ ለማውጣት የሚጠቀሙትን የTelebirr ስልክ ቁጥር ያስገቡ።
+
+💰 ትንሹ ${MIN_WITHDRAW} ETB`
+            );
+        } else if (data === "history") {
+            if (!user) {
+                await sendBotMessage(chatId, "❌ Please use /start first.");
+            } else {
+                const games = db.prepare(`
+                    SELECT match_id, stake, cards, result, prize, status
+                    FROM games WHERE user_id = ? ORDER BY id DESC LIMIT 10
+                `).all(user.id);
+                const historyText = games.length
+                    ? games.map((game, index) =>
+                        `${index + 1}. Game #${game.match_id || "—"}\n` +
+                        `Stake: ${num(game.stake)} ETB · Cards: ${game.cards}\n` +
+                        `Result: ${game.result || game.status || "PENDING"} · Prize: ${num(game.prize)} ETB`
+                    ).join("\n\n")
+                    : "📋 You have no games yet.";
+                await sendBotMessage(chatId, `🎮 Your Recent Games\n\n${historyText}`);
+            }
+        }
+
+        await bot.answerCallbackQuery(query.id);
+    } catch (error) {
+        console.error("Player menu button error:", error);
+        await bot.answerCallbackQuery(query.id, {
+            text: "Could not open this menu option.",
+            show_alert: true
+        });
+    }
+
+    return true;
+}
+
 // ADMIN APPROVE DEPOSIT
 // ======================================================
 
@@ -8108,6 +8247,10 @@ bot.on(
                 query.message.chat  
                     ? query.message.chat.id  
                     : null;  
+
+            if (await handlePlayerMenuCallback(query, data, chatId)) {
+                return;
+            }
 
             // --------------------------------------------  
             // SECURITY  
