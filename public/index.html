@@ -7156,18 +7156,11 @@ async function refreshPage2State() {
     try {
         let data;
 
-        // If we already know a match for this selection, refresh it.
-        const requestedMatchId = currentGameId;
-        if (requestedMatchId) {
-            data = await apiFetch(
-                "/api/match/" + encodeURIComponent(requestedMatchId)
-            );
-        } else {
-            // Find the active match even before selecting a card.
-            data = await apiFetch(
-                "/api/match/active?stake=" + encodeURIComponent(stake)
-            );
-        }
+        // Always look up the match for the selected stake. Each stake has
+        // its own match and server-side countdown.
+        data = await apiFetch(
+            "/api/match/active?stake=" + encodeURIComponent(stake)
+        );
 
         // Discard a delayed response if the player left Page 2 or changed stake.
         if (
@@ -7178,9 +7171,11 @@ async function refreshPage2State() {
             return;
         }
 
-        if (!requestedMatchId && data?.match?.id) {
+        if (data?.match?.id) {
             currentGameId = Number(data.match.id);
-            console.log("✅ Found active match:", currentGameId);
+            console.log("✅ Found active match for stake:", stake, currentGameId);
+        } else {
+            currentGameId = null;
         }
 
         if (!data || data.success === false) {
