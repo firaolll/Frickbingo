@@ -7882,54 +7882,78 @@ async function callNumber(){
    VOICE  
 ===================================================== */  
   
-function speakNumber(  
- letter,  
- number  
-){  
-  
- if(  
-  !voiceMode ||  
-  !("speechSynthesis" in window)  
- ){  
-  
-  return;  
-  
- }  
-  
-  
- try{  
-  
-  window.speechSynthesis.cancel();  
-  
-  
-  const speech =  
-   new SpeechSynthesisUtterance(  
-    `${getAmharicLetter(letter)}, ${number}`  
-   );  
-  
-  
-  speech.lang = "am-ET";  
-  speech.rate = .85;  
-  speech.pitch = 1;  
-  speech.volume = 1;  
-  
-  
-  window.speechSynthesis.speak(  
-   speech  
-  );  
-  
- }catch(error){  
-  
-  console.warn(  
-   "Voice error:",  
-   error  
-  );  
-  
- }  
-  
-}  
-  
-  
+function getAmharicNumber(number){
+
+ const units = [
+  "",
+  "አንድ",
+  "ሁለት",
+  "ሶስት",
+  "አራት",
+  "አምስት",
+  "ስድስት",
+  "ሰባት",
+  "ስምንት",
+  "ዘጠኝ"
+ ];
+
+ if(number <= 10) return number === 10 ? "አስር" : units[number];
+ if(number < 20) return "አስራ " + units[number - 10];
+
+ const tens = Math.floor(number / 10) * 10;
+ const remainder = number % 10;
+ const tensWords = {
+  20: "ሃያ",
+  30: "ሰላሳ",
+  40: "አርባ",
+  50: "ሃምሳ",
+  60: "ስልሳ",
+  70: "ሰባ"
+ };
+
+ return remainder
+  ? tensWords[tens] + " " + units[remainder]
+  : tensWords[tens];
+}
+
+
+/* =====================================================
+   VOICE
+===================================================== */
+
+function speakNumber(letter, number){
+
+ if(
+  !voiceMode ||
+  !("speechSynthesis" in window)
+ ){
+  return;
+ }
+
+ try{
+  window.speechSynthesis.cancel();
+
+  const letterSpeech = new SpeechSynthesisUtterance(letter);
+  letterSpeech.lang = "en-US";
+  letterSpeech.rate = .85;
+  letterSpeech.pitch = 1;
+  letterSpeech.volume = 1;
+
+  const numberSpeech = new SpeechSynthesisUtterance(
+   getAmharicNumber(number)
+  );
+  numberSpeech.lang = "am-ET";
+  numberSpeech.rate = .85;
+  numberSpeech.pitch = 1;
+  numberSpeech.volume = 1;
+
+  window.speechSynthesis.speak(letterSpeech);
+  window.speechSynthesis.speak(numberSpeech);
+ }catch(error){
+  console.warn("Voice error:", error);
+ }
+}
+
 /* =====================================================  
    AUTO  
 ===================================================== */  
@@ -8083,48 +8107,23 @@ function stopAutoCalling(){
    VOICE TOGGLE  
 ===================================================== */  
   
-function toggleVoice(){  
-  
- voiceMode =  
-  !voiceMode;  
-  
-  
- const button =  
-  document.getElementById(  
-   "voiceBtn"  
-  );  
-  
-  
- if(button){  
-  
-  button.textContent =  
-   voiceMode  
-    ? "🔊 Voice ON"  
-    : "🔇 Voice OFF";  
-  
-  
-  button.classList.toggle(  
-   "on",  
-   voiceMode  
-  );  
-  
- }  
-  
-  
- if(  
-  !voiceMode &&  
-  "speechSynthesis" in window  
- ){  
-  
-  window.speechSynthesis.cancel();  
-  
- }  
-  
-  
- haptic();  
-  
-}  
-  
+function toggleVoice(){
+
+ voiceMode = !voiceMode;
+
+ const voiceSwitch = document.getElementById("voiceSwitch");
+ if(voiceSwitch){
+  voiceSwitch.classList.toggle("on", voiceMode);
+  voiceSwitch.setAttribute("aria-checked", String(voiceMode));
+ }
+
+ if(!voiceMode && "speechSynthesis" in window){
+  window.speechSynthesis.cancel();
+ }
+
+ haptic();
+}
+
   function renderBigBoard(){
 
     const board =
