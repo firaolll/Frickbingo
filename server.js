@@ -42,7 +42,18 @@ const WINNER_CLAIM_WINDOW_MS = 3000;
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+    setHeaders(res, filePath) {
+        if (filePath.endsWith("index.html")) {
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        }
+    }
+}));
+
+app.use("/api", (req, res, next) => {
+    res.setHeader("Cache-Control", "no-store");
+    next();
+});
 
 // ======================================================
 // DATABASE
@@ -475,13 +486,15 @@ console.log(
                     ? cardNumbers
                     : []
             };
-        }).filter(player =>
+        });
+
+        const activePlayers = formattedPlayers.filter(player =>
             Number(player.cards || 0) > 0 &&
             player.cardNumbers.length > 0
         );
 
         const playerCount = new Set(
-            formattedPlayers.map(player => String(player.user_id))
+            activePlayers.map(player => String(player.user_id))
         ).size;
 
         return res.json({
@@ -572,7 +585,7 @@ const playerCount = db.prepare(`
     UPDATE games
     SET status = 'PLAYING'
     WHERE match_id = ?
-      AND status = 'WAITING'
+      AND status IN ('WAITING', 'STARTED')
 `).run(
     match.id
 );
