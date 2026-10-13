@@ -475,13 +475,16 @@ console.log(
                     ? cardNumbers
                     : []
             };
-        }).filter(player =>
+        });
+
+        // Count only players who have selected cards, but return every match
+        // participant so Page 2 can show players while their selection syncs.
+        const activePlayers = formattedPlayers.filter(player =>
             Number(player.cards || 0) > 0 &&
             player.cardNumbers.length > 0
         );
-
         const playerCount = new Set(
-            formattedPlayers.map(player => String(player.user_id))
+            activePlayers.map(player => String(player.user_id))
         ).size;
 
         return res.json({
