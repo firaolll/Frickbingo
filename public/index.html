@@ -7129,11 +7129,13 @@ if (window.isSpectator !== true) {
 
 let page2SyncInterval = null;
 let page2SyncBusy = false;
+let page2SyncGeneration = 0;
 let page2AutoReadyMatchId = null;
 
 async function refreshPage2State() {
     console.log("🔄 REFRESH PAGE 2 CALLED");
     if (page2SyncBusy) return;
+    const syncGeneration = page2SyncGeneration;
 
     const page2 = document.getElementById("page2");
 
@@ -7154,21 +7156,31 @@ async function refreshPage2State() {
     try {
         let data;
 
-        // If we already know the match ID, refresh that match.
-        if (currentGameId) {
+        // If we already know a match for this selection, refresh it.
+        const requestedMatchId = currentGameId;
+        if (requestedMatchId) {
             data = await apiFetch(
-                "/api/match/" + encodeURIComponent(currentGameId)
+                "/api/match/" + encodeURIComponent(requestedMatchId)
             );
         } else {
             // Find the active match even before selecting a card.
             data = await apiFetch(
                 "/api/match/active?stake=" + encodeURIComponent(stake)
             );
+        }
 
-            if (data.match && data.match.id) {
-                currentGameId = Number(data.match.id);
-                console.log("✅ Found active match:", currentGameId);
-            }
+        // Discard a delayed response if the player left Page 2 or changed stake.
+        if (
+            syncGeneration !== page2SyncGeneration ||
+            Number(selectedStake) !== stake ||
+            !document.getElementById("page2")?.classList.contains("active")
+        ) {
+            return;
+        }
+
+        if (!requestedMatchId && data?.match?.id) {
+            currentGameId = Number(data.match.id);
+            console.log("✅ Found active match:", currentGameId);
         }
 
         if (!data || data.success === false) {
@@ -7255,6 +7267,9 @@ console.log("🟢 PAGE 2 SYNC STARTED");
 /* Stop refreshing when leaving Page 2 */
 
 function stopPage2Sync() {
+
+    // Invalidate requests that are still in flight when Page 2 closes.
+    page2SyncGeneration++;
 
     if (page2SyncInterval !== null) {
 
