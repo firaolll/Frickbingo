@@ -2690,6 +2690,41 @@ button{
         inset 0 1px 0 rgba(255,255,255,.05);
 }
 
+
+/* Keep other players' choices visible without sacrificing the picker. */
+#page2 .selector-panel{height:250px;}
+#page2 .card-number-board{height:213px;}
+#page2 .shared-players-section{
+    margin-top:5px;
+}
+#page2 .shared-players-title{
+    margin-bottom:3px;
+    color:#d7d1e7;
+}
+#page2 .shared-players-cards{
+    flex-wrap:nowrap;
+    max-height:58px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:none;
+}
+#page2 .shared-players-cards::-webkit-scrollbar{display:none;}
+#page2 .shared-player-card{
+    flex:0 0 auto;
+    min-width:120px;
+    max-width:170px;
+    padding:4px 7px;
+    font-size:10px;
+}
+#page2 .shared-player-card-numbers{
+    white-space:nowrap;
+    font-size:10px;
+}
+@media(max-width:360px){
+    #page2 .selector-panel{height:235px;}
+    #page2 .card-number-board{height:198px;}
+}
+
 </style>  </head>  <body>  <div class="app">  <!-- ==================================================  
      PAGE 1  
 ================================================== -->  <section id="page1" class="page active">  <header class="app-header">  
@@ -2918,7 +2953,11 @@ button{
     Your 5×5 Cards  
 </div>  
 
-<div id="cardsPreview"></div>  
+<div id="cardsPreview"></div>
+<div class="shared-players-section">
+    <div class="shared-players-title">PLAYERS' SELECTED CARDS</div>
+    <div id="sharedPlayersCards" class="shared-players-cards"></div>
+</div>  
 
 
   
