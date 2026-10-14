@@ -3810,6 +3810,21 @@ if(tg){
    CONFIG  
 ================================================== */   
   
+function readTelegramInitData(webApp = window.Telegram?.WebApp){
+    const sdkData = webApp?.initData;
+    if(typeof sdkData === "string" && sdkData.trim()){
+        return sdkData.trim();
+    }
+
+    const hashData = new URLSearchParams(
+        String(window.location.hash || "").replace(/^#/, "")
+    ).get("tgWebAppData");
+    if(hashData) return hashData;
+
+    return new URLSearchParams(window.location.search || "")
+        .get("tgWebAppData") || "";
+}
+
 const MAX_CARDS = 2;  
   
 const STAKES = [10,20];  
@@ -3876,7 +3891,7 @@ if (tg) {
     tg.ready();
     tg.expand();
 
-    telegramInitData = tg.initData || "";
+    telegramInitData = readTelegramInitData(tg);
 
     console.log(
         "TELEGRAM INIT DATA LENGTH:",
