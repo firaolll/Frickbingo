@@ -7148,21 +7148,21 @@ console.log(
     "✅ Telegram bot polling started"  
 );
 
-bot.setMyCommands([
-    { command: "play", description: "Get the Frick Bingo launch button" }
-]).then(() => {
-    console.log("✅ Telegram /play command registered");
-}).catch(error => {
-    console.error("❌ Could not register Telegram /play command:", error.message);
-});
-
-bot.setChatMenuButton({
-    menu_button: { type: "commands" }
-}).then(() => {
-    console.log("✅ Telegram menu button opens bot commands");
-}).catch(error => {
-    console.error("❌ Could not configure Telegram menu button:", error.message);
-});
+if (WEB_APP_URL) {
+    bot.setChatMenuButton({
+        menu_button: {
+            type: "web_app",
+            text: "Play",
+            web_app: { url: WEB_APP_URL }
+        }
+    }).then(() => {
+        console.log("✅ Telegram menu button configured for Frick Bingo");
+    }).catch(error => {
+        console.error("❌ Could not configure Telegram menu button:", error.message);
+    });
+} else {
+    console.warn("⚠️ Telegram menu button not configured because WEB_APP_URL is missing");
+}
 
 } else {
 
@@ -7234,9 +7234,11 @@ function buildPlayerReplyKeyboard() {
         [{ text: "👥 Invite Friends" }]
     ];
 
-    keyboard.splice(1, 0, [
-        { text: "🎮 Play" }
-    ]);
+    if (WEB_APP_URL) {
+        keyboard.splice(1, 0, [
+            { text: "🎮 Play", web_app: { url: WEB_APP_URL } }
+        ]);
+    }
 
     return {
         keyboard,
