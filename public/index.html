@@ -2618,6 +2618,78 @@ button{
     overflow:hidden;
 }
 
+
+/* ==========================================
+   PAGE BACKGROUNDS AND READABLE TEXT
+========================================== */
+:root{
+    --muted:#c2bdd4;
+}
+
+.page.active{
+    background-color:#090714;
+    background-repeat:no-repeat;
+    background-size:cover;
+}
+
+#page1.page.active{
+    background-image:
+        radial-gradient(ellipse at 82% 4%, rgba(124,60,255,.22), transparent 38%),
+        radial-gradient(ellipse at 5% 48%, rgba(45,124,184,.12), transparent 36%),
+        linear-gradient(180deg,#100b20 0%,#090714 58%,#080611 100%);
+}
+
+#page2.page.active{
+    background-image:
+        radial-gradient(ellipse at 88% 3%, rgba(93,57,178,.24), transparent 38%),
+        radial-gradient(ellipse at 5% 68%, rgba(0,173,166,.12), transparent 34%),
+        linear-gradient(180deg,#100b22 0%,#090714 60%,#080611 100%);
+}
+
+#page3.page.active{
+    background-image:
+        radial-gradient(ellipse at 86% 0%, rgba(35,103,201,.2), transparent 35%),
+        radial-gradient(ellipse at 0% 62%, rgba(102,52,193,.17), transparent 38%),
+        linear-gradient(180deg,#0d0b1c 0%,#080713 62%,#070610 100%);
+}
+
+.small-muted,
+.info-label,
+.balance-label,
+.game-stat-label,
+.selector-title span:last-child,
+.selected-title span:last-child,
+.control-text small,
+.current-ball-label,
+.called-count-label{
+    color:#c2bdd4 !important;
+}
+
+.small-muted{font-size:11px;}
+.info-label{font-size:8px;}
+.balance-label{font-size:10px;}
+#page3 .game-stat-label{font-size:10px;color:#c9c3da;}
+#page3 .control-text small{font-size:11px;}
+#page3 .board-number,
+.card-number,
+.bingo-cell{
+    color:#fff;
+}
+
+.stake-panel,
+.selector-panel,
+.game-stat,
+.game-board-panel,
+.current-ball-card,
+.called-count-card,
+.controls-card,
+.bingo-card,
+.balance-box{
+    box-shadow:
+        0 10px 26px rgba(0,0,0,.32),
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
+
 </style>  </head>  <body>  <div class="app">  <!-- ==================================================  
      PAGE 1  
 ================================================== -->  <section id="page1" class="page active">  <header class="app-header">  
