@@ -7236,7 +7236,7 @@ function buildPlayerReplyKeyboard() {
 
     if (WEB_APP_URL) {
         keyboard.splice(1, 0, [
-            { text: "🎮 Play", web_app: { url: WEB_APP_URL } }
+            { text: "/play" }
         ]);
     }
 
