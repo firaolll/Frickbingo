@@ -2909,7 +2909,7 @@ button{
     <div class="game-stats">
 
         <div class="game-stat">
-            <div class="game-stat-label">PLAY</div>
+            <div class="game-stat-label">GAME ID</div>
             <div
                 class="game-stat-value"
                 id="gamePlay">
@@ -3763,7 +3763,27 @@ function updatePlayerCountDisplay() {
         if (element) element.textContent = String(count);
     }
 }
+function formatPublicGameId(value){
+    if(value === null || value === undefined || value === ""){
+        return "—";
+    }
+
+    const numericId = Number(value);
+    if(Number.isSafeInteger(numericId) && numericId > 0){
+        return `G${numericId.toString(36).toUpperCase().padStart(5, "0").slice(-5)}`;
+    }
+
+    const cleanId = String(value).toUpperCase().replace(/[^A-Z0-9]/g, "");
+    return cleanId ? `G${cleanId.padStart(5, "0").slice(-5)}` : "—";
+}
+
 function updateAllDisplays(){  
+
+    const gameIdDisplay = document.getElementById("gamePlay");
+    if(gameIdDisplay){
+        gameIdDisplay.textContent = formatPublicGameId(currentGameId);
+    }
+
   
     const main =  
         getMainBalance();  
