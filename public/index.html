@@ -2725,6 +2725,58 @@ button{
     #page2 .card-number-board{height:198px;}
 }
 
+
+/* Bottom navigation with clear, consistent emoji tabs. */
+.bottom-nav{
+    height:calc(62px + env(safe-area-inset-bottom));
+    padding:5px 6px env(safe-area-inset-bottom);
+    gap:4px;
+    background:linear-gradient(180deg,rgba(22,16,40,.98),rgba(8,6,17,.99));
+    border-top:1px solid rgba(165,107,255,.48);
+    box-shadow:0 -8px 24px rgba(0,0,0,.32);
+}
+.nav-btn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    min-width:0;
+    border-radius:12px;
+    color:#c2bdd4;
+    font-size:9px;
+    font-weight:800;
+    line-height:1.1;
+    transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.nav-icon{
+    display:grid;
+    place-items:center;
+    width:34px;
+    height:27px;
+    margin:0;
+    border-radius:9px;
+    background:rgba(255,255,255,.045);
+    font-size:18px;
+    line-height:1;
+    transition:background .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.nav-btn.active{
+    color:#fff;
+    background:rgba(124,60,255,.13);
+    text-shadow:none;
+}
+.nav-btn.active .nav-icon{
+    background:linear-gradient(145deg,#7c3cff,#4b20a8);
+    box-shadow:0 3px 12px rgba(124,60,255,.42),inset 0 1px 0 rgba(255,255,255,.24);
+    transform:translateY(-1px);
+}
+.nav-btn:active .nav-icon{transform:scale(.94);}
+.nav-btn:focus-visible{
+    outline:2px solid #d0a8ff;
+    outline-offset:-2px;
+}
+
 </style>  </head>  <body>  <div class="app">  <!-- ==================================================  
      PAGE 1  
 ================================================== -->  <section id="page1" class="page active">  <header class="app-header">  
@@ -3376,7 +3428,7 @@ button{
     data-page="page1"  
     onclick="navPage('page1',this)">  
 
-    <span class="nav-icon">⌂</span>  
+    <span class="nav-icon" aria-hidden="true">🏠</span>  
     Home  
 
 </button>  
@@ -3386,7 +3438,7 @@ button{
     data-page="historyPage"  
     onclick="navPage('historyPage',this)">  
 
-    <span class="nav-icon">◷</span>  
+    <span class="nav-icon" aria-hidden="true">🕘</span>  
     History  
 
 </button>  
@@ -3396,7 +3448,7 @@ button{
     data-page="scorePage"  
     onclick="navPage('scorePage',this)">  
 
-    <span class="nav-icon">★</span>  
+    <span class="nav-icon" aria-hidden="true">🏆</span>  
     Score  
 
 </button>  
@@ -3406,7 +3458,7 @@ button{
     data-page="walletPage"  
     onclick="navPage('walletPage',this)">  
 
-    <span class="nav-icon">◈</span>  
+    <span class="nav-icon" aria-hidden="true">👛</span>  
     Wallet  
 
 </button>  
@@ -3416,7 +3468,7 @@ button{
     data-page="profilePage"  
     onclick="navPage('profilePage',this)">  
 
-    <span class="nav-icon">●</span>  
+    <span class="nav-icon" aria-hidden="true">👤</span>  
     Profile  
 
 </button>
