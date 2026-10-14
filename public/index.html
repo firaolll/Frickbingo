@@ -7824,15 +7824,10 @@ async function callNumber(){
 
         if(status === "FINISHED"){
 
-            console.log("🏁 MATCH FINISHED");
+            console.log("🏁 MATCH FINISHED; syncing persisted winner details");
 
-            stopAutoCalling();
-            actualGameStarted = false;
-
-            if(!winnerShown){
-                showLoserScreen();
-            }
-
+            // Read winnerCards from the finished match before showing results.
+            await syncSharedGameState();
             return;
         }
 
@@ -8869,7 +8864,15 @@ if (winnerName) {
 }
 
 if (winnerNumber) {
-    winnerNumber.textContent = "WINNER";
+    const winningCardNumber = Array.isArray(winnerCards)
+        ? winnerCards.find(winner => {
+            const cardNumber = Number(winner?.cardNumber);
+            return Number.isInteger(cardNumber) && cardNumber > 0;
+        })
+        : null;
+    winnerNumber.textContent = winningCardNumber
+        ? `WINNING CARD #${Number(winningCardNumber.cardNumber)}`
+        : "WINNING CARD NUMBER UNAVAILABLE";
 }
 
 setWinnerPrize(
