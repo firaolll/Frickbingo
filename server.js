@@ -7291,7 +7291,7 @@ async function deliverScheduledBroadcast(audience, slotKey, recipientId, text, m
     if (wasBroadcastAttempted(audience, slotKey, recipientId)) return;
     let delivered = false;
     try {
-        await bot.sendMessage(recipientId, text, { reply_markup: markup });
+        await bot.sendMessage(recipientId, text, { parse_mode: "HTML", reply_markup: markup });
         delivered = true;
     } catch (error) {
         console.error(`TELEGRAM ${audience.toUpperCase()} BROADCAST FAILED:`, {
