@@ -7228,7 +7228,12 @@ const PLAYER_BROADCAST_INTERVAL_MS = 12 * 60 * 60 * 1000;
 const BROADCAST_CHECK_INTERVAL_MS = 60 * 1000;
 let broadcastSchedulerRunning = false;
 
-const AMHARIC_BINGO_INVITATIONS = [
+const AMHARIC_CHANNEL_INVITATIONS = [
+    "🎮 <b>Frick Bingo</b> — አዲሱ እና አጓጊው የቢንጎ ጨዋታ በቴሌግራምዎ!\n\nዘና ይበሉ፣ ቁጥሮችን ያዛምዱ፣ እና ከጓደኞችዎ ጋር በመወዳደር እድልዎን ይሞክሩ። በቀላሉ ከስልክዎ ሆነው ያለምንም ተጨማሪ አፕሊኬሽን መጫወት ይጀምሩ!\n\n✨ ዛሬውኑ ይቀላቀሉን እና ዕድልዎን ይፈትሹ!",
+    "<b>ወደ Frick Bingo እንኳን በደህና መጡ!</b> 🚀\n\nFrick Bingo በዘመናዊ መልኩ የተዘጋጀ፣ ፈጣን እና እጅግ አዝናኝ የሆነ የቢንጎ ጨዋታ ተሞክሮ ነው። በቴሌግራም ሚኒ አፕ (Mini App) መልክ የተሰራ በመሆኑ በማንኛውም ሰዓት እና ቦታ በቀላሉ መጫወት ይችላሉ።\n\n- <b>ፈጣን እና ቀላል አጨዋወት:</b> ምንም ውስብስብ ሂደት የለውም፤ ገብተው ወዲያው ይጀምሩ።\n- <b>ከፍተኛ መዝናኛ:</b> ለብቻም ሆነ ከጓደኞች ጋር በመሆን የሚጫወቱት አጓጊ ጨዋታ።\n- <b>ምቹ ተሞክሮ:</b> በቀጥታ ከቴሌግራም ቦታችን ጋር የተገናኘ።\n\nጨዋታውን አሁኑኑ ጀምረው የቢንጎ አሸናፊ ይሁኑ! 🎯"
+];
+
+const AMHARIC_PLAYER_INVITATIONS = [
     "🎉 ፍሪክ ቢንጎ ይጫወቱ! 🎱\n\nካርድዎን ይምረጡ፣ የቢንጎ ቁጥሮችን ይከታተሉ እና ዕድልዎን ይሞክሩ!\n\n👇 ጨዋታውን ለመክፈት ከታች ይጫኑ።",
     "✨ የቢንጎ ደስታ ይጠብቅዎታል! ✨\n\nከFrick Bingo ጋር ይቀላቀሉ፣ ካርድ ይምረጡ እና ይጫወቱ።\n\n🎮 አሁን ለመጀመር ከታች ይጫኑ።",
     "🔥 የቢንጎ ጊዜ ነው! 🔥\n\nጓደኞችዎን ይጋብዙ፣ ቁጥሮቹን ይከታተሉ እና ይደሰቱ።\n\n👇 Frick Bingoን ለመጫወት ከታች ይጫኑ።",
@@ -7305,9 +7310,10 @@ async function runScheduledTelegramBroadcasts() {
         const now = Date.now();
         const channelSlot = currentBroadcastSlot(CHANNEL_BROADCAST_INTERVAL_MS);
         const playerSlot = currentBroadcastSlot(PLAYER_BROADCAST_INTERVAL_MS);
-        const variants = AMHARIC_BINGO_INVITATIONS;
-        const channelText = variants[Number(channelSlot) % variants.length];
-        const playerText = variants[Number(playerSlot) % variants.length];
+        const channelVariants = AMHARIC_CHANNEL_INVITATIONS;
+        const playerVariants = AMHARIC_PLAYER_INVITATIONS;
+        const channelText = channelVariants[Number(channelSlot) % channelVariants.length];
+        const playerText = playerVariants[Number(playerSlot) % playerVariants.length];
         const username = await getBotUsername();
 
         if (!wasBroadcastAttempted("channel", channelSlot, BINGO_CHANNEL_TARGET)) {
