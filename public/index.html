@@ -6946,23 +6946,24 @@ if (matchStatus === "FINISHED") {
         if (overlay) overlay.classList.add("show");
         await refreshBalance();
 
-        // This winner screen is rendered here instead of through showWinner,
-        // so start the same five-second return countdown explicitly.
-        let seconds = 5;
-        const countdown = document.getElementById("winnerCountdown");
-        if (countdown) countdown.textContent = String(seconds);
-        clearInterval(winnerResetInterval);
-        winnerResetInterval = setInterval(() => {
-            seconds--;
-            if (countdown) {
-                countdown.textContent = String(Math.max(0, seconds));
-            }
-            if (seconds <= 0) {
-                clearInterval(winnerResetInterval);
-                winnerResetInterval = null;
-                resetAfterWinner();
-            }
-        }, 1000);
+        // This branch can be reached after showWinner already started its
+        // return countdown. Start a fallback only when no countdown is active.
+        if (!winnerResetInterval) {
+            let seconds = 5;
+            const countdown = document.getElementById("winnerCountdown");
+            if (countdown) countdown.textContent = String(seconds);
+            winnerResetInterval = setInterval(() => {
+                seconds--;
+                if (countdown) {
+                    countdown.textContent = String(Math.max(0, seconds));
+                }
+                if (seconds <= 0) {
+                    clearInterval(winnerResetInterval);
+                    winnerResetInterval = null;
+                    resetAfterWinner();
+                }
+            }, 1000);
+        }
     } else {
         // Other players and spectators see the same persisted winner awards.
         showLoserScreen(winnerCards);
@@ -7238,7 +7239,7 @@ function startSharedGameSync(){
     sharedSyncInterval =
         setInterval(
             syncSharedGameState,
-            3000
+            1000
         );
 
 }
