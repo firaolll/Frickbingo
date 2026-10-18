@@ -164,6 +164,18 @@ FOREIGN KEY(match_id) REFERENCES matches(id)
 
 );
 `);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS telegram_broadcast_deliveries (
+        audience TEXT NOT NULL,
+        slot_key TEXT NOT NULL,
+        recipient_id TEXT NOT NULL,
+        attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        delivered INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (audience, slot_key, recipient_id)
+    )
+`);
+
 try {
     db.exec(`
         ALTER TABLE games
@@ -7148,6 +7160,22 @@ console.log(
     "✅ Telegram bot polling started"  
 );
 
+bot.setMyCommands([
+    { command: "play", description: "Open Frick Bingo" }
+]).then(() => {
+    console.log("✅ Telegram /play command registered");
+}).catch(error => {
+    console.error("❌ Could not register Telegram /play command:", error.message);
+});
+
+bot.setChatMenuButton({
+    menu_button: { type: "commands" }
+}).then(() => {
+    console.log("✅ Telegram menu button opens bot commands");
+}).catch(error => {
+    console.error("❌ Could not configure Telegram menu button:", error.message);
+});
+
 } else {
 
 console.warn(  
@@ -7190,6 +7218,160 @@ try {
 
 let cachedTelegramBotUsername = "";
 
+const BINGO_CHANNEL_TARGET = String(
+    process.env.BINGO_CHANNEL_ID ||
+    process.env.BINGO_CHANNEL_USERNAME ||
+    "@frickbingo"
+).trim();
+const CHANNEL_BROADCAST_INTERVAL_MS = 3 * 60 * 60 * 1000;
+const PLAYER_BROADCAST_INTERVAL_MS = 12 * 60 * 60 * 1000;
+const BROADCAST_CHECK_INTERVAL_MS = 60 * 1000;
+let broadcastSchedulerRunning = false;
+
+const AMHARIC_CHANNEL_INVITATIONS = [
+    "🎮 <b>Frick Bingo</b> — አዲሱ እና አጓጊው የቢንጎ ጨዋታ በቴሌግራምዎ!\n\nዘና ይበሉ፣ ቁጥሮችን ያዛምዱ፣ እና ከጓደኞችዎ ጋር በመወዳደር እድልዎን ይሞክሩ። በቀላሉ ከስልክዎ ሆነው ያለምንም ተጨማሪ አፕሊኬሽን መጫወት ይጀምሩ!\n\n✨ ዛሬውኑ ይቀላቀሉን እና ዕድልዎን ይፈትሹ!",
+    "<b>ወደ Frick Bingo እንኳን በደህና መጡ!</b> 🚀\n\nFrick Bingo በዘመናዊ መልኩ የተዘጋጀ፣ ፈጣን እና እጅግ አዝናኝ የሆነ የቢንጎ ጨዋታ ተሞክሮ ነው። በቴሌግራም ሚኒ አፕ (Mini App) መልክ የተሰራ በመሆኑ በማንኛውም ሰዓት እና ቦታ በቀላሉ መጫወት ይችላሉ።\n\n- <b>ፈጣን እና ቀላል አጨዋወት:</b> ምንም ውስብስብ ሂደት የለውም፤ ገብተው ወዲያው ይጀምሩ።\n- <b>ከፍተኛ መዝናኛ:</b> ለብቻም ሆነ ከጓደኞች ጋር በመሆን የሚጫወቱት አጓጊ ጨዋታ።\n- <b>ምቹ ተሞክሮ:</b> በቀጥታ ከቴሌግራም ቦታችን ጋር የተገናኘ።\n\nጨዋታውን አሁኑኑ ጀምረው የቢንጎ አሸናፊ ይሁኑ! 🎯"
+];
+
+const AMHARIC_PLAYER_INVITATIONS = [
+    "🎉 ፍሪክ ቢንጎ ይጫወቱ! 🎱\n\nካርድዎን ይምረጡ፣ የቢንጎ ቁጥሮችን ይከታተሉ እና ዕድልዎን ይሞክሩ!\n\n👇 ጨዋታውን ለመክፈት ከታች ይጫኑ።",
+    "✨ የቢንጎ ደስታ ይጠብቅዎታል! ✨\n\nከFrick Bingo ጋር ይቀላቀሉ፣ ካርድ ይምረጡ እና ይጫወቱ።\n\n🎮 አሁን ለመጀመር ከታች ይጫኑ።",
+    "🔥 የቢንጎ ጊዜ ነው! 🔥\n\nጓደኞችዎን ይጋብዙ፣ ቁጥሮቹን ይከታተሉ እና ይደሰቱ።\n\n👇 Frick Bingoን ለመጫወት ከታች ይጫኑ።",
+    "🎱 ዕድልዎን በFrick Bingo ይሞክሩ! 🎱\n\nካርድ ይምረጡ፣ በጨዋታው ይሳተፉ እና ቢንጎ ይጥሩ!\n\n🎮 ለመጫወት ከታች ይጫኑ።"
+];
+
+function currentBroadcastSlot(intervalMs) {
+    return String(Math.floor(Date.now() / intervalMs));
+}
+
+function wasBroadcastAttempted(audience, slotKey, recipientId) {
+    return Boolean(db.prepare(`
+        SELECT 1
+        FROM telegram_broadcast_deliveries
+        WHERE audience = ? AND slot_key = ? AND recipient_id = ?
+    `).get(audience, slotKey, String(recipientId)));
+}
+
+function recordBroadcastAttempt(audience, slotKey, recipientId, delivered) {
+    db.prepare(`
+        INSERT OR IGNORE INTO telegram_broadcast_deliveries
+            (audience, slot_key, recipient_id, delivered)
+        VALUES (?, ?, ?, ?)
+    `).run(audience, slotKey, String(recipientId), delivered ? 1 : 0);
+}
+
+async function getBotUsername() {
+    if (!bot) return "";
+    if (!cachedTelegramBotUsername) {
+        const botInfo = await bot.getMe();
+        cachedTelegramBotUsername = String(botInfo.username || "").replace(/^@/, "");
+    }
+    return cachedTelegramBotUsername;
+}
+
+function buildBroadcastMarkup(audience, botUsername) {
+    if (audience === "players") {
+        return {
+            inline_keyboard: [[{
+                text: "🎮 አሁን ይጫወቱ",
+                web_app: { url: WEB_APP_URL }
+            }]]
+        };
+    }
+
+    return {
+        inline_keyboard: [[{
+            text: "🎮 ቢንጎ ይጫወቱ",
+            url: `https://t.me/${botUsername}?start=play`
+        }]]
+    };
+}
+
+async function deliverScheduledBroadcast(audience, slotKey, recipientId, text, markup) {
+    if (wasBroadcastAttempted(audience, slotKey, recipientId)) return;
+    let delivered = false;
+    try {
+        await bot.sendMessage(recipientId, text, { parse_mode: "HTML", reply_markup: markup });
+        delivered = true;
+    } catch (error) {
+        console.error(`TELEGRAM ${audience.toUpperCase()} BROADCAST FAILED:`, {
+            recipient: String(recipientId),
+            message: error.message
+        });
+    } finally {
+        recordBroadcastAttempt(audience, slotKey, recipientId, delivered);
+    }
+}
+
+async function runScheduledTelegramBroadcasts() {
+    if (!bot || !WEB_APP_URL || broadcastSchedulerRunning) return;
+    broadcastSchedulerRunning = true;
+    try {
+        const now = Date.now();
+        const channelSlot = currentBroadcastSlot(CHANNEL_BROADCAST_INTERVAL_MS);
+        const playerSlot = currentBroadcastSlot(PLAYER_BROADCAST_INTERVAL_MS);
+        const channelVariants = AMHARIC_CHANNEL_INVITATIONS;
+        const playerVariants = AMHARIC_PLAYER_INVITATIONS;
+        const channelText = channelVariants[Number(channelSlot) % channelVariants.length];
+        const playerText = playerVariants[Number(playerSlot) % playerVariants.length];
+        const username = await getBotUsername();
+
+        if (!wasBroadcastAttempted("channel", channelSlot, BINGO_CHANNEL_TARGET)) {
+            await deliverScheduledBroadcast(
+                "channel",
+                channelSlot,
+                BINGO_CHANNEL_TARGET,
+                channelText,
+                buildBroadcastMarkup("channel", username)
+            );
+            console.log("📣 Channel bingo invitation scheduled", {
+                channel: BINGO_CHANNEL_TARGET,
+                slot: channelSlot,
+                at: new Date(now).toISOString()
+            });
+        }
+
+        const registeredPlayers = db.prepare(`
+            SELECT u.telegram_id
+            FROM users u
+            WHERE u.telegram_id IS NOT NULL
+              AND TRIM(u.telegram_id) != ''
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM telegram_broadcast_deliveries d
+                  WHERE d.audience = 'players'
+                    AND d.slot_key = ?
+                    AND d.recipient_id = u.telegram_id
+              )
+            ORDER BY u.id ASC
+        `).all(playerSlot);
+
+        for (const player of registeredPlayers) {
+            await deliverScheduledBroadcast(
+                "players",
+                playerSlot,
+                player.telegram_id,
+                playerText,
+                buildBroadcastMarkup("players", username)
+            );
+            await new Promise(resolve => setTimeout(resolve, 45));
+        }
+        if (registeredPlayers.length) {
+            console.log("📨 Registered-player bingo invitations processed", {
+                count: registeredPlayers.length,
+                slot: playerSlot,
+                at: new Date(now).toISOString()
+            });
+        }
+    } catch (error) {
+        console.error("TELEGRAM BROADCAST SCHEDULER ERROR:", error.message);
+    } finally {
+        broadcastSchedulerRunning = false;
+    }
+}
+
+setInterval(runScheduledTelegramBroadcasts, BROADCAST_CHECK_INTERVAL_MS);
+
 async function createReferralLink(telegramId) {
     if (!bot) return null;
 
@@ -7220,7 +7402,7 @@ function buildPlayerReplyKeyboard() {
 
     if (WEB_APP_URL) {
         keyboard.splice(1, 0, [
-            { text: "🎮 Play", web_app: { url: WEB_APP_URL } }
+            { text: "/play" }
         ]);
     }
 
@@ -7294,7 +7476,22 @@ ${num(user.play_balance)} ETB
 Choose an option below.`,
 
 { reply_markup: buildPlayerReplyKeyboard() }  
-            );  
+            );
+
+            if (startPayload === "play" && WEB_APP_URL) {
+                await sendBotMessage(
+                    chatId,
+                    "🎮 Tap below to open Frick Bingo.",
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[{
+                                text: "🎮 PLAY FRICK BINGO",
+                                web_app: { url: WEB_APP_URL }
+                            }]]
+                        }
+                    }
+                );
+            }
 
         } catch (error) {  
 
